@@ -1,0 +1,40 @@
+
+> @saasfly/nextjs@0.1.0 dev
+> bun with-env next dev
+
+$ dotenv -e ../../.env.local -- next dev
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+Error: Cannot find module '../../lib/batcher'
+Require stack:
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\dev\on-demand-entry-handler.js
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\build\webpack\plugins\flight-client-entry-plugin.js
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\build\webpack-config.js
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1420:15)
+    at C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1058:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1063:22)
+    at Module._load (node:internal/modules/cjs/loader:1226:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1503:12)
+    at mod.require (C:\Users\57684\saasfly\node_modules\.bun\next@14.2.5+6dbf9a050bc9aadb\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\server\\dev\\on-demand-entry-handler.js',
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\build\\webpack\\plugins\\flight-client-entry-plugin.js',
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\build\\webpack-config.js',
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\57684\\saasfly\\node_modules\\.bun\\next@14.2.5+6dbf9a050bc9aadb\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+[?25h

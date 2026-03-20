@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price to Hours - Tooltip Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #111; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 18px;
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 10px;
+    }
+    .price {
+      font-size: 24px;
+      font-weight: bold;
+      color: #B12704;
+      display: inline-block;
+      margin: 10px 0;
+    }
+    .original-price {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 18px;
+    }
+    .test-instructions {
+      background: #e7f3ff;
+      border-left: 4px solid #0066cc;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .test-instructions ol { margin: 10px 0 0 0; padding-left: 20px; }
+    .test-instructions li { margin: 5px 0; }
+    .status {
+      background: #111;
+      color: #0f0;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+      min-height: 80px;
+    }
+    .product-list {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .product {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .product:hover { background: #f9f9f9; }
+    .product:last-child { border-bottom: none; }
+    .product-name { font-weight: 500; font-size: 16px; }
+    .product-price { font-weight: 600; color: #B12704; font-size: 18px; }
+
+    .buy-button {
+      background: #FFD814;
+      border: 1px solid #FCD200;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .add-to-cart {
+      background: #FFA41C;
+      border: 1px solid #FF9400;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .tooltip-sample {
+      display: inline-block;
+      background: rgba(30, 30, 30, 0.95);
+      color: #e0e0e0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .debug-info {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Price to Hours - Tooltip Test</h1>
+  <p class="subtitle">Version 1.8.1 - Simple Tooltip on Hover</p>
+
+  <div class="test-instructions">
+    <strong>Test Instructions:</strong>
+    <ol>
+      <li>Make sure extension is loaded in Chrome (version 1.8.1)</li>
+      <li>Hover over prices - tooltip appears after 100ms</li>
+      <li>Tooltip follows mouse, positioned at bottom-right</li>
+      <li>Time unit auto-selects: min → hours → workdays → weeks → months → years</li>
+      <li>Move mouse - tooltip follows</li>
+      <li>Move away - tooltip disappears</li>
+      <li>Press F12 to open console for debug logs</li>
+    </ol>
+  </div>
+
+  <div id="status" class="status">Checking extension status...</div>
+
+  <div class="card">
+    <h2>Test 1: Basic Price Hover</h2>
+    <p>This headset costs <span class="price">$299</span></p>
+    <p>Limited time offer: <span class="price">$19.99</span></p>
+    <p>Premium laptop: <span class="price">$1,299</span></p>
+  </div>
+
+  <div class="card">
+    <h2>Test 2: Multi-Currency</h2>
+    <p>UK price: <span class="price">£49</span></p>
+    <p>EU price: <span class="price">€89</span></p>
+    <p>Japan price: <span class="price">¥12,800</span></p>
+  </div>
+
+  <div class="card">
+    <h2>Test 3: Original Price (No Tooltip)</h2>
+    <p>Original: <span class="original-price">$599</span> &nbsp;&nbsp;
+       Sale: <span class="price">$399</span></p>
+    <p class="debug-info">Note: Strikethrough prices should NOT show tooltip</p>
+  </div>
+
+  <div class="card">
+    <h2>Test 4: Product List</h2>
+    <div class="product-list">
+      <div class="product">
+        <span class="product-name">Product A - Basic</span>
+        <span class="product-price">$49</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product B - Pro</span>
+        <span class="product-price">$149</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product C - Ultra</span>
+        <span class="product-price">$299</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Test 5: Buy Buttons</h2>
+    <div style="display: flex; gap: 20px; align-items: center; margin: 15px 0;">
+      <div style="text-align: center;">
+        <p style="color: #B12704; font-weight: 600; margin-bottom: 8px;">$29.99</p>
+        <button class="buy-button">Buy Now</button>
+      </div>
+      <div style="text-align: center;">
+        <p style="color: #B12704; font-weight: 600; margin-bottom: 8px;">$89.99</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tooltip Style Reference</h2>
+    <p>Tooltip should look like this on hover:</p>
+    <div class="tooltip-sample">≈ 2.0 hours of work</div>
+    <p class="debug-info" style="margin-top: 15px;">
+      Tooltip: dark semi-transparent background, simple work time text, follows mouse bottom-right
+    </p>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    let checkCount = 0;
+
+    function checkExtensionStatus() {
+      checkCount++;
+      const tooltip = document.querySelector('.pth-tooltip');
+
+      statusEl.textContent = `Checking extension... (check #${checkCount})\n`;
+
+      if (tooltip) {
+        statusEl.textContent += '✅ Tooltip element loaded\n';
+      } else {
+        statusEl.textContent += '⏳ No tooltip element found\n';
+      }
+
+      const prices = document.querySelectorAll('.price, .product-price');
+      statusEl.textContent += `\n📊 Found ${prices.length} price elements on page\n`;
+
+      if (chrome && chrome.storage) {
+        chrome.storage.sync.get(['amount', 'incomeType', 'hoursPerDay', 'enabled'], (result) => {
+          statusEl.textContent += '\nCurrent settings:\n';
+          statusEl.textContent += `  Amount: ${result.amount || 3000}\n`;
+          statusEl.textContent += `  Type: ${result.incomeType || 'biweekly'}\n`;
+          statusEl.textContent += `  Hours/day: ${result.hoursPerDay || 8}\n`;
+          statusEl.textContent += `  Enabled: ${result.enabled !== false}\n`;
+        });
+      }
+    }
+
+    setInterval(checkExtensionStatus, 1000);
+
+    console.log('[PTH Test] Page loaded, waiting for extension...');
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .preview { margin: 10px 0; }
+    canvas { border: 1px solid #ccc; margin: 5px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 10px 5px; }
+    .success { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Price to Hours - Icon Generator</h1>
+  <p>点击按钮生成并下载所有需要的图标尺寸</p>
+
+  <button onclick="generateAndDownload()">生成并下载图标</button>
+  <button onclick="openDownloadFolder()">打开下载文件夹</button>
+
+  <div id="status"></div>
+
+  <h3>预览:</h3>
+  <div class="preview">
+    <div>16x16 (icon16.png)</div>
+    <canvas id="c16" width="16" height="16"></canvas>
+  </div>
+  <div class="preview">
+    <div>48x48 (icon48.png)</div>
+    <canvas id="c48" width="48" height="48"></canvas>
+  </div>
+  <div class="preview">
+    <div>128x128 (icon128.png)</div>
+    <canvas id="c128" width="128" height="128"></canvas>
+  </div>
+
+  <script>
+    const sizes = [
+      { size: 16, name: 'icon16.png' },
+      { size: 48, name: 'icon48.png' },
+      { size: 128, name: 'icon128.png' }
+    ];
+
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+
+      // Black background
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, 0, size, size);
+
+      // Stopwatch emoji
+      ctx.font = `${size * 0.65}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'white';
+      ctx.fillText('⏱️', size / 2, size / 2 + size * 0.05);
+    }
+
+    // Draw previews
+    sizes.forEach(({ size, name }) => {
+      const canvas = document.getElementById(`c${size}`);
+      drawIcon(canvas, size);
+    });
+
+    async function generateAndDownload() {
+      const status = document.getElementById('status');
+
+      for (const { size, name } of sizes) {
+        const canvas = document.getElementById(`c${size}`);
+
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = name;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+
+        status.innerHTML = `<p class="success">✓ ${name} 下载已触发</p>`;
+
+        // Small delay between downloads
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      status.innerHTML += '<p class="success">全部完成！请将下载的文件移动到 icons 文件夹</p>';
+    }
+
+    function openDownloadFolder() {
+      // This won't work directly from browser, but user can manually open
+      alert('请手动打开下载文件夹:\n通常位于：C:\\Users\\57684\\Downloads\n\n然后将图标文件复制到:\nC:\\Users\\57684\\price-to-hours\\icons\\');
+    }
+  </script>
+</body>
+</html>

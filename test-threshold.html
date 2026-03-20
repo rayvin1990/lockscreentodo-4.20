@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threshold Test - v1.9.0</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .card { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #007bff; color: white; }
+    .price { font-size: 28px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Threshold Test - v1.9.0</h1>
+  <p><strong>Settings:</strong> $300,000/year, 8 hrs/day</p>
+
+  <div class="card">
+    <h2>Expected Results</h2>
+    <table>
+      <tr><th>Price</th><th>Total Hours</th><th>Expected Tooltip</th></tr>
+      <tr><td>$100</td><td>0.69 hrs</td><td>≈ 42 min of work</td></tr>
+      <tr><td>$500</td><td>3.48 hrs</td><td>≈ 3.5 hours of work</td></tr>
+      <tr><td>$1,000</td><td>6.96 hrs</td><td>≈ 7.0 hours of work</td></tr>
+      <tr><td>$2,000</td><td>13.9 hrs</td><td>≈ 1.7 workdays</td></tr>
+      <tr><td>$2,495</td><td>17.4 hrs</td><td>≈ 2.2 workdays ← FIX TEST</td></tr>
+      <tr><td>$5,000</td><td>34.8 hrs</td><td>≈ 4.3 workdays</td></tr>
+      <tr><td>$6,000</td><td>41.8 hrs</td><td>≈ 1.0 weeks of work</td></tr>
+      <tr><td>$12,000</td><td>83.5 hrs</td><td>≈ 2.1 weeks of work</td></tr>
+      <tr><td>$25,000</td><td>173.6 hrs</td><td>≈ 1.0 month of work</td></tr>
+      <tr><td>$50,000</td><td>347.2 hrs</td><td>≈ 2.0 months of work</td></tr>
+      <tr><td>$150,000</td><td>1041.7 hrs</td><td>≈ 0.5 years of work</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Test Prices (Hover to test)</h2>
+    <p class="price">$100</p>
+    <p class="price">$500</p>
+    <p class="price">$1,000</p>
+    <p class="price">$2,000</p>
+    <p class="price" style="color: red;">$2,495 ← Main test</p>
+    <p class="price">$5,000</p>
+    <p class="price">$6,000</p>
+  </div>
+
+  <script>
+    console.log('[Test] Reload extension v1.9.0, then hard refresh (Ctrl+Shift+R)');
+    console.log('[Test] Hover over $2,495 - should show "≈ 2.2 workdays"');
+  </script>
+</body>
+</html>

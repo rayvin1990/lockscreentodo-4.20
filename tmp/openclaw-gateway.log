@@ -1,0 +1,5 @@
+2026-03-19T21:24:23.547+08:00 [plugins] feishu_doc: Registered feishu_doc, feishu_app_scopes
+2026-03-19T21:24:23.562+08:00 [plugins] feishu_chat: Registered feishu_chat tool
+2026-03-19T21:24:23.581+08:00 [plugins] feishu_wiki: Registered feishu_wiki tool
+2026-03-19T21:24:23.597+08:00 [plugins] feishu_drive: Registered feishu_drive tool
+2026-03-19T21:24:23.621+08:00 [plugins] feishu_bitable: Registered bitable tools

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification - Price to Hours v1.8.9</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .card { background: #f5f5f5; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }
+    .success { color: #28a745; font-weight: bold; }
+    .error { color: #dc3545; font-weight: bold; }
+    .warning { color: #ffc107; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #007bff; color: white; }
+    .version-badge { display: inline-block; background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+    .calc-box { background: #e7f3ff; padding: 15px; border-radius: 6px; font-family: monospace; }
+    .step { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .step-num { display: inline-block; width: 30px; height: 30px; background: #007bff; color: white; text-align: center; line-height: 30px; border-radius: 50%; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Price to Hours - Verification Page</h1>
+  <p>Extension Version: <span class="version-badge">1.8.9</span></p>
+
+  <div class="card">
+    <h2>Calculation Reference</h2>
+    <p><strong>Settings:</strong> $2,000 / biweekly, 8 hours/day</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Price</th>
+          <th>Hourly Rate</th>
+          <th>Total Hours</th>
+          <th>Expected Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>$19.99</td>
+          <td>$12.50/hr</td>
+          <td>1.6 hrs</td>
+          <td class="success">≈ 1 hour of work</td>
+        </tr>
+        <tr>
+          <td>$299</td>
+          <td>$12.50/hr</td>
+          <td>23.9 hrs</td>
+          <td class="success">≈ 2 weeks of work</td>
+        </tr>
+        <tr>
+          <td>$1,299</td>
+          <td>$12.50/hr</td>
+          <td>103.9 hrs</td>
+          <td class="success">≈ 8.7 workdays</td>
+        </tr>
+        <tr>
+          <td>$5,999</td>
+          <td>$12.50/hr</td>
+          <td>479.9 hrs</td>
+          <td class="success">≈ 2.8 months of work</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Calculation Breakdown for $5,999</h2>
+    <div class="calc-box">
+      Income: $2,000 / biweekly (80 hours)<br>
+      Hourly Rate: $2,000 ÷ 80 = $25/hour<br>
+      <br>
+      Price: $5,999<br>
+      Total Hours: $5,999 ÷ $25 = <strong>239.96 hours</strong><br>
+      <br>
+      Work Days: 239.96 ÷ 8 = 29.99 days<br>
+      Work Weeks: 29.99 ÷ 5 = 6.0 weeks<br>
+      Work Months: 29.99 ÷ 21.75 = <strong>1.38 months</strong><br>
+      <br>
+      <span class="success">✓ Expected: ≈ 1.4 months of work</span><br>
+      <span class="error">✗ Old (WRONG): ≈ 1 year of work</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Reload Instructions</h2>
+
+    <div class="step">
+      <span class="step-num">1</span>
+      <strong>Reload Extension</strong><br>
+      Go to <code>chrome://extensions</code> → Find "Price to Hours" → Click reload button 🔃
+    </div>
+
+    <div class="step">
+      <span class="step-num">2</span>
+      <strong>Verify Version</strong><br>
+      Make sure the extension shows version <strong>1.8.9</strong>
+    </div>
+
+    <div class="step">
+      <span class="step-num">3</span>
+      <strong>Hard Refresh This Page</strong><br>
+      Press <code>Ctrl + Shift + R</code> (Windows) to clear cache
+    </div>
+
+    <div class="step">
+      <span class="step-num">4</span>
+      <strong>Test Hover</strong><br>
+      Hover over the prices below and verify the tooltip shows correct values
+    </div>
+
+    <div class="step">
+      <span class="step-num">5</span>
+      <strong>Check Console</strong><br>
+      Press <code>F12</code> and look for:<br>
+      <code>[PTH Debug] Result: ≈ 1.4 months of work</code>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Test Prices (Hover Over These)</h2>
+    <p class="price" style="font-size: 24px;">$19.99</p>
+    <p class="price" style="font-size: 24px;">$299</p>
+    <p class="price" style="font-size: 24px;">$1,299</p>
+    <p class="price" style="font-size: 32px; color: #dc3545;">$5,999 ← Test this one!</p>
+  </div>
+
+  <div class="card">
+    <h2>Debug Info</h2>
+    <div id="debug-info" class="calc-box">
+      Loading...
+    </div>
+  </div>
+
+  <script>
+    // Display browser info
+    const debugEl = document.getElementById('debug-info');
+    debugEl.innerHTML = `
+      User Agent: ${navigator.userAgent}<br>
+      Page Loaded: ${new Date().toLocaleString()}<br>
+      <br>
+      <strong>Next Steps:</strong><br>
+      1. Make sure extension is reloaded (chrome://extensions → Reload)<br>
+      2. Hard refresh this page (Ctrl + Shift + R)<br>
+      3. Hover over $5,999 above<br>
+      4. Check browser console (F12) for debug output
+    `;
+
+    console.log('[Verification] Page ready for testing');
+    console.log('[Verification] Press F12 to see extension debug logs');
+  </script>
+</body>
+</html>

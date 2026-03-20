@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试扩展 - 商品价格检测</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; }
+    .test-card { border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px; }
+    .price-label { background: #f0f0f0; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+
+    /* Amazon 风格价格结构 */
+    .a-price { display: inline-flex; align-items: baseline; gap: 2px; }
+    .a-price-symbol { font-size: 13px; }
+    .a-price-whole { font-size: 24px; font-weight: bold; }
+    .a-price-fraction { font-size: 13px; }
+
+    /* 原价样式 */
+    .original-price { text-decoration: line-through; color: #888; }
+    .a-text-price .a-price-whole { color: #888; }
+  </style>
+</head>
+<body>
+  <h1>💰 Price to Hours - 价格检测测试</h1>
+  <p>刷新页面后，检查以下价格旁边是否显示黑色工时标签：</p>
+
+  <!-- 测试 1: 普通文本价格 -->
+  <div class="test-card">
+    <h3>测试 1: 普通文本价格</h3>
+    <p>这款产品的价格是 <span>$299.00</span>，非常划算。</p>
+    <p class="price-label">预期：✅ 应该显示标签</p>
+  </div>
+
+  <!-- 测试 2: Amazon 风格分隔价格 -->
+  <div class="test-card">
+    <h3>测试 2: Amazon 风格分隔价格</h3>
+    <div class="a-price">
+      <span class="a-price-symbol">$</span>
+      <span class="a-price-whole">249</span>
+      <span class="a-price-fraction">99</span>
+    </div>
+    <p class="price-label">预期：✅ 应该显示标签</p>
+  </div>
+
+  <!-- 测试 3: 带原价的分隔价格 -->
+  <div class="test-card">
+    <h3>测试 3: 带原价（划线）</h3>
+    <div style="display: flex; gap: 15px; align-items: baseline;">
+      <div class="a-price">
+        <span class="a-price-symbol">$</span>
+        <span class="a-price-whole">199</span>
+        <span class="a-price-fraction">99</span>
+      </div>
+      <div class="a-price a-text-price">
+        <span class="a-price-symbol">$</span>
+        <span class="a-price-whole original-price">299</span>
+        <span class="a-price-fraction">00</span>
+      </div>
+    </div>
+    <p class="price-label">预期：✅ 现价显示标签，❌ 原价不显示</p>
+  </div>
+
+  <!-- 测试 4: 大金额价格 -->
+  <div class="test-card">
+    <h3>测试 4: 大金额（逗号分隔）</h3>
+    <p>笔记本电脑：<span class="a-price" style="font-size: 24px; font-weight: bold;">$1,299.99</span></p>
+    <p class="price-label">预期：✅ 应该显示标签</p>
+  </div>
+
+  <!-- 测试 5: Was/Now 结构 -->
+  <div class="test-card">
+    <h3>测试 5: Was/Now 标签</h3>
+    <p><span style="color: #888;">Was: $399</span> | <span style="color: #B12704; font-weight: bold;">Now: $299</span></p>
+    <p class="price-label">预期：✅ Now 价格显示标签，❌ Was 价格不显示</p>
+  </div>
+
+  <hr>
+
+  <h2>🔧 手动测试</h2>
+  <p>打开浏览器控制台（F12），运行以下命令：</p>
+  <pre><code>// 强制重新扫描
+hasScanned = false;
+showWorkTimeForAllPrices();
+
+// 查看检测到的价格容器
+console.log(document.querySelectorAll('[class*="price"]').length);</code></pre>
+
+  <script>
+    console.log('📖 Test page loaded');
+
+    // 自动检测扩展是否加载
+    setTimeout(() => {
+      console.log('=== Extension Status Check ===');
+      console.log('hasPrice:', typeof window.hasPrice);
+      console.log('parsePrice:', typeof window.parsePrice);
+      console.log('calculateWorkHours:', typeof window.calculateWorkHours);
+      console.log('isOriginalPrice:', typeof window.isOriginalPrice);
+      console.log('isOriginalPriceNode:', typeof window.isOriginalPriceNode);
+      console.log('showWorkTimeForAllPrices:', typeof window.showWorkTimeForAllPrices);
+
+      // 检查价格容器
+      const containers = document.querySelectorAll('[class*="price"], [class*="Price"]');
+      console.log(`Found ${containers.length} price containers`);
+
+      containers.forEach((el, i) => {
+        console.log(`${i + 1}. "${el.textContent.trim()}" - ${el.tagName}.${el.className}`);
+      });
+    }, 1000);
+  </script>
+</body>
+</html>

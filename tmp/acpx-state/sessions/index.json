@@ -1,0 +1,51 @@
+{
+  "schema": "acpx.session-index.v1",
+  "files": [
+    "18bca6ae-9214-4b68-924f-aba32ad83f28.json",
+    "98635e26-6e7b-4271-9973-d81dd470119d.json",
+    "9f47e5f6-f040-4ad6-8cd7-dfc9bf80c821.json",
+    "b9906ffa-f27a-4095-aa43-51e46a26c571.json"
+  ],
+  "entries": [
+    {
+      "file": "9f47e5f6-f040-4ad6-8cd7-dfc9bf80c821.json",
+      "acpxRecordId": "9f47e5f6-f040-4ad6-8cd7-dfc9bf80c821",
+      "acpSessionId": "9f47e5f6-f040-4ad6-8cd7-dfc9bf80c821",
+      "agentCommand": "\"C:/Program Files/nodejs/node.exe\" C:/Users/57684/saasfly/scripts/openclaw-acp-runner.mjs",
+      "cwd": "C:\\Users\\57684\\saasfly",
+      "name": "acpx-local-fixed",
+      "closed": false,
+      "lastUsedAt": "2026-03-19T13:30:37.171Z"
+    },
+    {
+      "file": "b9906ffa-f27a-4095-aa43-51e46a26c571.json",
+      "acpxRecordId": "b9906ffa-f27a-4095-aa43-51e46a26c571",
+      "acpSessionId": "b9906ffa-f27a-4095-aa43-51e46a26c571",
+      "agentCommand": "\"C:/Program Files/nodejs/node.exe\" C:/Users/57684/saasfly/scripts/openclaw-acp-runner.mjs",
+      "cwd": "C:\\Users\\57684\\saasfly",
+      "name": "acpx-local-fixed",
+      "closed": true,
+      "lastUsedAt": "2026-03-19T13:24:34.578Z"
+    },
+    {
+      "file": "18bca6ae-9214-4b68-924f-aba32ad83f28.json",
+      "acpxRecordId": "18bca6ae-9214-4b68-924f-aba32ad83f28",
+      "acpSessionId": "18bca6ae-9214-4b68-924f-aba32ad83f28",
+      "agentCommand": "\"C:/Program Files/nodejs/node.exe\" C:/Users/57684/saasfly/scripts/openclaw-acp-runner.mjs",
+      "cwd": "C:\\Users\\57684\\saasfly",
+      "name": "acpx-local-fixed",
+      "closed": true,
+      "lastUsedAt": "2026-03-19T13:10:26.112Z"
+    },
+    {
+      "file": "98635e26-6e7b-4271-9973-d81dd470119d.json",
+      "acpxRecordId": "98635e26-6e7b-4271-9973-d81dd470119d",
+      "acpSessionId": "98635e26-6e7b-4271-9973-d81dd470119d",
+      "agentCommand": "\"C:/Program Files/nodejs/node.exe\" C:/Users/57684/saasfly/scripts/openclaw-acp-runner.mjs",
+      "cwd": "C:\\Users\\57684\\saasfly",
+      "name": "acpx-local-fixed",
+      "closed": true,
+      "lastUsedAt": "2026-03-19T07:58:05.150Z"
+    }
+  ]
+}

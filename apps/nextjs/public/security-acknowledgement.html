@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感谢你的安全漏洞报告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .icon svg {
+            width: 45px;
+            height: 45px;
+            fill: white;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .content {
+            color: #4a5568;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 35px;
+        }
+
+        .content p {
+            margin-bottom: 15px;
+        }
+
+        .contact-box {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px 25px;
+            margin: 30px 0;
+            text-align: left;
+            border-radius: 8px;
+        }
+
+        .contact-box strong {
+            color: #2d3748;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .contact-box a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .contact-box a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .footer::before {
+            content: "⚠️";
+            margin-right: 5px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 35px 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                font-size: 15px;
+            }
+
+            .contact-box a {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .icon {
+                width: 70px;
+                height: 70px;
+            }
+
+            .icon svg {
+                width: 38px;
+                height: 38px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </div>
+
+        <h1>感谢你的安全漏洞报告</h1>
+
+        <div class="content">
+            <p>我们已收到你提交的安全漏洞报告，会在<strong>48小时内</strong>确认接收你的报告。</p>
+            <p>我们承诺在<strong>7个工作日内</strong>反馈漏洞处理的进展或结果。</p>
+        </div>
+
+        <div class="contact-box">
+            <strong>联系方式：</strong>
+            <a href="mailto:rayvin19901110@gmail.com">rayvin19901110@gmail.com</a>
+        </div>
+
+        <div class="footer">
+            本页面仅用于安全漏洞报告确认，非业务咨询通道
+        </div>
+    </div>
+</body>
+</html>

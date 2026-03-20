@@ -1,0 +1,19 @@
+{
+    "shouldTrigger": true,
+    "changeCount": 1,
+    "triggerId": "test-001",
+    "tasks": [
+        {
+            "changed": true,
+            "path": "openclaw-test.md",
+            "fileName": "openclaw-test.md",
+            "lastWriteTimeUtc": "2026-03-15T12:00:00.000Z",
+            "length": 100
+        }
+    ],
+    "reason": "manual-test",
+    "changes": [
+        "+ new task file: openclaw-test.md"
+    ],
+    "lastUpdatedUtc": "2026-03-15T12:00:00.000Z"
+}

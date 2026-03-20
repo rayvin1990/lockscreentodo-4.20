@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>v1.9.1 Fix Verification</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .card { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #28a745; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #28a745; color: white; }
+    .price { font-size: 28px; margin: 15px 0; padding: 10px; display: inline-block; background: #f0f0f0; border-radius: 6px; }
+    .highlight { background: #fff3cd !important; border: 2px solid #ffc107; }
+    .version { display: inline-block; background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; }
+  </style>
+</head>
+<body>
+  <h1>v1.9.1 Fix Verification</h1>
+  <p>Extension Version: <span class="version">1.9.1</span></p>
+
+  <div class="card">
+    <h2>Fix Summary</h2>
+    <p><strong>Issue:</strong> $2,495 @ $30,000/year showed "≈ 1.0 months of work" (wrong)</p>
+    <p><strong>Cause:</strong> 173.7 hours > 160 threshold, entered "months" branch too early</p>
+    <p><strong>Fix:</strong> Changed week/month threshold from 160 to 174 hours</p>
+    <p><strong>Result:</strong> Now shows "≈ 4.3 weeks of work" ✅</p>
+  </div>
+
+  <div class="card">
+    <h2>Test Cases</h2>
+    <table>
+      <tr><th>Price</th><th>Income</th><th>Hours</th><th>Expected</th></tr>
+      <tr class="highlight"><td>$2,495</td><td>$30,000/year</td><td>173.7 hrs</td><td>≈ 4.3 weeks of work</td></tr>
+      <tr><td>$2,495</td><td>$300,000/year</td><td>17.4 hrs</td><td>≈ 2.2 workdays</td></tr>
+      <tr><td>$5,999</td><td>$2,000/biweekly</td><td>240.0 hrs</td><td>≈ 1.4 months of work</td></tr>
+      <tr><td>$1,299</td><td>$3,000/biweekly</td><td>34.6 hrs</td><td>≈ 4.3 workdays</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>New Thresholds (v1.9.1)</h2>
+    <table>
+      <tr><th>Hours</th><th>Unit</th><th>Example</th></tr>
+      <tr><td>< 0.1 (6 min)</td><td>min</td><td>≈ 1 min of work</td></tr>
+      <tr><td>0.1 - 1</td><td>min</td><td>≈ 45 min of work</td></tr>
+      <tr><td>1 - 1.5</td><td>hour</td><td>≈ 1 hour of work</td></tr>
+      <tr><td>1.5 - 12</td><td>hours</td><td>≈ 7.0 hours of work</td></tr>
+      <tr><td>12 - 40</td><td>workdays</td><td>≈ 2.2 workdays</td></tr>
+      <tr><td>40 - 174</td><td>weeks</td><td>≈ 4.3 weeks of work ← FIXED</td></tr>
+      <tr><td>174 - 500</td><td>months</td><td>≈ 1.4 months of work</td></tr>
+      <tr><td>500+</td><td>years</td><td>≈ 1.4 years of work</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Test Prices (Hover to test)</h2>
+    <p class="price highlight">$2,495 ← Main test (should show ≈ 4.3 weeks of work)</p>
+    <p class="price">$1,299</p>
+    <p class="price">$5,999</p>
+  </div>
+
+  <div class="card">
+    <h2>Reload Instructions</h2>
+    <ol>
+      <li>Open <code>chrome://extensions</code></li>
+      <li>Find "Price to Hours" (version should be <strong>1.9.1</strong>)</li>
+      <li>Click reload button 🔃</li>
+      <li>Hard refresh: <code>Ctrl + Shift + R</code></li>
+      <li>Hover over $2,495 above</li>
+      <li>Should see: <strong>≈ 4.3 weeks of work</strong></li>
+    </ol>
+  </div>
+
+  <script>
+    console.log('[v1.9.1] Reload extension, then hard refresh (Ctrl+Shift+R)');
+    console.log('[v1.9.1] Test: Hover over $2,495 → should show ≈ 4.3 weeks of work');
+  </script>
+</body>
+</html>

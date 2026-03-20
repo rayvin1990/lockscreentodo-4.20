@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum Status {
+  PENDING
+  CREATING
+  INITING
+  RUNNING
+  STOPPED
+  DELETED
+}
+
+model Customer {
+  id                     Int               @id @default(autoincrement())
+  authUserId             String
+  name                   String?
+  plan                   SubscriptionPlan?
+  stripeCustomerId       String?           @unique
+  stripeSubscriptionId   String?           @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@index([authUserId])
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()"))
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                        String           @id @default(dbgenerated("gen_random_uuid()"))
+  name                      String?
+  email                     String?          @unique
+  emailVerified             DateTime?
+  image                     String?
+  accounts                  Account[]
+  sessions                  Session[]
+  privacyMode               Boolean          @default(false)
+  masterResumes             MasterResume[]
+  jobApplications           JobApplication[]
+
+  // Lockscreen Todo: Subscription fields
+  subscriptionPlan            SubscriptionPlan? @default(FREE)
+  subscriptionEndsAt          DateTime?
+  lemonSqueezyCustomerId      String?          @unique
+  lemonSqueezySubscriptionId  String?          @unique
+  lemonSqueezyVariantId       String?          // Track which plan variant user purchased
+
+  // Lockscreen Todo: Trial & Pro fields
+  trialEndsAt               DateTime?        // 7-day trial end date, null means not activated or expired
+  isPro                     Boolean          @default(false) // Pro status: true during trial or after payment
+
+  // Notion Integration: Store Notion OAuth tokens
+  notionAccessToken         String?          @db.Text         // Notion OAuth access token
+  notionWorkspaceId         String?                           // Notion workspace ID (optional)
+  notionTokenExpiresAt      DateTime?                         // Token expiration time (for refresh logic)
+
+  // Lockscreen Todo: Relations
+  wallpapers                Wallpaper[]
+  wallpaperUsages           WallpaperUsage[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model K8sClusterConfig {
+  id         Int               @id @default(autoincrement())
+  name       String
+  location   String
+  authUserId String
+  plan       SubscriptionPlan? @default(FREE)
+  network    String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  status     Status?           @default(PENDING)
+  delete     Boolean?          @default(false)
+
+  @@index([authUserId])
+}
+
+// EchoCV: Master Resume (母简历)
+model MasterResume {
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId     String
+  name       String?  @default("我的母简历")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workExps   WorkExperience[]
+  projects   Project[]
+  education  Education[]
+  skills     Skill[]
+
+  @@index([userId])
+}
+
+// EchoCV: Work Experience
+model WorkExperience {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  masterResumeId  String
+  company         String
+  position        String
+  startDate       DateTime
+  endDate         DateTime?
+  current         Boolean  @default(false)
+  description     String?  @db.Text
+  achievements    Json?
+  aiAnnotations   Json?
+  interviewData   Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  masterResume    MasterResume @relation(fields: [masterResumeId], references: [id], onDelete: Cascade)
+
+  @@index([masterResumeId])
+}
+
+// EchoCV: Project
+model Project {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  masterResumeId  String
+  name            String
+  role            String
+  startDate       DateTime
+  endDate         DateTime?
+  description     String?  @db.Text
+  achievements    Json?
+  aiAnnotations   Json?
+  interviewData   Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  masterResume    MasterResume @relation(fields: [masterResumeId], references: [id], onDelete: Cascade)
+
+  @@index([masterResumeId])
+}
+
+// EchoCV: Education
+model Education {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  masterResumeId  String
+  school          String
+  degree          String
+  major           String
+  startDate       DateTime
+  endDate         DateTime?
+  gpa             String?
+  description     String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  masterResume    MasterResume @relation(fields: [masterResumeId], references: [id], onDelete: Cascade)
+
+  @@index([masterResumeId])
+}
+
+// EchoCV: Skill
+model Skill {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  masterResumeId  String
+  name            String
+  level           String?
+  category        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  masterResume    MasterResume @relation(fields: [masterResumeId], references: [id], onDelete: Cascade)
+
+  @@index([masterResumeId])
+}
+
+// EchoCV: Job Application
+model JobApplication {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId          String
+  companyId       String?
+  position        String?
+  jdText          String?  @db.Text
+  jdKeywords      Json?
+  matchScore      Float?
+  resumeSnapshot  Json?
+  optimizedResume Json?
+  aiSuggestions   Json?
+  status          String?  @default("draft")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Lockscreen Todo: Wallpaper (保存生成的壁纸历史)
+model Wallpaper {
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId     String
+  imageData  String   @db.Text
+  device     String
+  style      String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Lockscreen Todo: WallpaperUsage (Track daily generation count for limit checking)
+model WallpaperUsage {
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId        String
+  date          DateTime @default(now()) // Query by date part
+  count         Int      @default(1)
+  downloadCount Int      @default(0) // Track daily download/QR code generation count
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date]) // Ensure one record per user per day
+  @@index([userId, date])
+}

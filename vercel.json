@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd apps/nextjs && npx contentlayer2 build && npx next build",
+  "outputDirectory": "apps/nextjs/.next",
+  "installCommand": "npm install"
+}

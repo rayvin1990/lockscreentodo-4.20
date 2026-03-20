@@ -1,0 +1,42 @@
+{
+  "schema": "acpx.session.v1",
+  "acpx_record_id": "18bca6ae-9214-4b68-924f-aba32ad83f28",
+  "acp_session_id": "18bca6ae-9214-4b68-924f-aba32ad83f28",
+  "agent_command": "\"C:/Program Files/nodejs/node.exe\" C:/Users/57684/saasfly/scripts/openclaw-acp-runner.mjs",
+  "cwd": "C:\\Users\\57684\\saasfly",
+  "name": "acpx-local-fixed",
+  "created_at": "2026-03-19T13:10:26.112Z",
+  "last_used_at": "2026-03-19T13:10:26.112Z",
+  "last_seq": 0,
+  "event_log": {
+    "active_path": "C:\\Users\\57684\\saasfly\\tmp\\acpx-state\\sessions\\18bca6ae-9214-4b68-924f-aba32ad83f28.stream.ndjson",
+    "segment_count": 5,
+    "max_segment_bytes": 67108864,
+    "max_segments": 5,
+    "last_write_error": null
+  },
+  "closed": true,
+  "closed_at": "2026-03-19T13:23:23.635Z",
+  "protocol_version": 1,
+  "agent_capabilities": {
+    "loadSession": true,
+    "promptCapabilities": {
+      "image": true,
+      "audio": false,
+      "embeddedContext": true
+    },
+    "mcpCapabilities": {
+      "http": false,
+      "sse": false
+    },
+    "sessionCapabilities": {
+      "list": {}
+    }
+  },
+  "title": null,
+  "messages": [],
+  "updated_at": "2026-03-19T13:10:26.112Z",
+  "cumulative_token_usage": {},
+  "request_token_usage": {},
+  "acpx": {}
+}

@@ -1,0 +1,12 @@
+{
+  "defaultAgent": "codex",
+  "defaultPermissions": "approve-reads",
+  "nonInteractivePermissions": "deny",
+  "authPolicy": "skip",
+  "ttl": 300,
+  "agents": {
+    "openclaw": {
+      "command": "\"C:/Program Files/nodejs/node.exe\" C:/Users/57684/saasfly/scripts/openclaw-acp-runner.mjs"
+    }
+  }
+}

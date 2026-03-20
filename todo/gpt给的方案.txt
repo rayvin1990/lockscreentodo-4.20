@@ -1,0 +1,111 @@
+根据你提供的屏幕截图，似乎你希望将 Coze 的 API 集成到你的网站按钮（**Convert Now**）中，并显示返回的结果（如生成的提示词）在右侧框中。
+
+为了实现这个目标，我们需要：
+
+1. **设置前端按钮点击事件**：当用户点击 **Convert Now** 按钮时，前端会发起 API 请求到 Coze 服务，发送图像和参数。
+2. **显示生成的提示词**：当 API 返回响应后，将结果显示在右侧的框中。
+
+### 操作步骤：
+
+#### 1. **前端按钮点击事件**
+
+你需要为 **Convert Now** 按钮添加点击事件，点击时将图像上传并发送到 Coze API。以下是使用 **JavaScript** 的一个示例：
+
+```html
+<!-- HTML -->
+<button id="convertButton">Convert Now</button>
+<div id="generatedPrompt">Generated Prompt will appear here</div>
+```
+
+```javascript
+// JavaScript
+document.getElementById('convertButton').addEventListener('click', async function() {
+  // 获取上传的图像文件（你可以从文件输入框获取）
+  const imageUrl = "上传图片的URL或Base64格式";  // 替换为实际图片URL或Base64格式
+
+  // 创建 API 请求的负载
+  const payload = {
+    workflow_id: "7557196778741917219",  // 你的工作流ID
+    parameters: {
+      ima: imageUrl,
+      promptType: "// 提示词类型 例如：\"midjouny\" || \"stableDiffusion\"",
+      userQuery: "请描述一下这个图"
+    }
+  };
+
+  try {
+    // 发起API请求
+    const response = await fetch('https://api.coze.cn/v1/workflow/stream_run', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer cztei_hdZ7rrT3TIHrses657bFc8Z6uBiebc5H6hMjVWbdU5PR5gC00GK6UxvHhH', // 替换为你的API Token
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (data.debug_url) {
+      // 获取 debug_url 后，轮询检查任务完成情况
+      checkTaskStatus(data.debug_url);
+    } else {
+      console.log('Error: No debug URL returned');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+});
+
+async function checkTaskStatus(debugUrl) {
+  try {
+    const response = await fetch(debugUrl);
+    const result = await response.json();
+    
+    if (result.status === 'done') {
+      // 显示结果
+      document.getElementById('generatedPrompt').innerText = result.prompt;
+    } else {
+      // 任务未完成，继续轮询
+      setTimeout(() => checkTaskStatus(debugUrl), 5000);  // 每5秒检查一次
+    }
+  } catch (error) {
+    console.error('Error checking task status:', error);
+  }
+}
+```
+
+#### 2. **解释代码**
+
+* **事件监听器**：当用户点击 **Convert Now** 按钮时，页面会向 Coze API 发送 POST 请求，上传图像并附带相应的参数。
+* **API 请求**：`fetch` 函数发送 POST 请求到 Coze 的 `/v1/workflow/stream_run` API，传递图像 URL 和其他参数。
+* **调度任务状态**：获取返回的 `debug_url`，通过该 URL 定期轮询任务的状态。如果任务完成，就显示生成的提示词。
+* **更新 UI**：当任务完成并且结果返回时，右侧的 `generatedPrompt` 区域会显示生成的提示词。
+
+#### 3. **后端（如果需要）**
+
+如果你希望通过后端（例如 Node.js、Python）进行 API 调用，你可以把请求从前端转发到后端，然后从后端与 Coze API 通信。前端只需要通过 AJAX 或 `fetch` 向后端请求，后端负责与 Coze API 交互并返回结果。
+
+#### 4. **结果展示**
+
+当 Coze 返回的任务状态为 `"done"` 时，你可以将生成的提示词或者其他处理结果展示在右侧的框中。
+
+### 注意事项：
+
+* 确保 Coze API Token 和工作流 ID 是正确的。
+* 你需要替换 `imageUrl` 为实际上传的图像 URL 或 Base64 格式。
+* 如果图片是本地上传的，你可能需要将其上传到服务器并使用公开可访问的 URL，Coze API 不支持使用本地 `blob:` URL。
+
+### 总结
+
+1. 用户点击 **Convert Now** 按钮时，发送请求到 Coze API。
+2. API 返回 `debug_url`，用于检查任务状态。
+3. 定期轮询任务状态，直到任务完成并显示结果。
+4. 在 UI 中展示生成的提示词。
+
+如果你需要进一步帮助或有更多问题，请随时告诉我！
+
+
+COZE_API_TOKEN="cztei_hdZ7rrT31TIHRses657bFc8Z6uBiecb5H6hMjVVbDU5PR5gCO0GK6UxvHhrLCCJQw"
+
+COZE__WORKFLOW_ID="7557196787741917219"
+

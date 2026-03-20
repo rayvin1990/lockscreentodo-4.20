@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>智能壁纸生成器 - 手机版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 20px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 40px 20px;
+            }
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 36px;
+            }
+            .header p {
+                font-size: 18px;
+            }
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content {
+                flex-direction: row;
+                gap: 40px;
+            }
+        }
+
+        .form-section {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group textarea,
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group textarea:focus,
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .style-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 480px) {
+            .style-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .style-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .style-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .style-option label {
+            display: block;
+            padding: 12px 8px;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .style-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .phone-preview {
+            position: relative;
+            width: 280px;
+            height: 560px;
+            background: #000;
+            border-radius: 36px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin: 0 auto;
+        }
+
+        @media (min-width: 480px) {
+            .phone-preview {
+                width: 320px;
+                height: 640px;
+            }
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 26px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wallpaper-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 26px;
+        }
+
+        .system-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        
+        
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background: white;
+            border-radius: 100px;
+        }
+
+        .download-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .download-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .placeholder-message {
+            color: #999;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 767px) {
+            .phone-preview {
+                transform: scale(0.8);
+                margin: -40px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 智能壁纸生成器</h1>
+            <p>输入任务计划和灵感，一键生成精美手机壁纸<br>让锁屏成为你的个人提醒中心</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <form id="wallpaperForm">
+                    <div class="form-group">
+                        <label for="tasks">今日任务清单</label>
+                        <textarea
+                            id="tasks"
+                            name="tasks"
+                            placeholder="输入你的任务清单，每行一个任务...&#10;例如：&#10;• 完成项目报告&#10;• 健身30分钟&#10;• 阅读一小时"
+                            rows="4"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <label for="ideas" style="margin-bottom: 0;">灵感与想法</label>
+                            <span style="font-size: 12px; color: #999; font-weight: normal;">(选填)</span>
+                        </div>
+                        <textarea
+                            id="ideas"
+                            name="ideas"
+                            placeholder="记录今日灵感或激励名言...&#10;例如：&#10;今天的努力，是明天的实力。&#10;专注当下，未来可期。"
+                            rows="3"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>选择壁纸风格</label>
+                        <div class="style-options">
+                            <div class="style-option">
+                                <input type="radio" id="style-minimal" name="style" value="minimal" checked>
+                                <label for="style-minimal">极简主义</label>
+                            </div>
+                            <div class="style-option">
+                                <input type="radio" id="style-gradient" name="style" value="gradient">
+                                <label for="style-gradient">渐变艺术</label>
+                            </div>
+                            <div class="style-option">
+                                <input type="radio" id="style-typography" name="style" value="typography">
+                                <label for="style-typography">字体设计</label>
+                            </div>
+                            <div class="style-option">
+                                <input type="radio" id="style-nature" name="style" value="nature">
+                                <label for="style-nature">自然风光</label>
+                            </div>
+                            <div class="style-option">
+                                <input type="radio" id="style-dark" name="style" value="dark">
+                                <label for="style-dark">暗黑模式</label>
+                            </div>
+                            <div class="style-option">
+                                <input type="radio" id="style-colorful" name="style" value="colorful">
+                                <label for="style-colorful">多彩活力</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="generate-btn">
+                        ✨ 生成壁纸
+                    </button>
+                </form>
+            </div>
+
+            <div class="preview-section">
+                <div class="phone-preview">
+                    <div class="phone-screen">
+                        <canvas id="wallpaperCanvas" class="wallpaper-canvas hidden"></canvas>
+                        <div id="placeholderMessage" class="placeholder-message">
+                            点击"生成壁纸"查看效果
+                        </div>
+                        <div class="system-overlay">
+                            <div class="home-indicator"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="downloadSection" class="download-section hidden">
+                    <a id="downloadBtn" class="download-btn" download="wallpaper.png">
+                        📥 下载壁纸到相册
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>📱 手机使用指南</h3>
+            <ol>
+                <li><strong>生成壁纸：</strong>填写今日任务（必填），可选择添加灵感想法（选填），选择喜欢的风格，点击"生成壁纸"</li>
+                <li><strong>预览效果：</strong>在手机模型中查看壁纸效果，确保文字不被系统UI遮挡</li>
+                <li><strong>下载保存：</strong>点击"下载壁纸到相册"按钮，图片将保存到手机相册</li>
+                <li><strong>设置壁纸：</strong>打开相册 → 找到生成的壁纸 → 点击分享按钮 → 选择"用作壁纸"</li>
+                <li><strong>每日更新：</strong>建议每天更新任务，保持锁屏的新鲜感和提醒作用</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 常量配置
+        const CONFIG = {
+            RESIZE_DEBOUNCE: 300,
+            MAX_TASK_LINES: 10,
+            IMAGE_QUALITY: 0.85,
+            SAFE_AREA: {
+                TOP_DEFAULT: 250,
+                BOTTOM_DEFAULT: 150,
+                TOP_RATIO: 0.25
+            },
+            MIN_FONT_SIZE: {
+                TASK: 10,
+                IDEA: 10,
+                TASK_LINE: 16,
+                IDEA_LINE: 18
+            }
+        };
+
+        class WallpaperGenerator {
+            constructor() {
+                this.canvas = document.getElementById('wallpaperCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.form = document.getElementById('wallpaperForm');
+                this.downloadSection = document.getElementById('downloadSection');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.placeholderMessage = document.getElementById('placeholderMessage');
+                this.resizeTimer = null;
+
+                this.setupEventListeners();
+                this.detectDevice();
+                this.setCanvasSize();
+                this.displayDeviceInfo();
+            }
+
+            setupEventListeners() {
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.generateWallpaper();
+                });
+
+                // 添加防抖的 resize 事件
+                window.addEventListener('resize', () => {
+                    clearTimeout(this.resizeTimer);
+                    this.resizeTimer = setTimeout(() => {
+                        this.detectDevice();
+                        this.setCanvasSize();
+                        this.displayDeviceInfo();
+                    }, CONFIG.RESIZE_DEBOUNCE);
+                });
+            }
+
+            detectDevice() {
+                const userAgent = navigator.userAgent.toLowerCase();
+                const screen = window.screen;
+                const devicePixelRatio = window.devicePixelRatio || 1;
+
+                // 检测设备类型和型号
+                this.deviceInfo = {
+                    type: 'unknown',
+                    model: 'unknown',
+                    screenWidth: screen.width,
+                    screenHeight: screen.height,
+                    pixelRatio: devicePixelRatio,
+                    // 计算实际物理分辨率
+                    actualWidth: screen.width * devicePixelRatio,
+                    actualHeight: screen.height * devicePixelRatio
+                };
+
+                // iPhone 检测
+                if (/iphone/.test(userAgent)) {
+                    this.deviceInfo.type = 'iPhone';
+
+                    // 根据屏幕分辨率判断具体型号
+                    const width = this.deviceInfo.actualWidth;
+                    const height = this.deviceInfo.actualHeight;
+
+                    if (width === 1125 && height === 2436) {
+                        this.deviceInfo.model = 'iPhone X/XS/11 Pro';
+                    } else if (width === 1242 && height === 2688) {
+                        this.deviceInfo.model = 'iPhone XS Max/11 Pro Max';
+                    } else if (width === 828 && height === 1792) {
+                        this.deviceInfo.model = 'iPhone XR/11';
+                    } else if (width === 1080 && height === 2340) {
+                        this.deviceInfo.model = 'iPhone 12 mini';
+                    } else if (width === 1170 && height === 2532) {
+                        this.deviceInfo.model = 'iPhone 12/12 Pro';
+                    } else if (width === 1284 && height === 2778) {
+                        this.deviceInfo.model = 'iPhone 12 Pro Max/13 Pro Max/14 Pro Max';
+                    } else if (width === 1179 && height === 2556) {
+                        this.deviceInfo.model = 'iPhone 13 Pro/14 Pro';
+                    } else if (width === 1170 && height === 2532) {
+                        this.deviceInfo.model = 'iPhone 14/15';
+                    } else if (width === 1179 && height === 2556) {
+                        this.deviceInfo.model = 'iPhone 14 Pro/15 Pro';
+                    } else if (width === 1290 && height === 2796) {
+                        this.deviceInfo.model = 'iPhone 14 Plus/15 Plus/16 Plus';
+                    } else if (width === 1206 && height === 2628) {
+                        this.deviceInfo.model = 'iPhone 16 Pro';
+                    } else if (width === 1320 && height === 2868) {
+                        this.deviceInfo.model = 'iPhone 16 Pro Max';
+                    } else {
+                        this.deviceInfo.model = 'iPhone (标准)';
+                    }
+                }
+                // Android 检测
+                else if (/android/.test(userAgent)) {
+                    this.deviceInfo.type = 'Android';
+
+                    // 根据屏幕尺寸判断常见Android设备
+                    const aspectRatio = this.deviceInfo.actualHeight / this.deviceInfo.actualWidth;
+
+                    if (this.deviceInfo.actualWidth >= 1440) {
+                        this.deviceInfo.model = 'Android 高分辨率 (2K+ 屏幕)';
+                    } else if (this.deviceInfo.actualWidth >= 1080) {
+                        this.deviceInfo.model = 'Android 标准分辨率 (FHD+ 屏幕)';
+                    } else {
+                        this.deviceInfo.model = 'Android 普通分辨率 (HD+ 屏幕)';
+                    }
+                }
+                // iPad 检测
+                else if (/ipad/.test(userAgent)) {
+                    this.deviceInfo.type = 'iPad';
+                    this.deviceInfo.model = 'iPad';
+                }
+                // 桌面设备
+                else {
+                    this.deviceInfo.type = 'Desktop';
+                    this.deviceInfo.model = '桌面设备';
+                }
+
+                // 根据设备信息确定最佳壁纸尺寸
+                this.setOptimalWallpaperSize();
+            }
+
+            setOptimalWallpaperSize() {
+                const { type, actualWidth, actualHeight, pixelRatio } = this.deviceInfo;
+
+                if (type === 'iPhone') {
+                    // iPhone 特定尺寸
+                    this.wallpaperWidth = 1179; // 标准iPhone宽度
+                    this.wallpaperHeight = 2556; // 标准iPhone高度
+                } else if (type === 'Android') {
+                    // Android 通用尺寸
+                    this.wallpaperWidth = 1080;
+                    this.wallpaperHeight = 2340;
+                } else if (type === 'iPad') {
+                    // iPad 尺寸
+                    this.wallpaperWidth = 2048;
+                    this.wallpaperHeight = 2732;
+                } else {
+                    // 桌面设备预览尺寸
+                    this.wallpaperWidth = 375;
+                    this.wallpaperHeight = 812;
+                }
+            }
+
+            displayDeviceInfo() {
+                // 创建或获取设备信息显示区域
+                let deviceInfoDiv = document.getElementById('deviceInfo');
+                
+                // 如果不存在，创建它
+                if (!deviceInfoDiv) {
+                    deviceInfoDiv = document.createElement('div');
+                    deviceInfoDiv.id = 'deviceInfo';
+                    deviceInfoDiv.style.cssText = `
+                        background: rgba(255, 255, 255, 0.95);
+                        border-radius: 12px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        text-align: center;
+                        font-size: 14px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    `;
+
+                    const formSection = document.querySelector('.form-section');
+                    formSection.insertBefore(deviceInfoDiv, formSection.firstChild);
+                }
+
+                // 只更新内容，不重新创建 DOM
+                // 使用缓存避免不必要的更新
+                const infoKey = `${this.deviceInfo.type}-${this.deviceInfo.model}-${this.wallpaperWidth}x${this.wallpaperHeight}`;
+                if (deviceInfoDiv.dataset.infoKey === infoKey) {
+                    return; // 信息未变化，跳过更新
+                }
+
+                deviceInfoDiv.dataset.infoKey = infoKey;
+                deviceInfoDiv.innerHTML = `
+                    <div style="font-weight: 600; color: #333; margin-bottom: 8px;">
+                        📱 智能设备检测
+                    </div>
+                    <div style="color: #666; font-size: 12px; line-height: 1.6;">
+                        <strong>设备类型：</strong>${this.deviceInfo.type}<br>
+                        <strong>设备型号：</strong>${this.deviceInfo.model}<br>
+                        <strong>壁纸尺寸：</strong>${this.wallpaperWidth} × ${this.wallpaperHeight}px<br>
+                        <strong>屏幕像素：</strong>${this.deviceInfo.actualWidth} × ${this.deviceInfo.actualHeight}px
+                    </div>
+                    <div style="margin-top: 10px; padding: 8px; background: #e8f4fd; border-radius: 8px; font-size: 11px; color: #0891b2;">
+                        ✅ 壁纸已自动适配您的设备尺寸
+                    </div>
+                `;
+            }
+
+            setCanvasSize() {
+                // 使用检测到的设备尺寸设置canvas
+                const pixelRatio = 2; // 高密度渲染确保清晰度
+
+                // 设置canvas的实际渲染尺寸
+                this.canvas.width = this.wallpaperWidth * pixelRatio;
+                this.canvas.height = this.wallpaperHeight * pixelRatio;
+
+                // 设置canvas的显示尺寸（填满手机预览框）
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+
+                // 重置变换矩阵，避免累积缩放
+                this.ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+                // 更新手机预览模型的尺寸比例以匹配真实设备
+                this.updatePhonePreview();
+            }
+
+            updatePhonePreview() {
+                const phonePreview = document.querySelector('.phone-preview');
+                if (phonePreview) {
+                    // 根据设备比例调整手机模型
+                    const aspectRatio = this.wallpaperHeight / this.wallpaperWidth;
+
+                    // 设置预览模型的基础尺寸
+                    const baseWidth = 280;
+                    const calculatedHeight = baseWidth * aspectRatio;
+
+                    phonePreview.style.width = baseWidth + 'px';
+                    phonePreview.style.height = Math.min(calculatedHeight, 600) + 'px'; // 限制最大高度
+                }
+            }
+
+            async generateWallpaper() {
+                try {
+                    const formData = new FormData(this.form);
+                    const tasks = formData.get('tasks') || '';
+                    const ideas = formData.get('ideas') || '';
+                    const style = formData.get('style');
+
+                    if (!tasks.trim()) {
+                        alert('请输入今日任务！');
+                        return;
+                    }
+
+                    this.showLoading();
+
+                    // 模拟异步生成过程
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    this.createWallpaper(tasks, ideas, style);
+                    this.hideLoading();
+                } catch (error) {
+                    console.error('生成壁纸时出错:', error);
+                    this.showLoading(); // 先清除之前的状态
+                    this.showError('生成失败，请重试');
+                }
+            }
+
+            showError(message) {
+                this.placeholderMessage.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #dc2626;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+                        <p style="font-size: 16px;">${message}</p>
+                    </div>
+                `;
+                this.canvas.classList.add('hidden');
+                this.downloadSection.classList.add('hidden');
+            }
+
+            showLoading() {
+                this.canvas.classList.add('hidden');
+                this.placeholderMessage.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>正在生成精美壁纸...</p>
+                    </div>
+                `;
+                this.downloadSection.classList.add('hidden');
+            }
+
+            hideLoading() {
+                this.placeholderMessage.classList.add('hidden');
+                this.canvas.classList.remove('hidden');
+                this.downloadSection.classList.remove('hidden');
+            }
+
+            createWallpaper(tasks, ideas, style) {
+                try {
+                    const ctx = this.ctx;
+                    // 使用检测到的设备逻辑尺寸（实际渲染尺寸的一半，因为设置了2倍像素密度）
+                    const width = this.wallpaperWidth;
+                    const height = this.wallpaperHeight;
+
+                    // 清空画布
+                    ctx.clearRect(0, 0, width, height);
+
+                    // 根据风格绘制背景
+                    this.drawBackground(ctx, width, height, style);
+
+                    // 设置文字样式
+                    ctx.fillStyle = this.getTextColor(style);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // 动态计算安全区域
+                    const safeTop = this.calculateSafeTop(height);
+                    const safeBottom = this.calculateSafeBottom(height);
+                    const safeWidth = width - 60;
+                    const availableHeight = safeBottom - safeTop; // 可用高度
+
+                    // 设置基础字体大小
+                    let taskFontSize = 20;
+                    let ideaFontSize = 22;
+                    let taskLineHeight = 28;
+                    let ideaLineHeight = 32;
+                    const moduleSpacing = 15; // 进一步减少模块间距，让它们更紧凑
+                    const titleHeight = 65; // 标题+装饰线高度
+
+                    // 计算初始内容高度
+                    let taskLines = [];
+                    let ideaLines = [];
+                    let taskContentHeight = 0;
+                    let ideaContentHeight = 0;
+
+                    if (tasks.trim()) {
+                        taskLines = this.formatText(tasks, safeWidth - 40, taskFontSize);
+                        taskContentHeight = titleHeight + (taskLines.length * taskLineHeight);
+                    }
+
+                    if (ideas.trim()) {
+                        ideaLines = this.formatText(ideas, safeWidth - 40, ideaFontSize);
+                        ideaContentHeight = titleHeight + (ideaLines.length * ideaLineHeight);
+                    }
+
+                    let totalContentHeight = taskContentHeight + ideaContentHeight;
+                    if (taskContentHeight > 0 && ideaContentHeight > 0) {
+                        totalContentHeight += moduleSpacing;
+                    }
+
+                    // 智能调整字体大小以适应固定区域
+                    let adjustmentCycles = 0;
+                    const maxCycles = 8; // 增加调整次数，让缩放更精确
+
+                    while (totalContentHeight > availableHeight && adjustmentCycles < maxCycles) {
+                        // 按比例缩小所有元素（包括行高和间距）
+                        const scaleFactor = availableHeight / totalContentHeight;
+                        const newScaleFactor = 0.8 + (0.2 * scaleFactor); // 缩放因子在0.8-1.0之间，避免过度缩小
+
+                        taskFontSize = Math.max(CONFIG.MIN_FONT_SIZE.TASK, Math.floor(taskFontSize * newScaleFactor));
+                        ideaFontSize = Math.max(CONFIG.MIN_FONT_SIZE.IDEA, Math.floor(ideaFontSize * newScaleFactor));
+                        taskLineHeight = Math.max(CONFIG.MIN_FONT_SIZE.TASK_LINE, Math.floor(taskLineHeight * newScaleFactor));
+                        ideaLineHeight = Math.max(CONFIG.MIN_FONT_SIZE.IDEA_LINE, Math.floor(ideaLineHeight * newScaleFactor));
+                        const currentModuleSpacing = Math.max(8, Math.floor(moduleSpacing * newScaleFactor)); // 最小间距8px，更紧凑
+
+                        // 重新计算行数和高度
+                        taskLines = tasks.trim() ? this.formatText(tasks, safeWidth - 40, taskFontSize) : [];
+                        ideaLines = ideas.trim() ? this.formatText(ideas, safeWidth - 40, ideaFontSize) : [];
+
+                        taskContentHeight = tasks.trim() ? titleHeight + (taskLines.length * taskLineHeight) : 0;
+                        ideaContentHeight = ideas.trim() ? titleHeight + (ideaLines.length * ideaLineHeight) : 0;
+
+                        totalContentHeight = taskContentHeight + ideaContentHeight;
+                        if (taskContentHeight > 0 && ideaContentHeight > 0) {
+                            totalContentHeight += currentModuleSpacing;
+                        }
+
+                        adjustmentCycles++;
+                    }
+
+                    // 固定起始位置
+                    let startY = safeTop;
+
+                    // 绘制任务
+                    if (tasks.trim() && taskLines.length > 0) {
+                        const currentModuleSpacing = (ideaContentHeight > 0) ? Math.max(10, Math.floor(moduleSpacing * 0.7)) : 0; // 固定较小间距，更紧凑
+                        this.drawTextBlock(ctx, '今日任务', taskLines, width / 2, startY, safeWidth, taskFontSize, taskLineHeight);
+                        startY += taskContentHeight + currentModuleSpacing;
+                    }
+
+                    // 绘制灵感
+                    if (ideas.trim() && ideaLines.length > 0) {
+                        this.drawTextBlock(ctx, '灵感', ideaLines, width / 2, startY, safeWidth, ideaFontSize, ideaLineHeight);
+                    }
+
+                    // 下载链接（添加图片压缩）
+                    this.downloadBtn.href = this.canvas.toDataURL('image/png', CONFIG.IMAGE_QUALITY);
+                } catch (error) {
+                    console.error('绘制壁纸时出错:', error);
+                    throw error;
+                }
+            }
+
+            // 动态计算安全区域顶部
+            calculateSafeTop(height) {
+                const { type, model } = this.deviceInfo;
+
+                // iPhone 14 Pro 及以上机型刘海更高
+                if (type === 'iPhone') {
+                    if (model.includes('Pro') && !model.includes('11')) {
+                        return Math.max(280, height * 0.28); // Pro 系列刘海更高
+                    } else if (model.includes('12 mini')) {
+                        return Math.max(220, height * 0.22); // mini 型号刘海较小
+                    }
+                }
+
+                return Math.max(CONFIG.SAFE_AREA.TOP_DEFAULT, height * CONFIG.SAFE_AREA.TOP_RATIO);
+            }
+
+            // 动态计算安全区域底部
+            calculateSafeBottom(height) {
+                const { type } = this.deviceInfo;
+
+                // iPhone 底部 home 区域
+                if (type === 'iPhone') {
+                    return height - 150;
+                }
+
+                // Android 通常底部导航栏较低
+                if (type === 'Android') {
+                    return height - 120;
+                }
+
+                // 其他设备使用默认值
+                return height - CONFIG.SAFE_AREA.BOTTOM_DEFAULT;
+            }
+
+            drawBackground(ctx, width, height, style) {
+                switch (style) {
+                    case 'minimal':
+                        // 极简白色背景 + 流体装饰
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                        this.drawFluidArt(ctx, width, height, 'rgba(102, 126, 234, 0.03)', 'rgba(118, 75, 162, 0.03)');
+                        break;
+
+                    case 'gradient':
+                        // 渐变背景 + 流体装饰
+                        const gradient = ctx.createLinearGradient(0, 0, width, height);
+                        gradient.addColorStop(0, '#667eea');
+                        gradient.addColorStop(1, '#764ba2');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(0, 0, width, height);
+                        this.drawFluidArt(ctx, width, height, 'rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.05)');
+                        break;
+
+                    case 'typography':
+                        // 字体设计背景 + 抽象流体
+                        ctx.fillStyle = '#f8f9fa';
+                        ctx.fillRect(0, 0, width, height);
+                        // 添加装饰性线条
+                        ctx.strokeStyle = '#e9ecef';
+                        ctx.lineWidth = 1;
+                        for (let i = 0; i < height; i += 40) {
+                            ctx.beginPath();
+                            ctx.moveTo(30, i);
+                            ctx.lineTo(width - 30, i);
+                            ctx.stroke();
+                        }
+                        this.drawFluidArt(ctx, width, height, 'rgba(233, 236, 239, 0.4)', 'rgba(206, 212, 218, 0.3)');
+                        break;
+
+                    case 'nature':
+                        // 自然绿色背景 + 有机流体
+                        const natureGradient = ctx.createLinearGradient(0, 0, 0, height);
+                        natureGradient.addColorStop(0, '#a8e6cf');
+                        natureGradient.addColorStop(1, '#dcedc1');
+                        ctx.fillStyle = natureGradient;
+                        ctx.fillRect(0, 0, width, height);
+                        this.drawFluidArt(ctx, width, height, 'rgba(168, 230, 207, 0.2)', 'rgba(220, 237, 193, 0.15)');
+                        break;
+
+                    case 'dark':
+                        // 暗黑模式背景 + 暗色流体
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillRect(0, 0, width, height);
+                        this.drawFluidArt(ctx, width, height, 'rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.08)');
+                        break;
+
+                    case 'colorful':
+                        // 多彩活力背景 + 动感流体
+                        const colorfulGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
+                        colorfulGradient.addColorStop(0, '#ff6b6b');
+                        colorfulGradient.addColorStop(0.5, '#4ecdc4');
+                        colorfulGradient.addColorStop(1, '#45b7d1');
+                        ctx.fillStyle = colorfulGradient;
+                        ctx.fillRect(0, 0, width, height);
+                        this.drawFluidArt(ctx, width, height, 'rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.1)');
+                        break;
+
+                    default:
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                        this.drawFluidArt(ctx, width, height, 'rgba(102, 126, 234, 0.03)', 'rgba(118, 75, 162, 0.03)');
+                }
+            }
+
+            drawFluidArt(ctx, width, height, color1, color2) {
+                // 保存当前状态
+                ctx.save();
+
+                // 创建多个流体形状
+                const fluidCount = 3 + Math.floor(Math.random() * 2); // 3-4个流体元素
+
+                for (let i = 0; i < fluidCount; i++) {
+                    // 随机位置，主要在角落和边缘
+                    let x, y;
+                    const edge = Math.floor(Math.random() * 4);
+
+                    switch (edge) {
+                        case 0: // 左上角
+                            x = Math.random() * width * 0.3;
+                            y = Math.random() * height * 0.3;
+                            break;
+                        case 1: // 右上角
+                            x = width * 0.7 + Math.random() * width * 0.3;
+                            y = Math.random() * height * 0.3;
+                            break;
+                        case 2: // 左下角
+                            x = Math.random() * width * 0.3;
+                            y = height * 0.7 + Math.random() * height * 0.3;
+                            break;
+                        case 3: // 右下角
+                            x = width * 0.7 + Math.random() * width * 0.3;
+                            y = height * 0.7 + Math.random() * height * 0.3;
+                            break;
+                    }
+
+                    // 随机大小
+                    const baseRadius = Math.min(width, height) * (0.15 + Math.random() * 0.25);
+
+                    // 创建流体路径
+                    const points = [];
+                    const pointCount = 6 + Math.floor(Math.random() * 3);
+
+                    for (let j = 0; j < pointCount; j++) {
+                        const angle = (Math.PI * 2 * j) / pointCount;
+                        const radiusVariation = baseRadius * (0.6 + Math.random() * 0.8);
+                        const px = x + Math.cos(angle) * radiusVariation;
+                        const py = y + Math.sin(angle) * radiusVariation;
+                        points.push({ x: px, y: py });
+                    }
+
+                    // 绘制流体形状
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+
+                    for (let j = 0; j < points.length; j++) {
+                        const current = points[j];
+                        const next = points[(j + 1) % points.length];
+                        const controlX = (current.x + next.x) / 2 + (Math.random() - 0.5) * 30;
+                        const controlY = (current.y + next.y) / 2 + (Math.random() - 0.5) * 30;
+
+                        ctx.quadraticCurveTo(current.x, current.y, controlX, controlY);
+                    }
+
+                    ctx.closePath();
+
+                    // 设置渐变填充
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, baseRadius);
+                    const color = i % 2 === 0 ? color1 : color2;
+                    gradient.addColorStop(0, color);
+                    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    // 添加柔和的边缘
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                // 添加一些小气泡装饰
+                const bubbleCount = 8 + Math.floor(Math.random() * 8);
+                for (let i = 0; i < bubbleCount; i++) {
+                    const bx = Math.random() * width;
+                    const by = Math.random() * height;
+                    const br = Math.random() * 3 + 1;
+
+                    ctx.beginPath();
+                    ctx.arc(bx, by, br, 0, Math.PI * 2);
+                    ctx.fillStyle = Math.random() > 0.5 ? color1 : color2;
+                    ctx.globalAlpha = 0.1 + Math.random() * 0.2;
+                    ctx.fill();
+                }
+
+                ctx.globalAlpha = 1;
+                ctx.restore();
+            }
+
+            getTextColor(style) {
+                const darkTextStyles = ['minimal', 'typography', 'nature'];
+                return darkTextStyles.includes(style) ? '#2d3748' : '#ffffff';
+            }
+
+            formatText(text, maxWidth, fontSize) {
+                const lines = text.split('\n');
+                const formattedLines = [];
+                const ctx = this.ctx;
+
+                // 设置当前字体大小进行测量
+                ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
+                lines.forEach(line => {
+                    if (line.trim()) {
+                        // 移除项目符号并清理文本
+                        const cleanLine = line.replace(/^[\s•·\-\*]+/, '').trim();
+                        if (cleanLine) {
+                            // 优化的文本换行处理：使用更高效的算法
+                            formattedLines.push(...this.wrapText(cleanLine, maxWidth, ctx));
+                        }
+                    }
+                });
+
+                return formattedLines;
+            }
+
+            // 优化的文本换行算法（支持中文优先在空格处换行）
+            wrapText(text, maxWidth, ctx) {
+                const lines = [];
+                let start = 0;
+                const length = text.length;
+
+                while (start < length) {
+                    // 使用二分查找找到最佳换行点
+                    let low = start;
+                    let high = length;
+                    let best = start;
+
+                    while (low <= high) {
+                        const mid = Math.floor((low + high) / 2);
+                        const substring = text.substring(start, mid);
+                        const width = ctx.measureText(substring).width;
+
+                        if (width <= maxWidth) {
+                            best = mid;
+                            low = mid + 1;
+                        } else {
+                            high = mid - 1;
+                        }
+                    }
+
+                    // 如果找到换行点，优先在空格处断开（对中文友好）
+                    if (best > start) {
+                        let lineEnd = best;
+                        // 从 best 往回找最后一个空格
+                        const lastSpaceIndex = text.substring(start, best).lastIndexOf(' ');
+                        
+                        // 如果有空格且不是在行首，优先在空格处换行
+                        if (lastSpaceIndex > 0 && (start + lastSpaceIndex) < best) {
+                            lineEnd = start + lastSpaceIndex + 1; // 包含空格
+                        }
+
+                        lines.push(text.substring(start, lineEnd));
+                        start = lineEnd;
+                    } else {
+                        // 单个字符都超出宽度，强制添加
+                        lines.push(text[start]);
+                        start++;
+                    }
+                }
+
+                return lines;
+            }
+
+            drawTextBlock(ctx, title, lines, x, y, maxWidth, fontSize, lineHeight) {
+                // 智能标题字体大小（比内容字体大2-4px）
+                const titleFontSize = Math.min(fontSize + 4, fontSize * 1.3);
+                ctx.font = `bold ${titleFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
+                // 绘制标题
+                ctx.fillText(title, x, y);
+
+                // 绘制装饰线
+                ctx.strokeStyle = ctx.fillStyle;
+                ctx.lineWidth = Math.max(1, Math.floor(fontSize / 12)); // 装饰线厚度随字体缩放
+                ctx.beginPath();
+                ctx.moveTo(x - 40, y + titleFontSize * 0.8);
+                ctx.lineTo(x + 40, y + titleFontSize * 0.8);
+                ctx.stroke();
+
+                // 绘制内容
+                ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+                let currentY = y + titleFontSize + 10; // 减少标题与内容的间距
+
+                lines.forEach((line, index) => {
+                    if (index < CONFIG.MAX_TASK_LINES) {
+                        ctx.fillText(line, x, currentY);
+                        currentY += lineHeight;
+                    }
+                });
+
+                // 行数限制提示（保存并恢复 fillStyle）
+                if (lines.length > CONFIG.MAX_TASK_LINES) {
+                    const originalFillStyle = ctx.fillStyle;
+                    ctx.font = `italic ${fontSize * 0.85}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+                    ctx.fillStyle = originalFillStyle + '80'; // 50% 透明度
+                    ctx.fillText(`... 还有 ${lines.length - CONFIG.MAX_TASK_LINES} 项`, x, currentY);
+                    ctx.fillStyle = originalFillStyle; // 恢复原始颜色
+                }
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new WallpaperGenerator();
+        });
+
+        // PWA 功能支持
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // 这里可以注册 Service Worker
+                console.log('PWA supported');
+            });
+        }
+    </script>
+</body>
+</html>

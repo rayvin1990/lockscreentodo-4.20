@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price to Hours - Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color: #111; }
+    .price {
+      font-size: 24px;
+      font-weight: bold;
+      color: #B12704;
+    }
+    .original-price {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 18px;
+    }
+    .test-instructions {
+      background: #e7f3ff;
+      border-left: 4px solid #0066cc;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .status {
+      background: #111;
+      color: #0f0;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+    }
+    .product-list {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .product {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+      align-items: center;
+    }
+    .product:last-child { border-bottom: none; }
+    .product-name { font-weight: 500; }
+    .badge-sample {
+      display: inline-block;
+      background: #f0f0f0;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #666;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Price to Hours - Test Page (Inline Badge Mode)</h1>
+
+  <div class="test-instructions">
+    <strong>测试说明：</strong>
+    <ol>
+      <li>确保扩展已在 Chrome 中加载</li>
+      <li>下面每个价格后面应该显示灰色标签</li>
+      <li>划线价格（原价）不应该显示标签</li>
+      <li>按 F12 打开控制台查看调试日志</li>
+    </ol>
+  </div>
+
+  <div id="status" class="status">正在检查扩展状态...</div>
+
+  <div class="card">
+    <h2>测试 1: 价格标签显示</h2>
+    <p>这款耳机售价 <span class="price">$299</span></p>
+    <p>限时优惠价：<span class="price">$19.99</span></p>
+    <p>高端笔记本：<span class="price">$1,299</span></p>
+  </div>
+
+  <div class="card">
+    <h2>测试 2: 多货币</h2>
+    <p>英国区价格：<span class="price">£49</span></p>
+    <p>欧元区价格：<span class="price">€89</span></p>
+    <p>日本区价格：<span class="price">¥12,800</span></p>
+  </div>
+
+  <div class="card">
+    <h2>测试 3: 划线价不显示标签</h2>
+    <p>原价：<span class="original-price">$599</span> &nbsp; 现价：<span class="price">$399</span></p>
+  </div>
+
+  <div class="card">
+    <h2>测试 4: 商品列表</h2>
+    <div class="product-list">
+      <div class="product">
+        <span class="product-name">Product A - Basic</span>
+        <span class="price">$49</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product B - Pro</span>
+        <span class="price">$149</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product C - Ultra</span>
+        <span class="price">$299</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product D - Max</span>
+        <span class="price">$999</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>测试 5: 动态加载内容</h2>
+    <div id="dynamic-products">
+      <p>2 秒后会自动添加更多商品...</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>标签样式参考</h2>
+    <p>这是标签应该显示的样子：
+      <span class="badge-sample">约等于 0.1 双周工作</span>
+    </p>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+
+    setTimeout(() => {
+      // Check for content script
+      const badges = document.querySelectorAll('.pth-badge');
+
+      statusEl.textContent = '检查扩展状态...\n';
+
+      if (badges.length > 0) {
+        statusEl.textContent += `✅ 发现 ${badges.length} 个标签！\n`;
+      } else {
+        statusEl.textContent += '️ 暂未发现标签，请检查:\n';
+        statusEl.textContent += '1. 扩展是否已加载\n';
+        statusEl.textContent += '2. 控制台是否有错误\n';
+        statusEl.textContent += '3. 设置中是否启用了扩展\n';
+      }
+
+      // Log settings
+      if (chrome && chrome.storage) {
+        chrome.storage.sync.get(['amount', 'incomeType', 'hoursPerDay', 'enabled'], (result) => {
+          statusEl.textContent += '\n当前设置:\n';
+          statusEl.textContent += `  金额：${result.amount || 3000}\n`;
+          statusEl.textContent += `  类型：${result.incomeType || 'biweekly'}\n`;
+          statusEl.textContent += `  工时/天：${result.hoursPerDay || 8}\n`;
+          statusEl.textContent += `  已启用：${result.enabled !== false}\n`;
+        });
+      }
+
+      console.log('[PTH Test] Page loaded, checking for extension...');
+    }, 1000);
+
+    // Add dynamic products after 2 seconds
+    setTimeout(() => {
+      const container = document.getElementById('dynamic-products');
+      const products = [
+        { name: 'Dynamic Widget X', price: '$79' },
+        { name: 'Dynamic Widget Y', price: '$199' },
+        { name: 'Dynamic Widget Z', price: '$399' }
+      ];
+
+      products.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `<span class="product-name">${p.name}</span><span class="price">${p.price}</span>`;
+        container.appendChild(div);
+      });
+
+      console.log('[PTH Test] Added dynamic products');
+    }, 2000);
+  </script>
+</body>
+</html>

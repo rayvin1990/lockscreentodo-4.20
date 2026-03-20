@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coze API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Coze API Test - Image to Prompt</h1>
+
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <div>
+                <p>📷 Click to upload an image or drag and drop</p>
+                <p><small>Supports: JPG, PNG, GIF up to 10MB</small></p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+
+        <div id="imagePreview" style="display: none; margin: 20px 0;">
+            <img id="previewImg" style="max-width: 300px; max-height: 300px; border: 1px solid #ddd; border-radius: 4px;">
+            <div id="imageInfo" style="margin-top: 10px;"></div>
+        </div>
+
+        <button id="generateBtn" onclick="generatePrompt()" style="display: none;">
+            🤖 Generate Prompt with Coze AI
+        </button>
+
+        <div class="loading" id="loading">
+            <p>⏳ Processing... Please wait...</p>
+            <div id="loadingDetails"></div>
+        </div>
+
+        <div id="result" class="result" style="display: none;"></div>
+
+        <div style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 4px;">
+            <h3>📝 Instructions:</h3>
+            <ol>
+                <li>Upload an image using the area above</li>
+                <li>Click "Generate Prompt with Coze AI"</li>
+                <li>Wait for the AI to analyze your image</li>
+                <li>View the generated prompt below</li>
+            </ol>
+            <p><strong>Target URL:</strong> http://localhost:3001/api/ai-prompt</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        // Drag and drop handlers
+        const uploadArea = document.querySelector('.upload-area');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFileSelect(file);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('imageInfo').innerHTML = `
+                    <strong>File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
+                    <strong>Type:</strong> ${file.type}
+                `;
+                document.getElementById('imagePreview').style.display = 'block';
+                document.getElementById('generateBtn').style.display = 'inline-block';
+                document.getElementById('result').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function generatePrompt() {
+            if (!selectedFile) {
+                alert('Please select an image first');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const loadingDetails = document.getElementById('loadingDetails');
+            const result = document.getElementById('result');
+            const generateBtn = document.getElementById('generateBtn');
+
+            // Show loading
+            loading.style.display = 'block';
+            generateBtn.disabled = true;
+            result.style.display = 'none';
+
+            try {
+                loadingDetails.textContent = 'Creating FormData...';
+
+                // Create FormData
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('prompt', '请描述一下这个图片并生成适合的提示词');
+
+                loadingDetails.textContent = 'Sending request to Coze API...';
+
+                // Make API request
+                const response = await fetch('http://localhost:3001/api/ai-prompt', {
+                    method: 'POST',
+                    body: formData
+                    // Note: Don't set Content-Type header, browser sets it automatically with boundary
+                });
+
+                loadingDetails.textContent = `Processing response (Status: ${response.status})...`;
+
+                const resultData = await response.json();
+
+                if (response.ok && resultData.success) {
+                    // Success
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h3>✅ Success!</h3>
+                        <strong>Generated Prompt:</strong>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+                            ${resultData.prompt}
+                        </div>
+                        ${resultData.rawResponse ? `
+                            <details style="margin-top: 10px;">
+                                <summary>Raw Response (Debug)</summary>
+                                <pre style="font-size: 12px; overflow-x: auto;">${JSON.stringify(resultData.rawResponse, null, 2)}</pre>
+                            </details>
+                        ` : ''}
+                    `;
+                } else {
+                    // Error
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <h3>❌ Error</h3>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Error:</strong> ${resultData.error || 'Unknown error'}</p>
+                        ${resultData.details ? `<p><strong>Details:</strong> ${resultData.details}</p>` : ''}
+                        <details style="margin-top: 10px;">
+                            <summary>Full Response</summary>
+                            <pre style="font-size: 12px; overflow-x: auto;">${JSON.stringify(resultData, null, 2)}</pre>
+                        </details>
+                    `;
+                }
+
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check:</p>
+                    <ul>
+                        <li>Is the dev server running on http://localhost:3001?</li>
+                        <li>Is your internet connection working?</li>
+                        <li>Check browser console for more details</li>
+                    </ul>
+                `;
+            } finally {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                generateBtn.disabled = false;
+            }
+        }
+
+        // Check if dev server is running
+        async function checkServer() {
+            try {
+                const response = await fetch('http://localhost:3001');
+                if (!response.ok) throw new Error('Server not responding');
+                console.log('✅ Dev server is running');
+            } catch (error) {
+                document.querySelector('.container').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 4px;">
+                        <h1>❌ Server Not Running</h1>
+                        <p>The development server is not running on http://localhost:3001</p>
+                        <p>Please start the server with: <code>bun dev</code></p>
+                        <p>Then refresh this page.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Check server on page load
+        checkServer();
+    </script>
+</body>
+</html>

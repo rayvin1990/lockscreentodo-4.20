@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price to Hours - Hover Tooltip Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #111; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 18px;
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 10px;
+    }
+    .price {
+      font-size: 24px;
+      font-weight: bold;
+      color: #B12704;
+      display: inline-block;
+      margin: 10px 0;
+    }
+    .original-price {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 18px;
+    }
+    .test-instructions {
+      background: #e7f3ff;
+      border-left: 4px solid #0066cc;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .test-instructions ol { margin: 10px 0 0 0; }
+    .test-instructions li { margin: 5px 0; }
+    .status {
+      background: #111;
+      color: #0f0;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+      min-height: 100px;
+    }
+    .product-list {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .product {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+    .product:hover { background: #f9f9f9; }
+    .product:last-child { border-bottom: none; }
+    .product-name { font-weight: 500; font-size: 16px; }
+    .product-price { font-weight: 600; color: #B12704; font-size: 18px; }
+
+    /* Buy button styles */
+    .buy-button {
+      background: #FFD814;
+      border: 1px solid #FCD200;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .buy-button:hover {
+      background: #F7CA00;
+      border-color: #F2C200;
+    }
+    .add-to-cart {
+      background: #FFA41C;
+      border: 1px solid #FF9400;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .add-to-cart:hover {
+      background: #FA8900;
+      border-color: #E57E00;
+    }
+    .badge-sample {
+      display: inline-block;
+      background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-width: 180px;
+    }
+    .badge-sample .price-text {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: block;
+      background: linear-gradient(90deg, #ffd700, #ffb347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge-sample .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 215, 0, 0.3), rgba(255, 255, 255, 0.1), rgba(255, 215, 0, 0.3));
+      margin: 8px 0;
+      display: block;
+    }
+    .badge-sample .worktime-primary {
+      font-weight: 600;
+      font-size: 15px;
+      color: #fff;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .badge-sample .worktime-secondary {
+      color: #4ade80;
+      font-size: 12px;
+      font-style: italic;
+      margin-bottom: 3px;
+      display: block;
+    }
+    .badge-sample .worktime-tertiary {
+      color: #888;
+      font-size: 11px;
+      display: block;
+    }
+    .debug-info {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Price to Hours - Hover Tooltip Test</h1>
+  <p class="subtitle">Version 1.7.0 - Tooltip Mode with Buy Button Support</p>
+
+  <div class="test-instructions">
+    <strong>测试说明：</strong>
+    <ol>
+      <li>确保扩展已在 Chrome 中加载（版本 1.7.0）</li>
+      <li>鼠标悬停在价格上，150ms 后应显示黑色提示框</li>
+      <li>移动鼠标时，提示框应跟随移动</li>
+      <li>鼠标移开，提示框立即消失</li>
+      <li>悬停在"Buy Now"或"Add to Cart"按钮上也会显示价格工时</li>
+      <li>划线价格（原价）不显示提示框</li>
+      <li>按 F12 打开控制台查看调试日志</li>
+    </ol>
+  </div>
+
+  <div id="status" class="status">正在检查扩展状态...</div>
+
+  <div class="card">
+    <h2>Test 1: Basic Price Hover</h2>
+    <p>这款耳机售价 <span class="price">$299</span></p>
+    <p>限时优惠价：<span class="price">$19.99</span></p>
+    <p>高端笔记本：<span class="price">$1,299</span></p>
+  </div>
+
+  <div class="card">
+    <h2>Test 2: Multi-Currency</h2>
+    <p>英国区价格：<span class="price">£49</span></p>
+    <p>欧元区价格：<span class="price">€89</span></p>
+    <p>日本区价格：<span class="price">¥12,800</span></p>
+  </div>
+
+  <div class="card">
+    <h2>Test 3: Original Price (No Tooltip)</h2>
+    <p>原价：<span class="original-price">$599</span> &nbsp;&nbsp;
+       现价：<span class="price">$399</span></p>
+    <p class="debug-info">提示：划线价格不应该显示提示框</p>
+  </div>
+
+  <div class="card">
+    <h2>Test 4: Product List with Prices</h2>
+    <div class="product-list">
+      <div class="product">
+        <span class="product-name">Product A - Basic</span>
+        <span class="product-price">$49</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product B - Pro</span>
+        <span class="product-price">$149</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product C - Ultra</span>
+        <span class="product-price">$299</span>
+      </div>
+      <div class="product">
+        <span class="product-name">Product D - Max</span>
+        <span class="product-price">$999</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Test 5: Buy Buttons</h2>
+    <div style="display: flex; gap: 20px; align-items: center; margin: 15px 0;">
+      <div style="text-align: center;">
+        <p style="margin-bottom: 10px;">Wireless Mouse</p>
+        <p style="color: #B12704; font-weight: 600; font-size: 18px; margin-bottom: 10px;">$29.99</p>
+        <button class="buy-button">Buy Now</button>
+      </div>
+      <div style="text-align: center;">
+        <p style="margin-bottom: 10px;">Mechanical Keyboard</p>
+        <p style="color: #B12704; font-weight: 600; font-size: 18px; margin-bottom: 10px;">$89.99</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+      <div style="text-align: center;">
+        <p style="margin-bottom: 10px;">USB Hub</p>
+        <p style="color: #B12704; font-weight: 600; font-size: 18px; margin-bottom: 10px;">$24.99</p>
+        <button class="buy-button" data-action="buy-now">Buy Now</button>
+      </div>
+    </div>
+    <p class="debug-info">提示：悬停在按钮上也会显示价格工时</p>
+  </div>
+
+  <div class="card">
+    <h2>Test 6: Dynamic Content (Loads after 2 seconds)</h2>
+    <div id="dynamic-products">
+      <p style="color: #666;">Loading more products...</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tooltip Style Reference</h2>
+    <p>这是提示框应该显示的样子：</p>
+    <div class="badge-sample">
+      <span class="price-text">$299</span>
+      <span class="divider"></span>
+      <span class="worktime-primary">≈ 2.0 小时</span>
+      <span class="worktime-secondary">一集电视剧的时间</span>
+      <span class="worktime-tertiary">(120 分钟)</span>
+    </div>
+    <p class="debug-info" style="margin-top: 15px;">
+      提示框应该是深色背景，金色价格，绿色情绪文案，紧跟在鼠标右下方
+    </p>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    let checkCount = 0;
+
+    function checkExtensionStatus() {
+      checkCount++;
+
+      // Check for tooltip element
+      const tooltip = document.querySelector('.pth-tooltip');
+
+      statusEl.textContent = `检查扩展状态... (第 ${checkCount} 次检查)\n`;
+      statusEl.textContent += `时间：${new Date().toLocaleTimeString()}\n\n`;
+
+      if (tooltip) {
+        statusEl.textContent += '✅ 发现提示框元素 (.pth-tooltip)\n';
+        const tooltipStyle = window.getComputedStyle(tooltip);
+        statusEl.textContent += `   显示状态：${tooltipStyle.display}\n`;
+        statusEl.textContent += `   Z-index: ${tooltipStyle.zIndex}\n`;
+      } else {
+        statusEl.textContent += '⏳ 暂未发现提示框元素\n';
+      }
+
+      // Check for content script
+      const prices = document.querySelectorAll('.price, .product-price');
+      statusEl.textContent += `\n📊 页面上有 ${prices.length} 个价格元素\n`;
+
+      // Log settings
+      if (chrome && chrome.storage) {
+        chrome.storage.sync.get(['amount', 'incomeType', 'hoursPerDay', 'enabled'], (result) => {
+          statusEl.textContent += '\n当前设置:\n';
+          statusEl.textContent += `  金额：${result.amount || 3000}\n`;
+          statusEl.textContent += `  类型：${result.incomeType || 'biweekly'}\n`;
+          statusEl.textContent += `  工时/天：${result.hoursPerDay || 8}\n`;
+          statusEl.textContent += `  已启用：${result.enabled !== false}\n`;
+
+          if (!result.enabled) {
+            statusEl.textContent += '\n⚠️ 扩展已禁用，请在 popup 中启用\n';
+          }
+        });
+      } else {
+        statusEl.textContent += '\n⚠️ Chrome Storage API 不可用\n';
+      }
+
+      console.log('[PTH Test] Status check:', {
+        tooltipFound: !!tooltip,
+        priceCount: prices.length,
+        checkNumber: checkCount
+      });
+    }
+
+    // Check every second for 10 seconds
+    const checkInterval = setInterval(checkExtensionStatus, 1000);
+    setTimeout(() => clearInterval(checkInterval), 10000);
+
+    // Add dynamic products after 2 seconds
+    setTimeout(() => {
+      const container = document.getElementById('dynamic-products');
+      const products = [
+        { name: 'Dynamic Widget X', price: '$79' },
+        { name: 'Dynamic Widget Y', price: '$199' },
+        { name: 'Dynamic Widget Z', price: '$399' }
+      ];
+
+      products.forEach((p, index) => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.style.animation = `fadeIn 0.3s ease ${index * 0.1}s both`;
+        div.innerHTML = `
+          <span class="product-name">${p.name}</span>
+          <span class="product-price">${p.price}</span>
+        `;
+        container.appendChild(div);
+      });
+
+      console.log('[PTH Test] Added dynamic products');
+    }, 2000);
+
+    // Log mouse events for debugging
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.classList.contains('price') ||
+          e.target.classList.contains('product-price') ||
+          e.target.closest('.buy-button') ||
+          e.target.closest('.add-to-cart')) {
+        console.log('[PTH Test] Mouse over:', e.target.className, e.target.textContent);
+      }
+    });
+
+    console.log('[PTH Test] Page loaded, waiting for extension...');
+  </script>
+</body>
+</html>

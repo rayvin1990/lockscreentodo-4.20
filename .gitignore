@@ -1,0 +1,72 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# expo
+.expo/
+dist/
+expo-env.d.ts
+apps/expo/.gitignore
+
+# production
+build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env.local
+.env.local.temp
+.env.*.local
+*.env.local
+
+# claude settings
+.claude/settings.local.json
+
+# openclaw temp/state (NEVER commit)
+tmp/openclaw-*/
+tmp/acp-*/
+*.token
+gateway.token
+
+# npm
+.npm
+
+# windows null device
+nul
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# turbo
+.turbo
+
+yarn.lock
+package-lock.json
+
+.idea/
+
+.env
+.npmrc
+.next/

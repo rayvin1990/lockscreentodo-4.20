@@ -1,0 +1,152 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { createNeonClient } from "@/lib/neon/server";
+import { isAfter, startOfWeek } from "date-fns";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const revalidate = 0;
+
+// Initialize Neon client
+const sql = createNeonClient();
+
+/**
+ * Check download limit before allowing download/QR code generation
+ */
+export async function GET() {
+  try {
+    // 1. Check authentication
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error: "Please log in first",
+          canDownload: false,
+          reason: "NOT_AUTHENTICATED",
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log(`API: Checking download limit for user ${userId}`);
+
+    // 2. Get user profile from Neon
+    const users = await sql`
+      SELECT * FROM "User" WHERE id = ${userId}
+    `;
+    let user = users[0] || null;
+
+    // 3. If user doesn't exist, create one (7-day trial)
+    if (!user) {
+      console.log(`⚠️  User ${userId} not found, activating 7-day trial`);
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+
+      const newUsers = await sql`
+        INSERT INTO "User" (id, "isPro", "trialEndsAt", "subscriptionPlan")
+        VALUES (${userId}, true, ${trialEndsAt.toISOString()}, 'PRO')
+        RETURNING *
+      `;
+      
+      user = newUsers[0];
+      console.log(`✅ User ${userId} created with 7-day trial, expires on ${trialEndsAt.toLocaleDateString()}`);
+    }
+
+    // 4. Check trial status
+    const now = new Date();
+    const trialEndsAt = user.trialEndsAt ? new Date(user.trialEndsAt) : null;
+    const isTrialActive = trialEndsAt && isAfter(trialEndsAt, now);
+    const isTrialExpired = trialEndsAt && !isTrialActive;
+    const daysRemaining = trialEndsAt
+      ? Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+
+    console.log(`User profile:`, {
+      isPro: user.isPro,
+      trialEndsAt: trialEndsAt?.toDateString(),
+      isTrialActive,
+      isTrialExpired,
+      daysRemaining,
+    });
+
+    // 5. Pro users or trial users → unlimited downloads
+    if (user.isPro || isTrialActive) {
+      console.log(`✅ User ${userId} (${user.isPro ? 'Pro' : 'Trial'}) - unlimited downloads`);
+      return NextResponse.json({
+        canDownload: true,
+        isPro: user.isPro,
+        isTrialActive,
+        isTrialExpired: false,
+        remainingThisWeek: -1,
+        message: user.isPro
+          ? "✓ Pro user - unlimited downloads"
+          : `✓ Trial period - ${daysRemaining} days remaining`,
+      });
+    }
+
+    // 6. Free users: check this week's download count
+    console.log(`⚠️  Free user, checking this week's download count`);
+
+    const weekStart = startOfWeek(now);
+    const weekStartString = weekStart.toISOString().split('T')[0];
+
+    const weekUsages = await sql`
+      SELECT * FROM "WallpaperUsage"
+      WHERE "userId" = ${userId}
+      AND "date" >= ${weekStartString}
+    `;
+
+    const weekDownloadCount = weekUsages?.reduce((sum, usage) => sum + (usage.downloadCount || 0), 0) || 0;
+
+    const weeklyLimit = isTrialExpired ? 1 : 3;
+    const remainingThisWeek = Math.max(0, weeklyLimit - weekDownloadCount);
+
+    console.log(`This week's downloads: ${weekDownloadCount}, limit: ${weeklyLimit}/week, remaining: ${remainingThisWeek}`);
+
+    if (weekDownloadCount >= weeklyLimit) {
+      console.log(`❌ User ${userId} weekly download limit reached (${weekDownloadCount}/${weeklyLimit})`);
+      return NextResponse.json(
+        {
+          error: isTrialExpired
+            ? "Weekly download limit reached (1/1). Your trial has ended. Upgrade to Pro for unlimited downloads"
+            : "Weekly download limit reached (3/3). Upgrade to Pro for unlimited downloads",
+          canDownload: false,
+          reason: "WEEKLY_LIMIT_REACHED",
+          isPro: false,
+          isTrialActive: false,
+          isTrialExpired,
+          weekDownloadCount,
+          remainingThisWeek: 0,
+        },
+        { status: 403 }
+      );
+    }
+
+    console.log(`✅ User ${userId} can download (${remainingThisWeek} remaining)`);
+    return NextResponse.json({
+      canDownload: true,
+      isPro: false,
+      isTrialActive: false,
+      isTrialExpired,
+      weekDownloadCount,
+      remainingThisWeek,
+      message: isTrialExpired
+        ? `Trial ended - ${remainingThisWeek} download remaining this week`
+        : `${remainingThisWeek} downloads remaining this week`,
+    });
+
+  } catch (error: any) {
+    console.error("Download limit check error:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to check download limit, please try again later",
+        canDownload: false,
+        reason: "INTERNAL_ERROR",
+        details: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}

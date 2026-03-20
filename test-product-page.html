@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Product Page Price Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+
+    /* Amazon typical price structures */
+    .a-price { display: flex; align-items: baseline; }
+    .a-price .a-price-symbol { font-size: 13px; top: -0.5em; }
+    .a-price .a-price-whole { font-size: 28px; font-weight: 700; }
+    .a-price .a-price-fraction { font-size: 13px; top: -0.5em; }
+
+    .a-price.a-text-price .a-offscreen { position: absolute; left: -9999px; }
+    .a-text-price .a-price-whole.original {
+      text-decoration: line-through;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Amazon Product Page Price Structures</h1>
+
+  <!-- Test 1: Simple price -->
+  <div class="test-section">
+    <h3>Test 1: Simple price text</h3>
+    <p>Price: $299.00</p>
+  </div>
+
+  <!-- Test 2: Amazon structure - separate elements -->
+  <div class="test-section">
+    <h3>Test 2: Amazon structure (separate elements)</h3>
+    <div class="a-price">
+      <span class="a-price-symbol">$</span>
+      <span class="a-price-whole">299</span>
+      <span class="a-price-fraction">00</span>
+    </div>
+  </div>
+
+  <!-- Test 3: Amazon with original price -->
+  <div class="test-section">
+    <h3>Test 3: Amazon with original price</h3>
+    <div style="display: flex; gap: 10px; align-items: baseline;">
+      <div class="a-price">
+        <span class="a-price-symbol">$</span>
+        <span class="a-price-whole">249</span>
+        <span class="a-price-fraction">99</span>
+      </div>
+      <div class="a-price a-text-price" style="margin-left: 10px;">
+        <span class="a-offscreen">Was: $299.00</span>
+        <span class="a-price-symbol">$</span>
+        <span class="a-price-whole original">299</span>
+        <span class="a-price-fraction">00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test 4: Price with label -->
+  <div class="test-section">
+    <h3>Test 4: Price with "Was" label</h3>
+    <p><span>Was:</span> <span>$399.00</span></p>
+    <p><span>Now:</span> <span>$299.00</span></p>
+  </div>
+
+  <!-- Test 5: Large price with comma -->
+  <div class="test-section">
+    <h3>Test 5: Large price</h3>
+    <p>Laptop: $1,299.99</p>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      console.log('=== Price Structure Analysis ===');
+
+      // Find all elements that might contain prices
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach((el, i) => {
+        const text = el.textContent.trim();
+        if (/[\$£€¥]/.test(text) && text.length < 100) {
+          const style = window.getComputedStyle(el);
+          console.log({
+            tag: el.tagName.toLowerCase(),
+            class: el.className,
+            text: text.substring(0, 50),
+            color: style.color,
+            textDecoration: style.textDecoration,
+            parent: el.parentElement?.tagName
+          });
+        }
+      });
+    }, 500);
+  </script>
+</body>
+</html>

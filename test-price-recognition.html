@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Price Recognition</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .card { background: #f0f0f0; padding: 20px; margin: 10px 0; border-radius: 8px; }
+    .price { font-size: 24px; font-weight: bold; color: #B12704; }
+    .price-large { font-size: 36px; }
+    .original { text-decoration: line-through; color: #999; }
+    .test-result { margin: 10px 0; padding: 10px; background: #e7f3ff; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Price Recognition Test</h1>
+  <p>Hover over prices to test recognition</p>
+
+  <div class="card">
+    <h2>Small Prices</h2>
+    <p>Price: <span class="price">$19.99</span></p>
+    <p>Price: <span class="price">$49</span></p>
+    <p>Price: <span class="price">$99</span></p>
+  </div>
+
+  <div class="card">
+    <h2>Large Prices (1,000+)</h2>
+    <p>Price: <span class="price price-large">$1,299</span></p>
+    <p>Price: <span class="price price-large">$2,499.00</span></p>
+    <p>Price: <span class="price price-large">$5,999</span></p>
+    <p>Price: <span class="price price-large">$10,000</span></p>
+  </div>
+
+  <div class="card">
+    <h2>Amazon Style</h2>
+    <div style="font-size: 28px;">
+      <span>$1,299<span style="font-size: 14px;">.00</span></span>
+    </div>
+    <div class="price" style="font-size: 36px;">$1,299<span style="font-size: 18px;">99</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Original Price Test</h2>
+    <p>Original: <span class="price original">$1,599</span></p>
+    <p>Sale: <span class="price">$1,299</span></p>
+  </div>
+
+  <div id="results" class="test-result">
+    <h3>Test Results:</h3>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const PRICE_REGEX = /([$£€¥₽₹₩₺₴₿]|CNY|USD|EUR|GBP|JPY|RMB|HKD|TWD|KRW|INR|AUD|CAD|CHF|SEK|NOK|DKK|NZD|SGD|THB|MYR|PHP|IDR|VND)[\s\u00a0]?(\d{1,3}(,\d{3})*(\.\d{1,2})?|\d+(\.\d{1,2})?)/gi;
+
+    const log = document.getElementById('log');
+
+    function testPrice(text) {
+      PRICE_REGEX.lastIndex = 0;
+      const match = PRICE_REGEX.exec(text);
+      return match ? match[0] : 'NO MATCH';
+    }
+
+    // Test all price elements
+    document.querySelectorAll('.price').forEach(el => {
+      const text = el.textContent;
+      const result = testPrice(text);
+      const div = document.createElement('div');
+      div.textContent = `"${text}" -> ${result}`;
+      log.appendChild(div);
+
+      el.addEventListener('mouseover', () => {
+        console.log('[Test] Hovered:', text, '->', result);
+      });
+    });
+
+    console.log('[Test] Page loaded. Hover over prices to test.');
+  </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+    "name":  "nextjs-template",
+    "private":  true,
+    "scripts":  {
+                    "build":  "turbo build ",
+                    "build:nextjs":  "cd apps/nextjs \u0026\u0026 bun with-env next build",
+                    "clean":  "git clean -xdf node_modules",
+                    "clean:workspaces":  "turbo clean",
+                    "db:push":  "cd ./packages/db/ \u0026\u0026 bun db:push",
+                    "dev":  "turbo dev --parallel",
+                    "dev:web":  "turbo dev --parallel --filter !stripe",
+                    "format":  "turbo format --continue -- --cache --cache-location=\u0027node_modules/.cache/.prettiercache\u0027 --ignore-path=\u0027../../.gitignore\u0027",
+                    "format:fix":  "turbo format --continue -- --write --cache --cache-location=\u0027node_modules/.cache/.prettiercache\u0027 --ignore-path=\u0027../../.gitignore\u0027",
+                    "lint":  "turbo lint -- --quiet -- --cache --cache-location \u0027node_modules/.cache/.eslintcache\u0027 \u0026\u0026 manypkg check",
+                    "lint:fix":  "turbo lint --continue -- --fix --cache --cache-location \u0027node_modules/.cache/.eslintcache\u0027 ",
+                    "typecheck":  "turbo typecheck",
+                    "postinstall": "echo 'Skip dependency check' || exit 0",
+                    "check-deps":  "check-dependency-version-consistency .",
+                    "gen":  "turbo gen --config \u0027turbo/generators/config.ts\u0027",
+                    "cf:build":  "npm --workspace @saasfly/nextjs run cf:build",
+                    "cf:deploy":  "npm run cf:build \u0026\u0026 wrangler deploy --config wrangler.jsonc",
+                    "cf:preview":  "npm run cf:build \u0026\u0026 wrangler dev --config wrangler.jsonc"
+                },
+    "devDependencies":  {
+                            "@next/eslint-plugin-next":  "^16.0.0",
+                            "@t3-oss/env-nextjs":  "^0.13.8",
+                            "@turbo/gen":  "1.13.3",
+                            "@typescript-eslint/eslint-plugin":  "^8.46.2",
+                            "check-dependency-version-consistency":  "4.1.0",
+                            "prettier":  "3.2.5",
+                            "react-markdown":  "^10.1.0",
+                            "tailwind-config-viewer":  "^2.0.4",
+                            "tailwindcss-animate":  "^1.0.7",
+                            "turbo":  "1.13.3",
+                            "typescript":  "5.4.5",
+                            "wrangler":  "^4.68.0"
+                        },
+    "engines":  {
+                    "node":  "\u003e=18"
+                },
+    "prettier":  "@saasfly/prettier-config",
+    "packageManager":  "npm@10.9.2",
+    "workspaces":  [
+                       "apps/*",
+                       "packages/*",
+                       "tooling/*"
+                   ],
+    "dependencies":  {
+                         "@clerk/nextjs":  "^6.20.0",
+                         "@prisma/client":  "5.9.1",
+                         "@supabase/supabase-js":  "^2.98.0",
+                         "lucide-react":  "^0.546.0",
+                         "next-auth":  "^4.24.11",
+                         "svix":  "^1.85.0",
+                         "zod":  "^4.1.12"
+                     }
+}

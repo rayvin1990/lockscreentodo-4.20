@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test File Upload</title>
+</head>
+<body>
+    <h1>Test File Upload API</h1>
+    <input type="file" id="fileInput" accept="image/*">
+    <button onclick="testUpload()">Test Upload</button>
+    <div id="result"></div>
+
+    <script>
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const result = document.getElementById('result');
+
+            if (!fileInput.files[0]) {
+                result.innerHTML = 'Please select a file first';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('prompt', '请描述一下这个图片并生成适合的提示词');
+
+            result.innerHTML = 'Uploading...';
+
+            try {
+                const response = await fetch('http://localhost:3002/api/ai-prompt', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const responseText = await response.text();
+                result.innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <pre>${responseText}</pre>
+                `;
+
+                if (response.ok) {
+                    console.log('✅ Test successful!');
+                } else {
+                    console.log('❌ Test failed');
+                }
+            } catch (error) {
+                result.innerHTML = `Error: ${error.message}`;
+                console.error('Test error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

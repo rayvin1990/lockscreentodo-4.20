@@ -1,0 +1,5 @@
+Implemented the task in the real mini program homepage paths, not the stale `src/...` note from the task file.
+
+The homepage now supports WeChat camera capture, local photo preview, clear/retake, an optional note before shooting, and a photo-aware follow-up flow that ties into the existing voice consultation UI. I also fixed the broken recording button wiring so the page now calls the actual handler. The updated files are [index.js](C:/Users/57684/saasfly/apps/zhuangmei-miniprogram/pages/index/index.js), [index.wxml](C:/Users/57684/saasfly/apps/zhuangmei-miniprogram/pages/index/index.wxml), and [index.wxss](C:/Users/57684/saasfly/apps/zhuangmei-miniprogram/pages/index/index.wxss).
+
+Verification: `node --check apps/zhuangmei-miniprogram/pages/index/index.js` passed. I did not run WeChat DevTools or real-device camera validation in this session.

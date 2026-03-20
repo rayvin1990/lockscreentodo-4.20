@@ -1,0 +1,51 @@
+{
+  "deviceName": "My-Laptop",
+  "feishuWebhookUrl": "",
+
+  "lowThreshold": 20,
+  "highThreshold": 90,
+  "cooldownMinutes": 30,
+  "pollIntervalSeconds": 60,
+
+  "keepAwakeEnabled": true,
+  "keepAwakeMode": "system-required",
+
+  "networkKeepAliveEnabled": true,
+  "keepAliveIntervalSeconds": 60,
+
+  "connectivityCheckIntervalSeconds": 15,
+  "connectivityTimeoutMs": 3000,
+  "connectivityTargets": [
+    "https://www.feishu.cn",
+    "https://www.baidu.com/generate_204",
+    "https://1.1.1.1/cdn-cgi/trace"
+  ],
+  "offlineAlertCooldownMinutes": 10,
+  "offlineAlertAfterMinutes": 5,
+  "criticalOfflineAfterMinutes": 15,
+
+  "retryQueueEnabled": true,
+  "retryMaxAttempts": 60,
+
+  "openclawEnabled": false,  // 完全禁用 OpenClaw 监控，只保留电池监控
+  "openclawCommand": "C:\\Program Files\\nodejs\\node.exe",
+  "openclawArgs": [
+    "C:\\Users\\57684\\AppData\\Roaming\\npm\\node_modules\\openclaw\\dist\\index.js",
+    "gateway",
+    "--port",
+    "18789"
+  ],
+  "openclawWorkdir": "C:\\Users\\57684\\saasfly",
+  "openclawEnv": {},
+  "openclawAutoRestart": false,
+  "openclawRestartBackoffBaseSeconds": 5,
+  "openclawRestartMaxPerHour": 20,
+  "openclawHangDetectMinutes": 0,
+  "openclawGatewayHealthUrl": "http://127.0.0.1:18789/health",
+
+  "heartbeatMode": "onChange",
+  "heartbeatIntervalMinutes": 30,
+
+  "autoStart": true,
+  "lowPowerMode": false
+}

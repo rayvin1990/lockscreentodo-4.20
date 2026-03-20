@@ -1,0 +1,13 @@
+{
+  "agent": "claude-code",
+  "taskDir": "memory/roles/operating/tasks",
+  "resultDir": "memory/roles/operating/results",
+  "pollInterval": 300,
+  "tasks": [
+    {
+      "file": "claude-code-zhuangmei.md",
+      "agent": "Claude Code Team Lead",
+      "status": "pending"
+    }
+  ]
+}
