@@ -16,8 +16,15 @@ export function createNeonClient(databaseUrl?: string) {
   return neon(url);
 }
 
-// 兼容旧代码
-export const sql = createNeonClient();
+// 兼容旧代码 - 延迟初始化，避免构建时执行
+let _sql: ReturnType<typeof createNeonClient> | null = null;
+export function getSql() {
+  if (!_sql) _sql = createNeonClient();
+  return _sql;
+}
+
+// 旧代码兼容：直接使用 getSql 函数（既可调用 getSql() 也可直接作为模板标签 sql`...`）
+export { getSql as sql };
 
 export function createServerSupabaseClient() {
   return createNeonClient();
