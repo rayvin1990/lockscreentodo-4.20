@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { buttonVariants } from "./button";
@@ -51,16 +50,6 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
-      }}
-      components={{
-        IconLeft: ({ ...props }) => (
-          // @ts-expect-error CSSProperties type conflict between packages
-          <ChevronLeft className="h-4 w-4" {...props} />
-        ),
-        IconRight: ({ ...props }) => (
-          // @ts-expect-error CSSProperties type conflict between packages
-          <ChevronRight className="h-4 w-4" {...props} />
-        ),
       }}
       {...props}
     />
