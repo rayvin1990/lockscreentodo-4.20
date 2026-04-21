@@ -6,7 +6,11 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
-const sql = createNeonClient();
+let sql: ReturnType<typeof createNeonClient> | null = null;
+function getSql() {
+  if (!sql) sql = createNeonClient();
+  return sql;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +33,7 @@ export async function POST(req: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    const existingRecords = await sql`
+    const existingRecords = await getSql()\`
       SELECT * FROM "WallpaperUsage"
       WHERE "userId" = ${userId}
       AND "date" = ${todayString}
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
       const newDownloadCount = (existingUsage.downloadCount || 0) + 1;
       console.log(`更新下载记录: ${existingUsage.downloadCount} → ${newDownloadCount}`);
 
-      await sql`
+      await getSql()\`
         UPDATE "WallpaperUsage"
         SET "downloadCount" = ${newDownloadCount}
         WHERE id = ${existingUsage.id}
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest) {
     } else {
       console.log(`创建新使用记录（下载）: userId=${userId}, date=${todayString}`);
 
-      await sql`
+      await getSql()\`
         INSERT INTO "WallpaperUsage" ("userId", "date", "count", "downloadCount")
         VALUES (${userId}, ${todayString}, 0, 1)
       `;

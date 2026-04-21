@@ -4,7 +4,11 @@ import { createNeonClient } from "~/lib/neon/server";
 
 export const dynamic = 'force-dynamic';
 
-const sql = createNeonClient();
+let sql: ReturnType<typeof createNeonClient> | null = null;
+function getSql() {
+  if (!sql) sql = createNeonClient();
+  return sql;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +31,7 @@ export async function POST(req: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    const existingRecords = await sql`
+    const existingRecords = await getSql()\`
       SELECT * FROM "WallpaperUsage"
       WHERE "userId" = ${userId}
       AND "date" = ${todayString}
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
       const newCount = existingUsage.count + 1;
       console.log(`更新使用记录: ${existingUsage.count} → ${newCount}`);
 
-      await sql`
+      await getSql()\`
         UPDATE "WallpaperUsage"
         SET "count" = ${newCount}
         WHERE id = ${existingUsage.id}
@@ -51,7 +55,7 @@ export async function POST(req: NextRequest) {
     } else {
       console.log(`创建新使用记录: userId=${userId}, date=${todayString}, count=1`);
 
-      await sql`
+      await getSql()\`
         INSERT INTO "WallpaperUsage" ("userId", "date", "count")
         VALUES (${userId}, ${todayString}, 1)
       `;

@@ -5,7 +5,11 @@ import { createNeonClient } from "@/lib/neon/server";
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const sql = createNeonClient();
+let sql: ReturnType<typeof createNeonClient> | null = null;
+function getSql() {
+  if (!sql) sql = createNeonClient();
+  return sql;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
     console.log(`API: Saving wallpaper for user ${userId}`, { imageUrl, taskCount, style });
 
     try {
-      const result = await sql`
+      const result = await getSql()\`
         INSERT INTO "Wallpaper" ("userId", "imageUrl", "taskCount", "style", "prompt")
         VALUES (${userId}, ${imageUrl}, ${taskCount || 0}, ${style || null}, ${prompt || null})
         RETURNING *
