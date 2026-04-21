@@ -24,7 +24,10 @@ export function getSql() {
 }
 
 // 旧代码兼容：直接使用 getSql 函数（既可调用 getSql() 也可直接作为模板标签 sql`...`）
-export { getSql as sql };
+export const sql = new Proxy({} as ReturnType<typeof createNeonClient>, {
+  apply: (_, thisArg, args) => getSql().apply(thisArg, args),
+  get: (_, prop) => getSql()[prop as keyof ReturnType<typeof createNeonClient>],
+});
 
 export function createServerSupabaseClient() {
   return createNeonClient();

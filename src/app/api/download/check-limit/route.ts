@@ -30,7 +30,7 @@ export async function GET() {
 
     console.log(`API: Checking download limit for user ${userId}`);
 
-    const users = await getSql()\`
+    const users = await getSql()`
       SELECT * FROM "User" WHERE id = ${userId}
     `;
     let user = users[0] || null;
@@ -40,7 +40,7 @@ export async function GET() {
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
-      const newUsers = await getSql()\`
+      const newUsers = await getSql()`
         INSERT INTO "User" (id, "isPro", "trialEndsAt", "subscriptionPlan")
         VALUES (${userId}, true, ${trialEndsAt.toISOString()}, 'PRO')
         RETURNING *
@@ -77,7 +77,7 @@ export async function GET() {
     const weekStart = startOfWeek(now);
     const weekStartString = weekStart.toISOString().split('T')[0];
 
-    const weekUsages = await getSql()\`
+    const weekUsages = await getSql()`
       SELECT * FROM "WallpaperUsage"
       WHERE "userId" = ${userId}
       AND "date" >= ${weekStartString}

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     console.log(`API: Saving wallpaper for user ${userId}`, { imageUrl, taskCount, style });
 
     try {
-      const result = await getSql()\`
+      const result = await getSql()`
         INSERT INTO "Wallpaper" ("userId", "imageUrl", "taskCount", "style", "prompt")
         VALUES (${userId}, ${imageUrl}, ${taskCount || 0}, ${style || null}, ${prompt || null})
         RETURNING *

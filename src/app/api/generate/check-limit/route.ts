@@ -30,7 +30,7 @@ export async function GET() {
 
     console.log(`API: 检查用户 ${userId} 的生成限额`);
 
-    const users = await getSql()\`
+    const users = await getSql()`
       SELECT * FROM "User" WHERE id = ${userId}
     `;
     let user = users[0] || null;
@@ -41,7 +41,7 @@ export async function GET() {
       trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
       try {
-        const newUsers = await getSql()\`
+        const newUsers = await getSql()`
           INSERT INTO "User" (id, "subscriptionPlan", "trialEndsAt")
           VALUES (${userId}, 'PRO', ${trialEndsAt.toISOString()})
           RETURNING *
@@ -51,7 +51,7 @@ export async function GET() {
         console.log(`用户 ${userId} 已创建，7天试用激活，到期时间: ${trialEndsAt.toLocaleDateString()}`);
       } catch (dbError) {
         console.log(`插入用户失败，重新查询...`, dbError);
-        const retryUsers = await getSql()\`
+        const retryUsers = await getSql()`
           SELECT * FROM "User" WHERE id = ${userId}
         `;
         user = retryUsers[0] ?? null;

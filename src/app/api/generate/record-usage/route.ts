@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    const existingRecords = await getSql()\`
+    const existingRecords = await getSql()`
       SELECT * FROM "WallpaperUsage"
       WHERE "userId" = ${userId}
       AND "date" = ${todayString}
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       const newCount = existingUsage.count + 1;
       console.log(`更新使用记录: ${existingUsage.count} → ${newCount}`);
 
-      await getSql()\`
+      await getSql()`
         UPDATE "WallpaperUsage"
         SET "count" = ${newCount}
         WHERE id = ${existingUsage.id}
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     } else {
       console.log(`创建新使用记录: userId=${userId}, date=${todayString}, count=1`);
 
-      await getSql()\`
+      await getSql()`
         INSERT INTO "WallpaperUsage" ("userId", "date", "count")
         VALUES (${userId}, ${todayString}, 1)
       `;
