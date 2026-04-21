@@ -6,7 +6,7 @@ const noRedirectRoute = ["/api(.*)", "/trpc(.*)"];
 const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png", ".*\\.html"];
 
 export const isPublicRoute = createRouteMatcher([
-  new RegExp("/(\\w{2}/)?signin(.*)"),
+  new RegExp("/(\\w{2}/)?sign-in(.*)"),
   new RegExp("/(\\w{2}/)?terms(.*)"),
   new RegExp("/(\\w{2}/)?privacy(.*)"),
   new RegExp("/(\\w{2}/)?pricing(.*)"),
@@ -105,3 +105,10 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
     );
   }
 });
+
+export const config = {
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
+};

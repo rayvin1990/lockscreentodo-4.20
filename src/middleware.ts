@@ -1,1 +1,1 @@
-export { middleware } from "~/utils/clerk";
+export { config, middleware } from "~/utils/clerk";
