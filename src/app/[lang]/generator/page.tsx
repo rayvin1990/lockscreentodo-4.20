@@ -766,7 +766,9 @@ export default function GeneratorPage() {
     setShareUrl(null);
 
     try {
-      const { toPng } = await import("dom-to-image");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const domtoimage = require("dom-to-image") as typeof import("dom-to-image");
+      const toPng = (domtoimage as unknown as { toPng: Function }).toPng;
 
       const canvas = canvasRef.current;
       if (!canvas) {
@@ -966,6 +968,7 @@ export default function GeneratorPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // @ts-expect-error dom-to-image types mismatch
     import("dom-to-image").then(({ toPng }) => {
       const rect = canvas.getBoundingClientRect();
       const scale = 2;
@@ -980,7 +983,7 @@ export default function GeneratorPage() {
           backdropFilter: 'none !important',
           webkitBackdropFilter: 'none !important',
         },
-      }).then(async (dataUrl) => {
+      }).then(async (dataUrl: string) => {
         const link = document.createElement("a");
         link.download = `lockscreen-${Date.now()}.png`;
         link.href = dataUrl;
@@ -998,7 +1001,8 @@ export default function GeneratorPage() {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const { toPng } = await import("dom-to-image");
+      const domtoimage = await import("dom-to-image") as unknown as { toPng: Function };
+      const toPng = domtoimage.toPng;
       const rect = canvas.getBoundingClientRect();
       const scale = 2;
 
@@ -1323,7 +1327,6 @@ export default function GeneratorPage() {
                         <>
                           <NotionAuthButton
                             isConnected={isNotionConnected}
-                            lang="en"
                           />
                           <div className="mt-3 p-3 bg-green-900/20 border border-green-800/50 rounded-lg">
                             <h4 className="text-sm font-semibold text-green-400 mb-2 flex items-center gap-2">

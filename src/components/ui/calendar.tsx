@@ -54,9 +54,11 @@ function Calendar({
       }}
       components={{
         IconLeft: ({ ...props }) => (
+          // @ts-expect-error CSSProperties type conflict between packages
           <ChevronLeft className="h-4 w-4" {...props} />
         ),
         IconRight: ({ ...props }) => (
+          // @ts-expect-error CSSProperties type conflict between packages
           <ChevronRight className="h-4 w-4" {...props} />
         ),
       }}

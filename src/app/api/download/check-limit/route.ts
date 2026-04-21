@@ -83,7 +83,7 @@ export async function GET() {
       AND "date" >= ${weekStartString}
     `;
 
-    const weekDownloadCount = weekUsages?.reduce((sum, usage) => sum + (usage.downloadCount || 0), 0) || 0;
+    const weekDownloadCount = weekUsages?.reduce((sum: number, usage: { downloadCount?: number }) => sum + (usage.downloadCount || 0), 0) || 0;
 
     const weeklyLimit = isTrialExpired ? 1 : 3;
     const remainingThisWeek = Math.max(0, weeklyLimit - weekDownloadCount);
