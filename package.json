@@ -38,6 +38,7 @@
     "@saasfly/ui": "file:../../packages/ui",
     "@supabase/supabase-js": "^2.98.0",
     "@t3-oss/env-nextjs": "^0.13.11",
+    "@tanstack/react-table": "^8.21.3",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.9.1",
