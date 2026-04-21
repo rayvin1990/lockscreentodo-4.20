@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npx contentlayer2 build && npx next build",
+  "outputDirectory": ".next"
+}
