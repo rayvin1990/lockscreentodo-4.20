@@ -12,6 +12,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: '/en/generator',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
