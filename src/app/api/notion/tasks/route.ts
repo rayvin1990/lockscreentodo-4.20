@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabaseClient } from "~/lib/supabase/server";
 
+export const dynamic = 'force-dynamic';
+
 interface NotionTask {
   id: string;
   text: string;
