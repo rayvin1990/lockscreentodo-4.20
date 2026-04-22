@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <div>DIAGNOSTIC: This is the SAASFLY root project. If you see this on lockscreentodo.com, your Vercel Root Directory is set incorrectly.</div>;
+  // 实战修正：默认进入带语言后缀的 Landing Page，而不是直接进工具页
+  redirect("/en");
 }

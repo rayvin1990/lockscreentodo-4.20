@@ -20,16 +20,13 @@ export function getLocale(request: NextRequest): string | undefined {
   return matchLocale(languages, locales, i18n.defaultLocale);
 }
 
-// Needed for middleware
 function matchLocale(languages: string[], locales: readonly string[], defaultLocale: string): string | undefined {
-  // Simple implementation
   for (const lang of languages) {
     if (locales.includes(lang as any)) return lang;
   }
   return defaultLocale;
 }
 
-// Needed for middleware
 class Negotiator {
   headers: Record<string, string>;
   constructor(options: { headers: Record<string, string> }) {
@@ -51,11 +48,69 @@ export function isNoNeedProcess(request: NextRequest): boolean {
   return noNeedProcessRoute.some((route) => new RegExp(route).test(pathname));
 }
 
-/*
+// 实战修正：恢复被注释的中间件逻辑，并确保它重定向到首页而不是工具页
 export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
-... (existing logic)
+  if (req.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
+  }
+
+  if (isNoNeedProcess(req)) {
+    return null;
+  }
+
+  const pathname = req.nextUrl.pathname;
+  const searchParams = req.nextUrl.search;
+
+  // 1. 处理根入口 - 去往 Landing Page
+  if (pathname === "/") {
+    const locale = getLocale(req);
+    return NextResponse.redirect(new URL(`/${locale}${searchParams}`, req.url));
+  }
+
+  // 2. 补全缺失的语言代码
+  const pathnameIsMissingLocale = i18n.locales.every(
+    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
+  );
+
+  if (!isNoRedirect(req) && pathnameIsMissingLocale) {
+    const locale = getLocale(req);
+    return NextResponse.redirect(
+      new URL(
+        `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}${searchParams}`,
+        req.url,
+      ),
+    );
+  }
+
+  // 3. 检查是否为公开路由（Landing Page 就在这里）
+  if (isPublicRoute(req)) {
+    return null;
+  }
+
+  // 4. 保护受限路由
+  const { userId } = await auth();
+
+  if (!userId) {
+    const locale = getLocale(req);
+    let from = req.nextUrl.pathname;
+    if (req.nextUrl.search) {
+      from += req.nextUrl.search;
+    }
+    return NextResponse.redirect(
+      new URL(
+        `/${locale}/sign-in?from=${encodeURIComponent(from)}`,
+        req.url,
+      ),
+    );
+  }
 });
-*/
 
 export const config = {
   matcher: [
