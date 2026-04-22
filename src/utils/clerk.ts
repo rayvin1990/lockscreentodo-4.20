@@ -6,13 +6,10 @@ const noRedirectRoute = ["/api(.*)", "/trpc(.*)"];
 const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png", ".*\\.html"];
 
 export const isPublicRoute = createRouteMatcher([
-  new RegExp("/(\\w{2}/)?sign-in(.*)"),
-  new RegExp("/(\\w{2}/)?terms(.*)"),
-  new RegExp("/(\\w{2}/)?privacy(.*)"),
-  new RegExp("/(\\w{2}/)?pricing(.*)"),
-  new RegExp("/(\\w{2}/)?generator(.*)"),
-  new RegExp("^/\\w{2}$"),
-  new RegExp("/api/unsplash(.*)"),
+  "/",
+  new RegExp("^/(\\w{2}(/.*)?)$"),
+  new RegExp("^/api/(.*)$"),
+  new RegExp("^/trpc/(.*)$"),
 ]);
 
 export function getLocale(request: NextRequest): string | undefined {
@@ -71,24 +68,46 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   const pathname = req.nextUrl.pathname;
+  const searchParams = req.nextUrl.search;
+
+  // 1. Handle root redirect
+  if (pathname === "/") {
+    const locale = getLocale(req);
+    return NextResponse.redirect(new URL(`/${locale}/generator${searchParams}`, req.url));
+  }
+
+  // 2. Handle missing locale for non-API routes
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
   );
 
   if (!isNoRedirect(req) && pathnameIsMissingLocale) {
     const locale = getLocale(req);
+    const targetPath = pathname === "/" ? "/generator" : pathname;
     return NextResponse.redirect(
       new URL(
-        `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}`,
+        `/${locale}${targetPath.startsWith("/") ? "" : "/"}${targetPath}${searchParams}`,
         req.url,
       ),
     );
   }
 
+  // 3. Handle root locale redirect (e.g. /en or /en/) to /en/generator
+  const isRootLocale = i18n.locales.some(
+    (locale) => pathname === `/${locale}` || pathname === `/${locale}/`
+  );
+
+  if (isRootLocale) {
+    const locale = pathname.split("/")[1] || i18n.defaultLocale;
+    return NextResponse.redirect(new URL(`/${locale}/generator${searchParams}`, req.url));
+  }
+
+  // 4. Check if the current route is public
   if (isPublicRoute(req)) {
     return null;
   }
 
+  // 5. Protect all other routes
   const { userId } = await auth();
 
   if (!userId) {

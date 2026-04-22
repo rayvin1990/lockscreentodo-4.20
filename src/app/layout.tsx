@@ -101,10 +101,6 @@ const notoSansSC = Noto_Sans_SC({
   display: "swap",
 });
 
-export function generateStaticParams() {
-  return i18n.locales.map((locale) => ({ lang: locale }));
-}
-
 export const metadata = {
   title: {
     default: siteConfig.name,
