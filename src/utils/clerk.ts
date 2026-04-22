@@ -7,7 +7,7 @@ const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png", 
 
 export const isPublicRoute = createRouteMatcher([
   "/",
-  new RegExp("^/(\\w{2}(/.*)?)$"),
+  new RegExp("^/(\\w{2})/?$"), // 仅限 /en, /zh 等首页
   new RegExp("^/api/(.*)$"),
   new RegExp("^/trpc/(.*)$"),
 ]);
