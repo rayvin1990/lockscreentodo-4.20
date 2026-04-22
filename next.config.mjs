@@ -12,6 +12,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/en/generator',
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
