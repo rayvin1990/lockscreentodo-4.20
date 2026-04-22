@@ -176,6 +176,41 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Defensive: If no publishable key is found and we're not in dev, 
+  // we still need to render the html/body structure, but maybe skip Clerk features.
+  const content = (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          inter.variable,
+          roboto.variable,
+          poppins.variable,
+          montserrat.variable,
+          openSans.variable,
+          lato.variable,
+          sourceCodePro.variable,
+          firaCode.variable,
+          jetbrainsMono.variable,
+          notoSansSC.variable,
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.NODE_ENV === 'production') {
+    return content;
+  }
+
   return (
     <ClerkProvider
       {...clerkConfig}
@@ -200,32 +235,7 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            inter.variable,
-            roboto.variable,
-            poppins.variable,
-            montserrat.variable,
-            openSans.variable,
-            lato.variable,
-            sourceCodePro.variable,
-            firaCode.variable,
-            jetbrainsMono.variable,
-            notoSansSC.variable,
-          )}
-        >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </body>
-      </html>
+      {content}
     </ClerkProvider>
   );
 }
