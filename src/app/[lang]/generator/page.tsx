@@ -541,12 +541,15 @@ export default function GeneratorPage() {
       return;
     }
 
+    if (!supabase) return;
+
     try {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: true });
+        .order('y', { ascending: true });
+
 
       if (error) throw error;
 
@@ -582,6 +585,7 @@ export default function GeneratorPage() {
   };
 
   const saveTasksToSupabase = async (userId: string, tasks: Task[]) => {
+    if (!supabase) return;
     try {
       const validTasks = tasks.filter(task => task.text && task.text.trim() !== '');
       const uniqueTasks = Array.from(
