@@ -132,7 +132,7 @@ export async function GET() {
           canGenerate: false,
           reason: "TRIAL_EXPIRED",
           subscriptionPlan,
-          trialEndsAt: trialEndsAt.toISOString(),
+          trialEndsAt: trialEndsAt?.toISOString() || null,
           daysRemaining: 0,
           daysSinceExpired,
           message: "您的 7 天免费试用已结束，请升级 Pro 继续使用",
