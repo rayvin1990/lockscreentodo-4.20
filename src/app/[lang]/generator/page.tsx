@@ -740,7 +740,7 @@ export default function GeneratorPage() {
     }
 
     if (!limitResponse.ok || !limitData.canGenerate) {
-      if (limitData.reason === 'TRIAL_EXPIRED') {
+      if (limitData.reason === 'TRIAL_EXPIRED' || limitData.reason === 'FREE_USER') {
         setShowUpgradeModalPricing(true);
         toast({
           variant: "destructive",

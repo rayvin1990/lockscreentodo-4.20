@@ -102,27 +102,34 @@ export async function GET() {
       daysRemaining,
     });
 
-    if (subscriptionPlan === 'PRO') {
-      if (trialEndsAt && isTrialActive) {
-        console.log(`用户 ${userId} 试用期 Pro，剩余 ${daysRemaining} 天`);
-        return NextResponse.json({
-          canGenerate: true,
-          subscriptionPlan: 'PRO',
+    // 试用已过期，统一触发充值界面
+    if (trialEndsAt && !isTrialActive) {
+      const daysSinceExpired = Math.floor((now.getTime() - trialEndsAt.getTime()) / (1000 * 60 * 60 * 24));
+      console.log(`用户 ${userId} 试用已过期 ${daysSinceExpired} 天，显示充值界面`);
+      return NextResponse.json(
+        {
+          canGenerate: false,
+          reason: "TRIAL_EXPIRED",
+          subscriptionPlan,
           trialEndsAt: trialEndsAt.toISOString(),
-          daysRemaining,
-          isTrialActive: true,
-          message: `7天全功能试用 - 剩余 ${daysRemaining} 天`,
-        });
-      }
+          daysRemaining: 0,
+          daysSinceExpired,
+          message: "您的 7 天免费试用已结束，请升级 Pro 继续使用",
+        },
+        { status: 403 }
+      );
+    }
 
-      console.log(`用户 ${userId} Pro 用户，无限生成`);
+    // 试用有效期内
+    if (subscriptionPlan === 'PRO') {
+      console.log(`用户 ${userId} 试用期 Pro，剩余 ${daysRemaining} 天`);
       return NextResponse.json({
         canGenerate: true,
         subscriptionPlan: 'PRO',
-        trialEndsAt: null,
-        daysRemaining: 0,
-        isTrialActive: false,
-        message: `Pro 用户 - 无限生成`,
+        trialEndsAt: trialEndsAt.toISOString(),
+        daysRemaining,
+        isTrialActive: true,
+        message: `7天全功能试用 - 剩余 ${daysRemaining} 天`,
       });
     }
 
