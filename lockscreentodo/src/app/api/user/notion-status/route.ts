@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ connected: false }, { status: 401 });
     }
 
-    const result = await supabase.select('User', {
+    const result = await supabaseDb.select('User', {
       select: 'notionAccessToken, notionWorkspaceId',
       eq: { id: userId },
     });

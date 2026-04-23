@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const users = await supabase.select('User', {
+    const users = await supabaseDb.select('User', {
       select: 'notionAccessToken',
       eq: { id: userId },
     });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    const existingRecords = await supabase.select('WallpaperUsage', {
+    const existingRecords = await supabaseDb.select('WallpaperUsage', {
       eq: { userId: userId, date: todayString },
     });
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       const newDownloadCount = (existingUsage.downloadCount || 0) + 1;
       console.log(`更新下载记录: ${existingUsage.downloadCount} → ${newDownloadCount}`);
 
-      await supabase.update('WallpaperUsage',
+      await supabaseDb.update('WallpaperUsage',
         { downloadCount: newDownloadCount },
         { id: existingUsage.id }
       );
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     } else {
       console.log(`创建新使用记录（下载）: userId=${userId}, date=${todayString}`);
 
-      await supabase.insert('WallpaperUsage', {
+      await supabaseDb.insert('WallpaperUsage', {
         userId: userId,
         date: todayString,
         count: 0,

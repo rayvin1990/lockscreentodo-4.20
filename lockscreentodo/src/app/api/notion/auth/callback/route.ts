@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       workspace_id: tokenData.workspace_id,
     });
 
-    const existingUsers = await supabase.select('User', {
+    const existingUsers = await supabaseDb.select('User', {
       select: 'id',
       eq: { id: userId },
       limit: 1,
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      await supabase.update('User', {
+      await supabaseDb.update('User', {
         notionAccessToken: tokenData.access_token,
         notionWorkspaceId: tokenData.workspace_id,
       }, { id: userId });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     console.log(`API: Saving wallpaper for user ${userId}`, { imageUrl, taskCount, style });
 
     try {
-      const result = await supabase.insert('Wallpaper', {
+      const result = await supabaseDb.insert('Wallpaper', {
         userId: userId,
         imageUrl: imageUrl,
         taskCount: taskCount || 0,

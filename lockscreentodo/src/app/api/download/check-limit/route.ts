@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 import { isAfter, startOfWeek } from "date-fns";
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,7 @@ export async function GET() {
 
     console.log(`API: Checking download limit for user ${userId}`);
 
-    const users = await supabase.select('User', { eq: { id: userId } });
+    const users = await supabaseDb.select('User', { eq: { id: userId } });
     let user = users[0] || null;
 
     if (!user) {
@@ -32,7 +32,7 @@ export async function GET() {
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
-      const newUsers = await supabase.insert('User', {
+      const newUsers = await supabaseDb.insert('User', {
         id: userId,
         isPro: true,
         trialEndsAt: trialEndsAt.toISOString(),
@@ -70,7 +70,7 @@ export async function GET() {
     const weekStart = startOfWeek(now);
     const weekStartString = weekStart.toISOString().split('T')[0];
 
-    const weekUsages = await supabase.select('WallpaperUsage', {
+    const weekUsages = await supabaseDb.select('WallpaperUsage', {
       eq: { userId: userId },
     });
 

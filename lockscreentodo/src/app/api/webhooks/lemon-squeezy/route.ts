@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -84,7 +84,7 @@ async function getUserIdFromLemonCustomer(customerId: number | undefined): Promi
   if (!customerId) return null;
 
   try {
-    const users = await supabase.select('User', {
+    const users = await supabaseDb.select('User', {
       select: 'id',
       eq: { lemonSqueezyCustomerId: customerId.toString() },
     });
@@ -105,7 +105,7 @@ async function handleSubscriptionCreated(userId: string, payload: LemonEvent) {
   console.log(`  - variantId: ${variantId}`);
   console.log(`  - customerId: ${customerId}`);
 
-  await supabase.update('User', {
+  await supabaseDb.update('User', {
     subscriptionPlan: 'PRO',
     subscriptionEndsAt: endsAt ? new Date(endsAt).toISOString() : null,
     lemonSqueezyVariantId: variantId?.toString() || null,
@@ -127,7 +127,7 @@ async function handleSubscriptionRenewed(userId: string, payload: LemonEvent) {
 
   console.log(`[LemonSqueezy Webhook] Renewing subscription for user ${userId}, new endsAt: ${endsAt}`);
 
-  await supabase.update('User', {
+  await supabaseDb.update('User', {
     subscriptionEndsAt: endsAt ? new Date(endsAt).toISOString() : null,
     updated_at: new Date().toISOString(),
   }, { id: userId });
@@ -136,7 +136,7 @@ async function handleSubscriptionRenewed(userId: string, payload: LemonEvent) {
 async function handleSubscriptionCancelled(userId: string, payload: LemonEvent) {
   console.log(`[LemonSqueezy Webhook] Subscription cancelled for user ${userId}`);
 
-  await supabase.update('User', {
+  await supabaseDb.update('User', {
     subscriptionPlan: 'FREE',
     isPro: false,
     updated_at: new Date().toISOString(),
@@ -146,7 +146,7 @@ async function handleSubscriptionCancelled(userId: string, payload: LemonEvent) 
 async function handleSubscriptionExpired(userId: string, payload: LemonEvent) {
   console.log(`[LemonSqueezy Webhook] Subscription expired for user ${userId}`);
 
-  await supabase.update('User', {
+  await supabaseDb.update('User', {
     subscriptionPlan: 'FREE',
     subscriptionEndsAt: null,
     isPro: false,

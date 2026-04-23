@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "~/lib/supabase/server";
+import { supabaseDb } from "~/lib/supabase/server";
 import { isAfter } from "date-fns";
 
 // Allow unauthenticated access for limit check
@@ -32,7 +32,7 @@ export async function GET() {
 
     console.log(`[check-limit] Checking limit for user ${userId}`);
 
-    const users = await supabase.select('User', { eq: { id: userId } });
+    const users = await supabaseDb.select('User', { eq: { id: userId } });
     let user = users[0] || null;
 
     if (!user) {
@@ -41,7 +41,7 @@ export async function GET() {
       trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
       try {
-        const newUsers = await supabase.insert('User', {
+        const newUsers = await supabaseDb.insert('User', {
           id: userId,
           subscriptionPlan: 'PRO',
           trialEndsAt: trialEndsAt.toISOString(),
@@ -51,7 +51,7 @@ export async function GET() {
         console.log(`用户 ${userId} 已创建，7天试用激活，到期时间: ${trialEndsAt.toLocaleDateString()}`);
       } catch (dbError) {
         console.log(`插入用户失败，重新查询...`, dbError);
-        const retryUsers = await supabase.select('User', { eq: { id: userId } });
+        const retryUsers = await supabaseDb.select('User', { eq: { id: userId } });
         user = retryUsers[0] ?? null;
 
         if (!user) {
