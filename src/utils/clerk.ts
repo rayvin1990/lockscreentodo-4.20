@@ -3,13 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { i18n } from "~/config/i18n-config";
 
 const noRedirectRoute = ["/api(.*)", "/trpc(.*)"];
-const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png", ".*\\.html"];
+const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png", ".*\\.html", "^/_next/"];
 
 export const isPublicRoute = createRouteMatcher([
   "/",
-  new RegExp("^/(\\w{2})/?$"), // 仅限 /en, /zh 等首页
-  new RegExp("^/api/(.*)$"),
-  new RegExp("^/trpc/(.*)$"),
+  "/en",
+  "/zh",
+  "/en/sign-in",
+  "/zh/sign-in",
+  "/en/sign-up",
+  "/zh/sign-up",
+  "/api/:path*",
+  "/trpc/:path*",
+  "/api/generate/check-limit",
+  "/api/download/check-limit",
+  "/en/generator",
+  "/zh/generator",
 ]);
 
 export function getLocale(request: NextRequest): string | undefined {
@@ -49,6 +58,9 @@ export function isNoNeedProcess(request: NextRequest): boolean {
 }
 
 // 实战修正：恢复被注释的中间件逻辑，并确保它重定向到首页而不是工具页
+// 限额接口允许未登录访问（返回明确的错误而不是重定向）
+const limitCheckRoute = ["/api/generate/check-limit", "/api/download/check-limit"];
+
 export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
   if (req.method === "OPTIONS") {
     return new NextResponse(null, {
@@ -65,16 +77,19 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
     return null;
   }
 
+  // 限额接口不需要登录，直接放行
   const pathname = req.nextUrl.pathname;
+  if (limitCheckRoute.some(route => pathname === route)) {
+    return null;
+  }
+
   const searchParams = req.nextUrl.search;
 
-  // 1. 处理根入口 - 去往 Landing Page
   if (pathname === "/") {
     const locale = getLocale(req);
     return NextResponse.redirect(new URL(`/${locale}${searchParams}`, req.url));
   }
 
-  // 2. 补全缺失的语言代码
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
   );
@@ -89,12 +104,10 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
     );
   }
 
-  // 3. 检查是否为公开路由（Landing Page 就在这里）
   if (isPublicRoute(req)) {
     return null;
   }
 
-  // 4. 保护受限路由
   const { userId } = await auth();
 
   if (!userId) {

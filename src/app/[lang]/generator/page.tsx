@@ -747,13 +747,16 @@ export default function GeneratorPage() {
           title: "Trial period has ended",
           description: "Please upgrade to Pro to continue generating wallpapers",
         });
-      } else if (limitData.reason === 'NOT_AUTHENTICATED') {
+      } else if (limitData.reason === 'NOT_AUTHENTICATED' || limitData.isGuest) {
+        // User not logged in - show toast but don't redirect
+        // Let them decide when to sign in
         toast({
           variant: "destructive",
           title: "Please sign in first",
           description: "Sign in to generate wallpapers",
         });
-        router.push(`/${currentLang}/sign-in`);
+        // Don't redirect - just show the error
+        // User can click Sign In button on the page
       } else {
         console.error("Limit check failed:", JSON.stringify(limitData));
         toast({

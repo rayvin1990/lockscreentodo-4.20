@@ -3,32 +3,43 @@ import { auth } from "@clerk/nextjs/server";
 import { createNeonClient } from "~/lib/neon/server";
 import { isAfter } from "date-fns";
 
+// Allow unauthenticated access for limit check
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
 let sql: ReturnType<typeof createNeonClient> | null = null;
 function getSql() {
-  if (!sql) sql = createNeonClient();
+  if (!sql) {
+    console.log('[check-limit] Creating Neon client...');
+    sql = createNeonClient();
+  }
   return sql;
 }
 
 export async function GET() {
   try {
+    // Get auth - allow unauthenticated for this endpoint
     const { userId } = await auth();
 
+    console.log('[check-limit] Request received, userId:', userId);
+
     if (!userId) {
-      return NextResponse.json(
-        {
-          error: "请先登录",
-          canGenerate: false,
-          reason: "NOT_AUTHENTICATED",
-        },
-        { status: 401 }
-      );
+      console.log('[check-limit] No userId - returning guest response');
+      // Return guest/unauthenticated response instead of 401
+      // This allows the UI to show "Please sign in" without a redirect
+      return NextResponse.json({
+        canGenerate: false,
+        isGuest: true,
+        reason: "NOT_AUTHENTICATED",
+        message: "请先登录",
+        subscriptionPlan: null,
+        trialEndsAt: null,
+        daysRemaining: 0,
+      }, { status: 200 });  // Use 200 so frontend can handle it
     }
 
-    console.log(`API: 检查用户 ${userId} 的生成限额`);
+    console.log(`[check-limit] Checking limit for user ${userId}`);
 
     const users = await getSql()`
       SELECT * FROM "User" WHERE id = ${userId}
