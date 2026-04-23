@@ -1,21 +1,28 @@
-// Supabase Server Client using official SDK v2
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+// Supabase REST API client - direct fetch approach for reliability
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+function getHeaders() {
+  return {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+  };
+}
 
-// Create a single instance for server-side use
-const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+function buildUrl(table: string, params: Record<string, string>) {
+  const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.append(key, value);
+  }
+  return url.toString();
+}
 
-// Legacy exports for compatibility
-export { supabase };
-export const sql = supabase;
-export const createServerSupabaseClient = () => supabase;
+// Legacy exports
+export const supabase = { from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: () => ({ single: () => ({}) }) }) }) }) }) };
+export const sql = {};
+export const createServerSupabaseClient = () => ({});
 
 // Helper functions for common operations
 export const supabaseDb = {
@@ -25,72 +32,108 @@ export const supabaseDb = {
     order?: string,
     limit?: number,
   }): Promise<T[]> {
-    let query = supabase.from(table).select(options?.select || '*');
+    const params: Record<string, string> = {};
+    if (options?.select) params['select'] = options.select;
+    else params['select'] = '*';
 
     if (options?.eq) {
       for (const [key, value] of Object.entries(options.eq)) {
-        query = query.eq(key, value);
+        params[`${key}=eq.${value}`] = '';
       }
     }
 
     if (options?.order) {
-      const [column, direction] = options.order.split('.');
-      query = query.order(column, { ascending: direction !== '.desc' });
+      params['order'] = options.order;
     }
 
     if (options?.limit) {
-      query = query.limit(options.limit);
+      params['limit'] = String(options.limit);
     }
 
-    const { data, error } = await query;
-    if (error) {
-      console.error(`[Supabase] SELECT ${table} error:`, error.message);
+    const url = buildUrl(table, params);
+
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[Supabase] SELECT ${table} error ${res.status}:`, text);
+        return [];
+      }
+      return await res.json();
+    } catch (err: any) {
+      console.error(`[Supabase] SELECT ${table} failed:`, err.message);
       return [];
     }
-    return (data as T[]) || [];
   },
 
   async insert<T = any>(table: string, data: Record<string, any>): Promise<T[]> {
-    const { data: result, error } = await supabase
-      .from(table)
-      .insert(data)
-      .select()
-      .single();
+    const url = `${SUPABASE_URL}/rest/v1/${table}`;
 
-    if (error) {
-      console.error(`[Supabase] INSERT ${table} error:`, error.message);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[Supabase] INSERT ${table} error ${res.status}:`, text);
+        return [];
+      }
+      return await res.json();
+    } catch (err: any) {
+      console.error(`[Supabase] INSERT ${table} failed:`, err.message);
       return [];
     }
-    return result ? [result as T] : [];
   },
 
   async update(table: string, data: Record<string, any>, filters: Record<string, any>): Promise<any[]> {
-    let query = supabase.from(table).update(data);
-
+    let url = `${SUPABASE_URL}/rest/v1/${table}?`;
     for (const [key, value] of Object.entries(filters)) {
-      query = query.eq(key, value);
+      url += `${encodeURIComponent(key)}=eq.${encodeURIComponent(value)}&`;
     }
 
-    const { error } = await query;
-    if (error) {
-      console.error(`[Supabase] UPDATE ${table} error:`, error.message);
+    try {
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[Supabase] UPDATE ${table} error ${res.status}:`, text);
+        return [];
+      }
+      return await res.json();
+    } catch (err: any) {
+      console.error(`[Supabase] UPDATE ${table} failed:`, err.message);
       return [];
     }
-    return [{ success: true }];
   },
 
   async delete(table: string, filters: Record<string, any>): Promise<any[]> {
-    let query = supabase.from(table).delete();
-
+    let url = `${SUPABASE_URL}/rest/v1/${table}?`;
     for (const [key, value] of Object.entries(filters)) {
-      query = query.eq(key, value);
+      url += `${encodeURIComponent(key)}=eq.${encodeURIComponent(value)}&`;
     }
 
-    const { error } = await query;
-    if (error) {
-      console.error(`[Supabase] DELETE ${table} error:`, error.message);
+    try {
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[Supabase] DELETE ${table} error ${res.status}:`, text);
+        return [];
+      }
+      return await res.json();
+    } catch (err: any) {
+      console.error(`[Supabase] DELETE ${table} failed:`, err.message);
       return [];
     }
-    return [{ success: true }];
   },
 };
