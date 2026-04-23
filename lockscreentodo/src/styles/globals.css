@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222deg 47% 11%;
+    --foreground: 0deg 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 0deg 0% 63.9%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0deg 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0deg 0% 98%;
+
+    --primary: 222deg 47% 11%;
+    --primary-foreground: 0deg 0% 98%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0deg 0% 98%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0deg 0% 98%;
+
+    --destructive: 0deg 100% 50%;
+    --destructive-foreground: 210deg 40% 98%;
+
+    --ring: 215deg 20.2% 65.1%;
+
+    --radius: 0.5rem;
+
+    /* Font variables */
+    --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+
+    /* Custom brand colors */
+    --brand-green: 159 84% 39%;
+    --brand-blue: 229 84% 63%;
+    --brand-bg: 222 19% 8%;
+    --brand-card: 217 19% 16%;
+  }
+
+  .dark {
+    --background: 222 19% 8%;
+    --foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 216 34% 17%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+
+  .container {
+    @apply max-sm:px-4;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar styling */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    background-clip: content-box;
+  }
+
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Clerk Modal - Fix height issue */
+  [data-clerk-modal-wrapper] {
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  [data-clerk-modal-wrapper] > div {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Fix Clerk card in modal */
+  .clerk-Modal {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  .clerk-Modal-Card {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
