@@ -110,11 +110,11 @@ export async function GET() {
 
     // 付费订阅用户（subscriptionEndsAt 在未来）：无限生成
     if (lemonSqueezyVariantId && isSubscriptionActive) {
-      console.log(`用户 ${userId} 是付费订阅用户，订阅到 ${subscriptionEndsAt.toLocaleDateString()}，无限生成`);
+      console.log(`用户 ${userId} 是付费订阅用户，订阅到 ${subscriptionEndsAt?.toLocaleDateString()}，无限生成`);
       return NextResponse.json({
         canGenerate: true,
         subscriptionPlan: 'PRO',
-        subscriptionEndsAt: subscriptionEndsAt.toISOString(),
+        subscriptionEndsAt: subscriptionEndsAt?.toISOString() || null,
         trialEndsAt: trialEndsAt?.toISOString() || null,
         daysRemaining: 0,
         isSubscriptionActive: true,
