@@ -17,6 +17,7 @@ export const isPublicRoute = createRouteMatcher([
   "/trpc/:path*",
   "/api/generate/check-limit",
   "/api/download/check-limit",
+  "/api/webhooks/lemon-squeezy",
   "/en/generator",
   "/zh/generator",
 ]);
