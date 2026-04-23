@@ -147,7 +147,7 @@ export async function GET() {
       return NextResponse.json({
         canGenerate: true,
         subscriptionPlan: 'PRO',
-        trialEndsAt: trialEndsAt.toISOString(),
+        trialEndsAt: trialEndsAt?.toISOString() || null,
         daysRemaining,
         isTrialActive: true,
         message: `7天全功能试用 - 剩余 ${daysRemaining} 天`,
