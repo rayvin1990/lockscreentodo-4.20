@@ -1,7 +1,11 @@
 'use client';
 import { SignIn } from '@clerk/nextjs';
+import { useSearchParams } from 'next/navigation';
 
 export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') || '/zh/generator';
+
   return (
     <div className="flex justify-center items-center min-h-screen">
       <SignIn
@@ -13,7 +17,8 @@ export default function SignInPage() {
             divider: 'hidden',
           },
         }}
-        redirectUrl="/api/auth/google-callback"
+        redirectUrl={from}
+        afterSignInUrl={from}
       />
     </div>
   );
