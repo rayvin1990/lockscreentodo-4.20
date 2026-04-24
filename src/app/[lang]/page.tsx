@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { ArrowRight, Sparkles, Lightbulb, CheckCircle2, Circle, Palette, Zap, QrCode, Smartphone } from "lucide-react";
+import { trackEvent } from "~/lib/analytics";
 
 // 使用 dynamic import 并禁用 SSR
 const RealisticPhoneMockup = dynamic(
@@ -109,12 +110,19 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
               </p>
 
               <div className="flex items-center justify-center lg:justify-start gap-8 pt-2">
-                <Link href={`/${lang}/generator`}>
+                <Link
+                  href={`/${lang}/generator`}
+                  onClick={() => trackEvent("home_cta_click", { target: "generator", lang })}
+                >
                   <Button variant="outline" className="h-12 px-8 text-[12px] font-bold tracking-widest uppercase border-white/20 hover:bg-white hover:text-black rounded-none transition-all shadow-xl shadow-white/5">
                     Start Now
                   </Button>
                 </Link>
-                <Link href="#pricing" className="text-[11px] font-bold tracking-widest uppercase text-white/40 hover:text-white transition-colors">
+                <Link
+                  href="#pricing"
+                  className="text-[11px] font-bold tracking-widest uppercase text-white/40 hover:text-white transition-colors"
+                  onClick={() => trackEvent("home_pricing_click", { lang })}
+                >
                   Pricing
                 </Link>
               </div>
