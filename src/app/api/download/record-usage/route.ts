@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createNeonClient } from "@/lib/neon/server";
+import { getTodayWallpaperUsage, upsertWallpaperUsage } from "~/lib/supabase/admin";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
-
-let sql: ReturnType<typeof createNeonClient> | null = null;
-function getSql() {
-  if (!sql) sql = createNeonClient();
-  return sql;
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,11 +27,7 @@ export async function POST(req: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    const existingRecords = await getSql()`
-      SELECT * FROM "WallpaperUsage"
-      WHERE "userId" = ${userId}
-      AND "date" = ${todayString}
-    `;
+    const existingRecords = await getTodayWallpaperUsage(userId, todayString);
 
     if (existingRecords.length > 0) {
       const existingUsage = existingRecords[0];
@@ -50,20 +40,18 @@ export async function POST(req: NextRequest) {
       const newDownloadCount = (existingUsage.downloadCount || 0) + 1;
       console.log(`更新下载记录: ${existingUsage.downloadCount} → ${newDownloadCount}`);
 
-      await getSql()`
-        UPDATE "WallpaperUsage"
-        SET "downloadCount" = ${newDownloadCount}
-        WHERE id = ${existingUsage.id}
-      `;
+      await upsertWallpaperUsage(userId, todayString, {
+        downloadCount: newDownloadCount,
+      });
 
       console.log(`更新成功，今日下载 ${newDownloadCount} 次`);
     } else {
       console.log(`创建新使用记录（下载）: userId=${userId}, date=${todayString}`);
 
-      await getSql()`
-        INSERT INTO "WallpaperUsage" ("userId", "date", "count", "downloadCount")
-        VALUES (${userId}, ${todayString}, 0, 1)
-      `;
+      await upsertWallpaperUsage(userId, todayString, {
+        count: 0,
+        downloadCount: 1,
+      });
 
       console.log(`创建成功，今日首次下载`);
     }

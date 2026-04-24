@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createServerSupabaseClient } from "~/lib/supabase/server";
+import { getUser } from "~/lib/supabase/admin";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
     const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json({ connected: false }, { status: 401 });
     }
 
-    const result = await supabase`
-      SELECT "notionAccessToken", "notionWorkspaceId"
-      FROM "User"
-      WHERE id = ${userId}
-    `;
-    const user = result[0] ?? null;
+    const user = await getUser(userId);
 
     return NextResponse.json({
       connected: Boolean(user?.notionAccessToken),

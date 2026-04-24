@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createNeonClient } from "@/lib/neon/server";
+import { insertWallpaper } from "~/lib/supabase/admin";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-let sql: ReturnType<typeof createNeonClient> | null = null;
-function getSql() {
-  if (!sql) sql = createNeonClient();
-  return sql;
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,32 +35,30 @@ export async function POST(req: NextRequest) {
 
     console.log(`API: Saving wallpaper for user ${userId}`, { imageUrl, taskCount, style });
 
-    try {
-      const result = await getSql()`
-        INSERT INTO "Wallpaper" ("userId", "imageUrl", "taskCount", "style", "prompt")
-        VALUES (${userId}, ${imageUrl}, ${taskCount || 0}, ${style || null}, ${prompt || null})
-        RETURNING *
-      `;
+    const wallpaper = await insertWallpaper(userId, {
+      imageUrl,
+      taskCount: taskCount || 0,
+      style: style || null,
+      prompt: prompt || null,
+    });
 
-      const wallpaper = result[0];
-      console.log(`Wallpaper saved successfully: ${wallpaper?.id}`);
-
+    if (!wallpaper) {
+      // Table might not exist, return success anyway
+      console.log('Wallpaper save skipped (table might not exist)');
       return NextResponse.json({
         success: true,
-        wallpaper: wallpaper,
-        message: "Wallpaper saved successfully",
+        message: "Wallpaper save skipped",
+        tableMissing: true,
       });
-    } catch (insertError: any) {
-      if (insertError.code === '42P01') {
-        console.log('Wallpaper table does not exist yet. Please create it in Neon');
-        return NextResponse.json({
-          success: true,
-          message: "Wallpaper table not created yet, skipping save",
-          tableMissing: true,
-        });
-      }
-      throw insertError;
     }
+
+    console.log(`Wallpaper saved successfully: ${wallpaper.id}`);
+
+    return NextResponse.json({
+      success: true,
+      wallpaper: wallpaper,
+      message: "Wallpaper saved successfully",
+    });
 
   } catch (error: any) {
     console.error("Save wallpaper error:", error);

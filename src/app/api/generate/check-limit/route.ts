@@ -1,79 +1,57 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createNeonClient } from "~/lib/neon/server";
-import { isAfter } from "date-fns";
+import { getUser, upsertUser, getWallpaperUsage } from "~/lib/supabase/admin";
+import { isAfter, startOfWeek } from "date-fns";
 
 // Allow unauthenticated access for limit check
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
-let sql: ReturnType<typeof createNeonClient> | null = null;
-function getSql() {
-  if (!sql) {
-    console.log('[check-limit] Creating Neon client...');
-    sql = createNeonClient();
-  }
-  return sql;
-}
-
 export async function GET() {
   try {
-    // Get auth - allow unauthenticated for this endpoint
     const { userId } = await auth();
 
     console.log('[check-limit] Request received, userId:', userId);
 
     if (!userId) {
-      console.log('[check-limit] No userId - returning guest response');
-      // Return guest/unauthenticated response instead of 401
-      // This allows the UI to show "Please sign in" without a redirect
       return NextResponse.json({
         canGenerate: false,
         isGuest: true,
         reason: "NOT_AUTHENTICATED",
-        message: "请先登录",
+        message: "Please sign in first",
         subscriptionPlan: null,
         trialEndsAt: null,
         daysRemaining: 0,
-      }, { status: 200 });  // Use 200 so frontend can handle it
+      }, { status: 200 });
     }
 
     console.log(`[check-limit] Checking limit for user ${userId}`);
 
-    const users = await getSql()`
-      SELECT * FROM "User" WHERE id = ${userId}
-    `;
-    let user = users[0] || null;
+    let user = await getUser(userId);
 
     if (!user) {
-      console.log(`用户 ${userId} 不存在，自动激活7天试用`);
+      console.log(`User ${userId} not found, activating 7-day trial`);
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
-      try {
-        const newUsers = await getSql()`
-          INSERT INTO "User" (id, "subscriptionPlan", "trialEndsAt")
-          VALUES (${userId}, 'PRO', ${trialEndsAt.toISOString()})
-          RETURNING *
-        `;
+      user = await upsertUser(userId, {
+        subscriptionPlan: 'PRO',
+        trialEndsAt: trialEndsAt.toISOString(),
+        isPro: true,
+      });
 
-        user = newUsers[0] ?? null;
-        console.log(`用户 ${userId} 已创建，7天试用激活，到期时间: ${trialEndsAt.toLocaleDateString()}`);
-      } catch (dbError) {
-        console.log(`插入用户失败，重新查询...`, dbError);
-        const retryUsers = await getSql()`
-          SELECT * FROM "User" WHERE id = ${userId}
-        `;
-        user = retryUsers[0] ?? null;
+      if (!user) {
+        // Retry fetch
+        user = await getUser(userId);
+      }
 
-        if (!user) {
-          console.error(`无法创建或查询用户 ${userId}`);
-          return NextResponse.json(
-            { error: "User not found", canGenerate: false, reason: "USER_NOT_FOUND" },
-            { status: 404 }
-          );
-        }
+      if (!user) {
+        console.error(`Unable to create or query user ${userId}`);
+        return NextResponse.json(
+          { error: "User not found", canGenerate: false, reason: "USER_NOT_FOUND" },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({
@@ -81,7 +59,7 @@ export async function GET() {
         subscriptionPlan: 'PRO',
         trialEndsAt: trialEndsAt.toISOString(),
         daysRemaining: 7,
-        message: `7天全功能试用 - 剩余 7 天`,
+        message: `7-day trial - 7 days remaining`,
       });
     }
 
@@ -90,6 +68,7 @@ export async function GET() {
     const subscriptionEndsAt = user?.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
     const subscriptionPlan = user?.subscriptionPlan || 'FREE';
     const lemonSqueezyVariantId = user?.lemonSqueezyVariantId || null;
+    const isPro = user?.isPro || false;
 
     const daysRemaining = trialEndsAt
       ? Math.max(0, Math.floor((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
@@ -98,19 +77,20 @@ export async function GET() {
     const isTrialActive = trialEndsAt ? isAfter(trialEndsAt, now) : false;
     const isSubscriptionActive = subscriptionEndsAt ? isAfter(subscriptionEndsAt, now) : false;
 
-    console.log('用户订阅状态:', {
+    console.log('User subscription status:', {
       subscriptionPlan,
       trialEndsAt: trialEndsAt?.toDateString(),
       subscriptionEndsAt: subscriptionEndsAt?.toDateString(),
       lemonSqueezyVariantId,
       isTrialActive,
       isSubscriptionActive,
+      isPro,
       daysRemaining,
     });
 
-    // 付费订阅用户（subscriptionEndsAt 在未来）：无限生成
-    if (lemonSqueezyVariantId && isSubscriptionActive) {
-      console.log(`用户 ${userId} 是付费订阅用户，订阅到 ${subscriptionEndsAt?.toLocaleDateString()}，无限生成`);
+    // Pro subscribers: unlimited generation
+    if ((lemonSqueezyVariantId && isSubscriptionActive) || (isPro && isSubscriptionActive)) {
+      console.log(`User ${userId} is a Pro subscriber until ${subscriptionEndsAt?.toLocaleDateString()}, unlimited generation`);
       return NextResponse.json({
         canGenerate: true,
         subscriptionPlan: 'PRO',
@@ -119,14 +99,56 @@ export async function GET() {
         daysRemaining: 0,
         isSubscriptionActive: true,
         lemonSqueezyVariantId,
-        message: `Pro 订阅用户 - 无限生成`,
+        message: `Pro subscriber - Unlimited generation`,
       });
     }
 
-    // 试用已过期且无付费订阅：触发充值界面
-    if (trialEndsAt && !isTrialActive) {
-      const daysSinceExpired = Math.floor((now.getTime() - trialEndsAt.getTime()) / (1000 * 60 * 60 * 24));
-      console.log(`用户 ${userId} 试用已过期 ${daysSinceExpired} 天，显示充值界面`);
+    // Active trial
+    if ((subscriptionPlan === 'PRO' || isPro) && isTrialActive) {
+      console.log(`User ${userId} in trial Pro, ${daysRemaining} days remaining`);
+      return NextResponse.json({
+        canGenerate: true,
+        subscriptionPlan: 'PRO',
+        trialEndsAt: trialEndsAt?.toISOString() || null,
+        daysRemaining,
+        isTrialActive: true,
+        message: `7-day trial - ${daysRemaining} days remaining`,
+      });
+    }
+
+    // Trial expired or free user: check weekly quota
+    const isTrialExpired = trialEndsAt && !isTrialActive;
+
+    console.log(`Checking weekly quota for user ${userId} (TrialExpired: ${isTrialExpired})`);
+
+    const weekStart = startOfWeek(now);
+    const weekStartString = weekStart.toISOString().split('T')[0];
+
+    const weekUsages = await getWallpaperUsage(userId, weekStartString);
+
+    const weekDownloadCount = weekUsages?.reduce((sum: number, usage: any) => sum + (usage.downloadCount || 0), 0) || 0;
+    const weeklyLimit = isTrialExpired ? 1 : 3;
+    const remainingThisWeek = Math.max(0, weeklyLimit - weekDownloadCount);
+
+    if (remainingThisWeek > 0) {
+      console.log(`User ${userId} trial expired but has ${remainingThisWeek} weekly quota remaining`);
+      return NextResponse.json({
+        canGenerate: true,
+        subscriptionPlan: 'FREE',
+        trialEndsAt: trialEndsAt?.toISOString() || null,
+        daysRemaining: 0,
+        isTrialExpired,
+        weekDownloadCount,
+        remainingThisWeek,
+        message: isTrialExpired
+          ? `Trial ended - 1 free generation per week (Remaining: ${remainingThisWeek})`
+          : `Free user - 3 free generations per week (Remaining: ${remainingThisWeek})`,
+      });
+    }
+
+    // Quota exhausted
+    if (isTrialExpired) {
+      console.log(`User ${userId} trial expired and quota exhausted`);
       return NextResponse.json(
         {
           canGenerate: false,
@@ -134,45 +156,35 @@ export async function GET() {
           subscriptionPlan,
           trialEndsAt: trialEndsAt?.toISOString() || null,
           daysRemaining: 0,
-          daysSinceExpired,
-          message: "您的 7 天免费试用已结束，请升级 Pro 继续使用",
+          weekDownloadCount,
+          remainingThisWeek: 0,
+          message: "Your 7-day trial has ended and weekly free quota is exhausted. Please upgrade to Pro to continue.",
         },
         { status: 403 }
       );
     }
 
-    // 试用有效期内
-    if (subscriptionPlan === 'PRO' && isTrialActive) {
-      console.log(`用户 ${userId} 试用期 Pro，剩余 ${daysRemaining} 天`);
-      return NextResponse.json({
-        canGenerate: true,
-        subscriptionPlan: 'PRO',
-        trialEndsAt: trialEndsAt?.toISOString() || null,
-        daysRemaining,
-        isTrialActive: true,
-        message: `7天全功能试用 - 剩余 ${daysRemaining} 天`,
-      });
-    }
-
-    console.log(`用户 ${userId} 是 ${subscriptionPlan} 用户，禁止生成`);
+    console.log(`User ${userId} is ${subscriptionPlan} user and quota exhausted`);
 
     return NextResponse.json(
       {
-        error: "请升级 Pro 继续使用",
+        error: "Weekly free quota exhausted. Please upgrade to Pro to continue.",
         canGenerate: false,
         reason: "FREE_USER",
         subscriptionPlan,
         trialEndsAt: trialEndsAt?.toISOString() || null,
         daysRemaining: 0,
+        weekDownloadCount,
+        remainingThisWeek: 0,
       },
       { status: 403 }
     );
 
   } catch (error: any) {
-    console.error("检查限额错误:", error);
+    console.error("Check limit error:", error);
     return NextResponse.json(
       {
-        error: "检查生成限额失败，请稍后再试",
+        error: "Failed to check generation limit, please try again later",
         canGenerate: false,
         reason: "INTERNAL_ERROR",
         details: error.message,

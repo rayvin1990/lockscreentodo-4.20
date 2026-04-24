@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
-import { createNeonClient } from "~/lib/neon/server";
+import { getUserByLemonCustomer, updateUserSubscription, upsertUser } from "~/lib/supabase/admin";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-let sql: ReturnType<typeof createNeonClient> | null = null;
-function getSql() {
-  if (!sql) sql = createNeonClient();
-  return sql;
-}
 
 // Lemon Squeezy webhook events we handle
 type LemonEvent = {
@@ -89,15 +83,8 @@ export async function POST(request: Request) {
 async function getUserIdFromLemonCustomer(customerId: number | undefined): Promise<string | null> {
   if (!customerId) return null;
 
-  try {
-    const users = await getSql()`
-      SELECT id FROM "User" WHERE "lemonSqueezyCustomerId" = ${customerId.toString()}
-    `;
-    return users[0]?.id || null;
-  } catch (e) {
-    console.error('[LemonSqueezy Webhook] Error finding user by customer ID:', e);
-    return null;
-  }
+  const user = await getUserByLemonCustomer(customerId.toString());
+  return user?.id || null;
 }
 
 async function handleSubscriptionCreated(userId: string, payload: LemonEvent) {
@@ -110,18 +97,15 @@ async function handleSubscriptionCreated(userId: string, payload: LemonEvent) {
   console.log(`  - variantId: ${variantId}`);
   console.log(`  - customerId: ${customerId}`);
 
-  await getSql()`
-    UPDATE "User"
-    SET
-      "subscriptionPlan" = 'PRO',
-      "subscriptionEndsAt" = ${endsAt ? new Date(endsAt) : null},
-      "lemonSqueezyVariantId" = ${variantId?.toString() || null},
-      "lemonSqueezyCustomerId" = ${customerId?.toString() || null},
-      "lemonSqueezySubscriptionId" = ${payload.data.id},
-      "isPro" = true,
-      "updated_at" = NOW()
-    WHERE id = ${userId}
-  `;
+  await updateUserSubscription(userId, {
+    subscriptionPlan: 'PRO',
+    subscriptionEndsAt: endsAt ? new Date(endsAt) : null,
+    lemonSqueezyVariantId: variantId?.toString() || null,
+    lemonSqueezyCustomerId: customerId?.toString() || null,
+    lemonSqueezySubscriptionId: payload.data.id,
+    isPro: true,
+    updated_at: new Date().toISOString(),
+  });
 
   console.log(`[LemonSqueezy Webhook] Subscription created/updated for user ${userId}`);
 }
@@ -135,40 +119,31 @@ async function handleSubscriptionRenewed(userId: string, payload: LemonEvent) {
 
   console.log(`[LemonSqueezy Webhook] Renewing subscription for user ${userId}, new endsAt: ${endsAt}`);
 
-  await getSql()`
-    UPDATE "User"
-    SET
-      "subscriptionEndsAt" = ${endsAt ? new Date(endsAt) : null},
-      "updated_at" = NOW()
-    WHERE id = ${userId}
-  `;
+  await updateUserSubscription(userId, {
+    subscriptionEndsAt: endsAt ? new Date(endsAt) : null,
+    updated_at: new Date().toISOString(),
+  });
 }
 
 async function handleSubscriptionCancelled(userId: string, payload: LemonEvent) {
   console.log(`[LemonSqueezy Webhook] Subscription cancelled for user ${userId}`);
 
-  await getSql()`
-    UPDATE "User"
-    SET
-      "subscriptionPlan" = 'FREE',
-      "isPro" = false,
-      "updated_at" = NOW()
-    WHERE id = ${userId}
-  `;
+  await updateUserSubscription(userId, {
+    subscriptionPlan: 'FREE',
+    isPro: false,
+    updated_at: new Date().toISOString(),
+  });
 }
 
 async function handleSubscriptionExpired(userId: string, payload: LemonEvent) {
   console.log(`[LemonSqueezy Webhook] Subscription expired for user ${userId}`);
 
-  await getSql()`
-    UPDATE "User"
-    SET
-      "subscriptionPlan" = 'FREE',
-      "subscriptionEndsAt" = null,
-      "isPro" = false,
-      "updated_at" = NOW()
-    WHERE id = ${userId}
-  `;
+  await updateUserSubscription(userId, {
+    subscriptionPlan: 'FREE',
+    subscriptionEndsAt: null,
+    isPro: false,
+    updated_at: new Date().toISOString(),
+  });
 }
 
 async function handleSubscriptionResumed(userId: string, payload: LemonEvent) {

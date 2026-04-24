@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createNeonClient } from "@/lib/neon/server";
+import { getUser, upsertUser, getWallpaperUsage } from "~/lib/supabase/admin";
 import { isAfter, startOfWeek } from "date-fns";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
-
-let sql: ReturnType<typeof createNeonClient> | null = null;
-function getSql() {
-  if (!sql) sql = createNeonClient();
-  return sql;
-}
 
 export async function GET() {
   try {
@@ -30,43 +24,55 @@ export async function GET() {
 
     console.log(`API: Checking download limit for user ${userId}`);
 
-    const users = await getSql()`
-      SELECT * FROM "User" WHERE id = ${userId}
-    `;
-    let user = users[0] || null;
+    let user = await getUser(userId);
 
     if (!user) {
       console.log(`User ${userId} not found, activating 7-day trial`);
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
-      const newUsers = await getSql()`
-        INSERT INTO "User" (id, "isPro", "trialEndsAt", "subscriptionPlan")
-        VALUES (${userId}, true, ${trialEndsAt.toISOString()}, 'PRO')
-        RETURNING *
-      `;
+      user = await upsertUser(userId, {
+        isPro: true,
+        trialEndsAt: trialEndsAt.toISOString(),
+        subscriptionPlan: 'PRO',
+      });
 
-      user = newUsers[0] ?? null;
+      if (!user) {
+        user = await getUser(userId);
+      }
+
+      if (!user) {
+        console.error(`Unable to create or query user ${userId}`);
+        return NextResponse.json(
+          { error: "User not found", canDownload: false, reason: "USER_NOT_FOUND" },
+          { status: 404 }
+        );
+      }
+
       console.log(`User ${userId} created with 7-day trial, expires on ${trialEndsAt.toLocaleDateString()}`);
     }
 
     const now = new Date();
     const trialEndsAt = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
+    const subscriptionEndsAt = user?.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
     const isTrialActive = trialEndsAt && isAfter(trialEndsAt, now);
     const isTrialExpired = trialEndsAt && !isTrialActive;
+    const isSubscriptionActive = subscriptionEndsAt && isAfter(subscriptionEndsAt, now);
+    const isPro = user?.isPro || user?.subscriptionPlan === 'PRO' || isSubscriptionActive;
+
     const daysRemaining = trialEndsAt
-      ? Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
 
-    if (user?.isPro || isTrialActive) {
-      console.log(`User ${userId} (${user?.isPro ? 'Pro' : 'Trial'}) - unlimited downloads`);
+    if (isPro || isTrialActive) {
+      console.log(`User ${userId} (${isPro ? 'Pro' : 'Trial'}) - unlimited downloads`);
       return NextResponse.json({
         canDownload: true,
-        isPro: user?.isPro ?? false,
-        isTrialActive,
+        isPro: !!isPro,
+        isTrialActive: !!isTrialActive,
         isTrialExpired: false,
         remainingThisWeek: -1,
-        message: user?.isPro
+        message: isPro
           ? "Pro user - unlimited downloads"
           : `Trial period - ${daysRemaining} days remaining`,
       });
@@ -77,11 +83,7 @@ export async function GET() {
     const weekStart = startOfWeek(now);
     const weekStartString = weekStart.toISOString().split('T')[0];
 
-    const weekUsages = await getSql()`
-      SELECT * FROM "WallpaperUsage"
-      WHERE "userId" = ${userId}
-      AND "date" >= ${weekStartString}
-    `;
+    const weekUsages = await getWallpaperUsage(userId, weekStartString);
 
     const weekDownloadCount = weekUsages?.reduce((sum: number, usage: { downloadCount?: number }) => sum + (usage.downloadCount || 0), 0) || 0;
 

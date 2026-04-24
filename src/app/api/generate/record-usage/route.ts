@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createNeonClient } from "~/lib/neon/server";
+import { getTodayWallpaperUsage, upsertWallpaperUsage } from "~/lib/supabase/admin";
 
 export const dynamic = 'force-dynamic';
-
-let sql: ReturnType<typeof createNeonClient> | null = null;
-function getSql() {
-  if (!sql) sql = createNeonClient();
-  return sql;
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,61 +12,55 @@ export async function POST(req: NextRequest) {
       console.error('record-usage: No userId found');
       return NextResponse.json(
         {
-          error: "请先登录",
+          error: "Please sign in first",
           success: false,
         },
         { status: 401 }
       );
     }
 
-    console.log(`API: 记录用户 ${userId} 的壁纸生成`);
+    console.log(`API: Recording wallpaper generation for user ${userId}`);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    const existingRecords = await getSql()`
-      SELECT * FROM "WallpaperUsage"
-      WHERE "userId" = ${userId}
-      AND "date" = ${todayString}
-    `;
+    const existingRecords = await getTodayWallpaperUsage(userId, todayString);
 
     const existingUsage = existingRecords[0];
 
-    console.log(`今日使用记录:`, existingUsage ? `已存在，count=${existingUsage.count}` : '不存在');
+    console.log(`Today's usage record:`, existingUsage ? `exists, count=${existingUsage.count}` : 'not found');
 
     if (existingUsage) {
-      const newCount = existingUsage.count + 1;
-      console.log(`更新使用记录: ${existingUsage.count} → ${newCount}`);
+      const newCount = (existingUsage.count || 0) + 1;
+      console.log(`Updating usage record: ${existingUsage.count} -> ${newCount}`);
 
-      await getSql()`
-        UPDATE "WallpaperUsage"
-        SET "count" = ${newCount}
-        WHERE id = ${existingUsage.id}
-      `;
+      await upsertWallpaperUsage(userId, todayString, {
+        count: newCount,
+      });
 
-      console.log(`更新成功，今日已生成 ${newCount} 次`);
+      console.log(`Update successful, today's generation count: ${newCount}`);
     } else {
-      console.log(`创建新使用记录: userId=${userId}, date=${todayString}, count=1`);
+      console.log(`Creating new usage record: userId=${userId}, date=${todayString}, count=1`);
 
-      await getSql()`
-        INSERT INTO "WallpaperUsage" ("userId", "date", "count")
-        VALUES (${userId}, ${todayString}, 1)
-      `;
+      await upsertWallpaperUsage(userId, todayString, {
+        count: 1,
+        downloadCount: 0,
+      });
 
-      console.log(`创建成功，今日首次生成`);
+      console.log(`Creation successful, first generation today`);
     }
 
     return NextResponse.json({
       success: true,
-      message: "记录成功",
+      message: "Recorded successfully",
     });
 
   } catch (error: any) {
-    console.error("记录使用次数错误:", error);
+    console.error("Error recording usage count:", error);
     return NextResponse.json(
       {
-        error: "记录使用次数失败",
+        error: "Failed to record usage count",
         success: false,
         details: error.message,
       },
