@@ -28,6 +28,7 @@ import { DndContext, closestCenter, DragEndEvent, DragOverlay } from "@dnd-kit/c
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDownloadLimit } from "~/hooks/use-download-limit";
+import { trackEvent } from "~/lib/analytics";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase client safely
@@ -547,8 +548,7 @@ export default function GeneratorPage() {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', userId)
-        .order('y', { ascending: true });
+        .eq('user_id', userId);
 
 
       if (error) throw error;
@@ -949,6 +949,10 @@ export default function GeneratorPage() {
       await recordDownload();
 
       setShowSuccessModal(true);
+      trackEvent("wallpaper_generate_success", {
+        taskCount: wallpaperStyle.tasks.length,
+        signedIn: isSignedIn,
+      });
 
       toast({
         title: "Wallpaper generated successfully!",
@@ -998,6 +1002,10 @@ export default function GeneratorPage() {
         link.click();
 
         await recordDownload();
+        trackEvent("wallpaper_download_success", {
+          taskCount: wallpaperStyle.tasks.length,
+          signedIn: isSignedIn,
+        });
       });
     });
   };
