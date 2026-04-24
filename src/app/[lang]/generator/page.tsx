@@ -3,7 +3,7 @@
 // VERSION MARKER: 2025-02-27-v2 - Wallpaper save feature added
 console.log('Generator page loaded - VERSION 2025-02-27-v2');
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Smartphone, Plus, Trash2, X, Download, Share2, Twitter, Facebook, Linkedin, Send, ShoppingCart, Settings, GripVertical } from "lucide-react";
@@ -24,6 +24,8 @@ import { FeedbackWidget } from "~/components/feedback-widget";
 import { UpgradeModalPricing } from "~/components/lockscreen/upgrade-modal-pricing";
 import { UserStatusBadge } from "~/components/lockscreen/user-status-badge";
 import { NotionAuthButton } from "~/components/notion-auth-button";
+import { NotionTaskSelector } from "~/components/notion-task-selector";
+import { useNotionSync, formatLastSyncTime } from "~/hooks/use-notion-sync";
 import { DndContext, closestCenter, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -119,6 +121,56 @@ export default function GeneratorPage() {
 
   const [isNotionConnected, setIsNotionConnected] = useState(false);
   const [isImportingFromNotion, setIsImportingFromNotion] = useState(false);
+  const [selectedNotionTaskIds, setSelectedNotionTaskIds] = useState<Set<string>>(new Set());
+  const [showNotionTaskSelector, setShowNotionTaskSelector] = useState(false);
+
+  const { tasks: syncedNotionTasks, isSyncing, lastSyncTime, syncNow } = useNotionSync(isNotionConnected);
+
+  const handleToggleNotionTask = useCallback((taskId: string) => {
+    setSelectedNotionTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleAddSelectedNotionTasksToWallpaper = useCallback(() => {
+    const tasksToAdd = syncedNotionTasks
+      .filter(t => selectedNotionTaskIds.has(t.id))
+      .map((notionTask, index) => ({
+        id: notionTask.id,
+        text: notionTask.text,
+        x: 132,
+        y: wallpaperStyle.tasks.length * 30 + (index * 30),
+        fontSize: 14,
+        color: "#000000",
+        backgroundColor: "transparent",
+        backgroundOpacity: 0.5,
+        opacity: 1,
+        isBold: true,
+        isItalic: false,
+        isCompleted: false,
+        textAlign: "center" as const,
+        fontFamily: "Comic Sans Ms.Fun",
+      }));
+
+    setWallpaperStyle(prev => ({
+      ...prev,
+      tasks: [...prev.tasks, ...tasksToAdd],
+    }));
+
+    setSelectedNotionTaskIds(new Set());
+    setShowNotionTaskSelector(false);
+
+    toast({
+      title: "Tasks Added!",
+      description: `Added ${tasksToAdd.length} task(s) from Notion to your wallpaper.`,
+    });
+  }, [syncedNotionTasks, selectedNotionTaskIds, wallpaperStyle.tasks.length, toast]);
 
   const [tasksLocked, setTasksLocked] = useState(true);
   const [containerPosition, setContainerPosition] = useState({ x: 0, y: 200 });
@@ -548,7 +600,8 @@ export default function GeneratorPage() {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .is('deleted_at', null); // Only load non-deleted tasks
 
 
       if (error) throw error;
@@ -594,24 +647,28 @@ export default function GeneratorPage() {
 
       const currentTaskIds = uniqueTasks.map(task => task.id);
 
+      // Soft delete tasks that are no longer in wallpaper (set deleted_at instead of hard delete)
       if (currentTaskIds.length > 0) {
-        const { error: deleteError } = await supabase
+        const { error: softDeleteError } = await supabase
           .from('tasks')
-          .delete()
+          .update({ deleted_at: new Date().toISOString() })
           .eq('user_id', userId)
-          .not('notion_task_id', 'in', `(${currentTaskIds.join(',')})`);
+          .not('notion_task_id', 'in', `(${currentTaskIds.map(id => `'${id}'`).join(',')})`)
+          .is('deleted_at', null);
 
-        if (deleteError) {
-          console.error('Failed to delete removed tasks:', deleteError);
+        if (softDeleteError) {
+          console.error('Failed to soft delete removed tasks:', softDeleteError);
         }
       } else {
-        const { error: deleteAllError } = await supabase
+        // Soft delete all tasks if no tasks in wallpaper
+        const { error: softDeleteAllError } = await supabase
           .from('tasks')
-          .delete()
-          .eq('user_id', userId);
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .is('deleted_at', null);
 
-        if (deleteAllError) {
-          console.error('Failed to delete all tasks:', deleteAllError);
+        if (softDeleteAllError) {
+          console.error('Failed to soft delete all tasks:', softDeleteAllError);
         }
         console.log('No tasks to save');
         return;
@@ -622,16 +679,23 @@ export default function GeneratorPage() {
         text: task.text,
         completed: task.isCompleted || false,
         notion_task_id: task.id,
+        // Preserve existing notion_database_id and notion_last_edited_time
+        // by using a raw update that doesn't overwrite them if already set
       }));
 
-      const { error } = await supabase
-        .from('tasks')
-        .upsert(tasksToUpsert, {
-          onConflict: 'notion_task_id',
-          ignoreDuplicates: false,
-        });
+      // Upsert tasks, preserving notion sync metadata
+      for (const task of tasksToUpsert) {
+        const { error: upsertError } = await supabase
+          .from('tasks')
+          .upsert(task, {
+            onConflict: 'notion_task_id',
+            ignoreDuplicates: false,
+          });
 
-      if (error) throw error;
+        if (upsertError) {
+          console.error('Failed to upsert task:', upsertError);
+        }
+      }
 
       console.log('Saved tasks to Supabase:', tasksToUpsert.length);
     } catch (error) {
@@ -1376,27 +1440,45 @@ export default function GeneratorPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
+                          {/* Sync Status Indicator */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${isSyncing ? "bg-yellow-400 animate-pulse" : "bg-green-400"}`} />
+                              <span className="text-xs text-gray-400">
+                                {isSyncing ? "Syncing..." : `Last sync: ${formatLastSyncTime(lastSyncTime)}`}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => syncNow()}
+                              disabled={isSyncing}
+                              className="text-xs text-brand-green hover:text-brand-green/80 transition-colors disabled:opacity-50"
+                            >
+                              {isSyncing ? "Syncing..." : "Sync Now"}
+                            </button>
+                          </div>
+
+                          {/* Notion Task Selector Button */}
                           <button
-                            onClick={importFromNotion}
-                            disabled={isImportingFromNotion}
+                            onClick={() => setShowNotionTaskSelector(!showNotionTaskSelector)}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-white/90 disabled:bg-white/50 disabled:text-black/50 text-black rounded-xl font-semibold transition-all text-sm"
                           >
-                            {isImportingFromNotion ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Importing...
-                              </>
-                            ) : (
-                              <>
-                                <Download className="w-4 h-4" />
-                                Refresh Tasks from Notion
-                              </>
-                            )}
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Select Tasks from Notion
                           </button>
-                          <p className="text-xs text-gray-400 text-center">
-                            Re-sync tasks from your Notion databases
-                          </p>
+
+                          {/* Task Selector Panel */}
+                          {showNotionTaskSelector && (
+                            <NotionTaskSelector
+                              tasks={syncedNotionTasks}
+                              selectedTaskIds={selectedNotionTaskIds}
+                              onToggleTask={handleToggleNotionTask}
+                              onAddSelectedToWallpaper={handleAddSelectedNotionTasksToWallpaper}
+                              isLoading={isSyncing && syncedNotionTasks.length === 0}
+                            />
+                          )}
                         </div>
                       )}
                     </div>
