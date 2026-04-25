@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { getUser, getWallpaperUsage, getTodayWallpaperUsage } from "~/lib/supabase/admin";
 import { startOfWeek, startOfMonth } from "date-fns";
-import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getAuthenticatedUserId(req);
+    const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json({ error: "Please sign in first" }, { status: 401 });

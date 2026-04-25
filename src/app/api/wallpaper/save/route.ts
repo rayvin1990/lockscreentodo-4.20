@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { insertWallpaper } from "~/lib/supabase/admin";
-import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getAuthenticatedUserId(req);
+    const { userId } = await auth();
 
     if (!userId) {
       console.error('save-wallpaper: No userId found');
