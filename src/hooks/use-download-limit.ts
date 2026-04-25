@@ -17,7 +17,7 @@ interface DownloadLimitStatus {
  * Custom Hook to check user download limit
  */
 export function useDownloadLimit() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const [downloadLimitStatus, setDownloadLimitStatus] = useState<DownloadLimitStatus>({
     canDownload: false,
     isPro: false,
@@ -48,9 +48,14 @@ export function useDownloadLimit() {
     setIsLoading(true);
 
     try {
+      const token = await getToken();
       const response = await fetch('/api/download/check-limit', {
         method: 'GET',
         cache: 'no-store',
+        credentials: 'include',
+        headers: token ? {
+          Authorization: `Bearer ${token}`,
+        } : undefined,
       });
 
       const data = await response.json();
@@ -140,10 +145,13 @@ export function useDownloadLimit() {
     }
 
     try {
+      const token = await getToken();
       const response = await fetch('/api/download/record-usage', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 

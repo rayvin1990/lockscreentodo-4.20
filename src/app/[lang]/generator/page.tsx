@@ -70,9 +70,27 @@ export default function GeneratorPage() {
   const router = useRouter();
   const [currentLang, setCurrentLang] = useState('en');
   const { toast } = useToast();
-  const { isSignedIn, isLoaded, userId } = useAuth();
+  const { isSignedIn, isLoaded, userId, getToken } = useAuth();
 
   const { downloadLimitStatus, checkDownloadLimit, recordDownload } = useDownloadLimit();
+
+  const fetchWithClerkAuth = useCallback(
+    async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const headers = new Headers(init.headers);
+      const token = isSignedIn ? await getToken() : null;
+
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+
+      return fetch(input, {
+        ...init,
+        credentials: "include",
+        headers,
+      });
+    },
+    [getToken, isSignedIn],
+  );
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -443,7 +461,6 @@ export default function GeneratorPage() {
         tasks: newTasks
       }));
 
-      const { userId } = useAuth();
       if (userId) {
         await saveTasksToSupabase(userId, newTasks);
       }
@@ -530,7 +547,7 @@ export default function GeneratorPage() {
     setIsImportingFromNotion(true);
 
     try {
-      const response = await fetch("/api/notion/tasks");
+      const response = await fetchWithClerkAuth("/api/notion/tasks");
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -711,7 +728,7 @@ export default function GeneratorPage() {
       if (!isSignedIn) return;
 
       try {
-        const response = await fetch("/api/user/notion-status");
+        const response = await fetchWithClerkAuth("/api/user/notion-status");
         if (response.ok) {
           const data = await response.json();
           const wasConnected = isNotionConnected;
@@ -738,7 +755,7 @@ export default function GeneratorPage() {
       });
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [isSignedIn]);
+  }, [fetchWithClerkAuth, isSignedIn, isNotionConnected]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
@@ -758,6 +775,15 @@ export default function GeneratorPage() {
 
   const generateWallpaper = async () => {
     console.log('Starting wallpaper generation...');
+
+    if (!isLoaded) {
+      toast({
+        variant: "destructive",
+        title: "Authentication is still loading",
+        description: "Please try again in a moment",
+      });
+      return;
+    }
 
     if (!isSignedIn) {
       console.log('User not authenticated');
@@ -787,7 +813,7 @@ export default function GeneratorPage() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      limitResponse = await fetch("/api/generate/check-limit", {
+      limitResponse = await fetchWithClerkAuth("/api/generate/check-limit", {
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -967,7 +993,7 @@ export default function GeneratorPage() {
 
       console.log('Recording wallpaper generation...');
       try {
-        const recordResponse = await fetch('/api/generate/record-usage', {
+        const recordResponse = await fetchWithClerkAuth('/api/generate/record-usage', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -989,7 +1015,7 @@ export default function GeneratorPage() {
 
       console.log('Saving wallpaper to history...');
       try {
-        const saveWallpaperResponse = await fetch('/api/wallpaper/save', {
+        const saveWallpaperResponse = await fetchWithClerkAuth('/api/wallpaper/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

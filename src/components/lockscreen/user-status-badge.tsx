@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton, useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,26 @@ interface UserStatus {
 
 export function UserStatusBadge() {
   const { user } = useUser();
+  const { isSignedIn, getToken } = useAuth();
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUserStatus = async () => {
+      if (!isSignedIn) {
+        setUserStatus(null);
+        return;
+      }
+
       setLoading(true);
       try {
-        const response = await fetch("/api/generate/check-limit");
+        const token = await getToken();
+        const response = await fetch("/api/generate/check-limit", {
+          credentials: "include",
+          headers: token ? {
+            Authorization: `Bearer ${token}`,
+          } : undefined,
+        });
         if (response.ok) {
           const data = await response.json();
           setUserStatus(data);
@@ -32,7 +44,7 @@ export function UserStatusBadge() {
       }
     };
     fetchUserStatus();
-  }, [user]);
+  }, [getToken, isSignedIn, user]);
 
   return (
     <div className="flex items-center gap-3">
@@ -62,7 +74,10 @@ export function UserStatusBadge() {
       {/* 2. 未登录态 - 引导按钮 */}
       <SignedOut>
         <Link href="/sign-in">
-           <Button size="sm" className="rounded-full bg-indigo-600 hover:bg-indigo-500 font-bold text-[10px] uppercase tracking-widest px-4 h-8">
+           <Button 
+             size="sm" 
+             className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-widest px-6 h-10 shadow-[0_0_20px_rgba(79,70,229,0.4)] transition-all hover:scale-105 active:scale-95"
+           >
              Sign In
            </Button>
         </Link>
