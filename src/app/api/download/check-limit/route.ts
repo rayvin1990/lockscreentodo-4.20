@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { getUser, upsertUser, getWallpaperUsage } from "~/lib/supabase/admin";
 import { isAfter, startOfWeek } from "date-fns";
+import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { userId } = await auth();
+    const userId = await getAuthenticatedUserId(req);
 
     if (!userId) {
       return NextResponse.json(
