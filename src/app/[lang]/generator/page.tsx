@@ -77,7 +77,7 @@ export default function GeneratorPage() {
   const fetchWithClerkAuth = useCallback(
     async (input: RequestInfo | URL, init: RequestInit = {}) => {
       const headers = new Headers(init.headers);
-      const token = isSignedIn ? await getToken() : null;
+      const token = await getToken();
 
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
@@ -89,7 +89,7 @@ export default function GeneratorPage() {
         headers,
       });
     },
-    [getToken, isSignedIn],
+    [getToken],
   );
 
   useEffect(() => {
@@ -785,7 +785,9 @@ export default function GeneratorPage() {
       return;
     }
 
-    if (!isSignedIn) {
+    const authToken = await getToken();
+
+    if (!authToken) {
       console.log('User not authenticated');
       toast({
         variant: "destructive",
@@ -815,6 +817,9 @@ export default function GeneratorPage() {
 
       limitResponse = await fetchWithClerkAuth("/api/generate/check-limit", {
         signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       clearTimeout(timeout);
 

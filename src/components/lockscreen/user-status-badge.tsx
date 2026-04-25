@@ -19,19 +19,19 @@ export function UserStatusBadge() {
 
   useEffect(() => {
     const fetchUserStatus = async () => {
-      if (!isSignedIn) {
-        setUserStatus(null);
-        return;
-      }
-
       setLoading(true);
       try {
         const token = await getToken();
+        if (!token) {
+          setUserStatus(null);
+          return;
+        }
+
         const response = await fetch("/api/generate/check-limit", {
           credentials: "include",
-          headers: token ? {
+          headers: {
             Authorization: `Bearer ${token}`,
-          } : undefined,
+          },
         });
         if (response.ok) {
           const data = await response.json();

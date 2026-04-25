@@ -28,8 +28,7 @@ const clerkConfig = {
   development: process.env.NODE_ENV === 'development',
 };
 
-const clerkPublishableKey =
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_placeholder";
+const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -207,7 +206,7 @@ export default function RootLayout({
     </html>
   );
 
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.NODE_ENV === 'production') {
+  if (!clerkPublishableKey) {
     return content;
   }
 

@@ -30,7 +30,7 @@ export function useDownloadLimit() {
   const [isLoading, setIsLoading] = useState(false);
 
   const checkDownloadLimit = async (): Promise<DownloadLimitStatus> => {
-    if (!isLoaded || !isSignedIn) {
+    if (!isLoaded) {
       const notAuthStatus: DownloadLimitStatus = {
         canDownload: false,
         isPro: false,
@@ -49,13 +49,28 @@ export function useDownloadLimit() {
 
     try {
       const token = await getToken();
+      if (!token) {
+        const notAuthStatus: DownloadLimitStatus = {
+          canDownload: false,
+          isPro: false,
+          isTrialActive: false,
+          isTrialExpired: false,
+          remainingThisWeek: 0,
+          weekDownloadCount: 0,
+          message: 'Please log in first',
+          reason: 'NOT_AUTHENTICATED',
+        };
+        setDownloadLimitStatus(notAuthStatus);
+        return notAuthStatus;
+      }
+
       const response = await fetch('/api/download/check-limit', {
         method: 'GET',
         cache: 'no-store',
         credentials: 'include',
-        headers: token ? {
+        headers: {
           Authorization: `Bearer ${token}`,
-        } : undefined,
+        },
       });
 
       const data = await response.json();
@@ -139,19 +154,19 @@ export function useDownloadLimit() {
   };
 
   const recordDownload = async (): Promise<boolean> => {
-    if (!isSignedIn) {
-      console.warn('User not logged in, skipping download record');
-      return false;
-    }
-
     try {
       const token = await getToken();
+      if (!token) {
+        console.warn('User not logged in, skipping download record');
+        return false;
+      }
+
       const response = await fetch('/api/download/record-usage', {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
       });
 
