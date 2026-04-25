@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { ArrowRight, Sparkles, Lightbulb, CheckCircle2, Circle, Palette, Zap, QrCode, Smartphone } from "lucide-react";
-import { UserStatusBadge } from "~/components/lockscreen/user-status-badge";
 import { trackEvent } from "~/lib/analytics";
 
 // 使用 dynamic import 并禁用 SSR
@@ -87,7 +86,7 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
           </div>
           <div className="flex items-center gap-4">
              <Link href={`/${lang}/generator`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Generator</Link>
-             <UserStatusBadge />
+           <Link href={`/${lang}/dashboard/settings`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Dashboard</Link>
           </div>
         </div>
       </nav>
