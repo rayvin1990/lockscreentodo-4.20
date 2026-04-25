@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { createServerSupabaseClient } from "~/lib/supabase/server";
-import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,7 @@ interface NotionQueryResponse {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getAuthenticatedUserId(req);
+    const { userId } = await auth();
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
