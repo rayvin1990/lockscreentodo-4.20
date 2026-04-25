@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { ArrowRight, Sparkles, Lightbulb, CheckCircle2, Circle, Palette, Zap, QrCode, Smartphone } from "lucide-react";
+import { UserStatusBadge } from "~/components/lockscreen/user-status-badge";
 import { trackEvent } from "~/lib/analytics";
 
 // 使用 dynamic import 并禁用 SSR
@@ -75,6 +76,22 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
   return (
     <div className="flex flex-col min-h-screen bg-[#020205] text-white/90 selection:bg-white/10 font-light tracking-tight antialiased">
       
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020205]/80 backdrop-blur-md">
+        <div className="container mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <CheckCircle2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold tracking-tight text-lg">Lockscreen Todo</span>
+          </div>
+          <div className="flex items-center gap-4">
+             <Link href={`/${lang}/generator`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Generator</Link>
+             <UserStatusBadge />
+          </div>
+        </div>
+      </nav>
+
       {/* 结构化数据 SEO */}
       <script
         type="application/ld+json"
@@ -206,8 +223,37 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
       </section>
 
       {/* Footer */}
-      <footer className="py-24 text-center opacity-30 border-t border-white/5">
-          <p className="text-[9px] font-bold tracking-[0.6em] uppercase">© 2026 Lockscreen Todo • Built for Focus</p>
+      <footer className="py-24 border-t border-white/5 bg-black/20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left mb-16">
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Product</h4>
+              <ul className="space-y-2">
+                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Lock Screen Todo</Link></li>
+                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Reminder Wallpaper</Link></li>
+                <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">Generator</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Solutions</h4>
+              <ul className="space-y-2">
+                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Daily Tasks</Link></li>
+                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Medication Reminders</Link></li>
+                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Habit Tracker</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Legal</h4>
+              <ul className="space-y-2">
+                <li><Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="text-center opacity-30 pt-8 border-t border-white/5">
+            <p className="text-[9px] font-bold tracking-[0.6em] uppercase">© 2026 Lockscreen Todo • Built for Focus</p>
+          </div>
+        </div>
       </footer>
 
       {isInspirationOpen && (
