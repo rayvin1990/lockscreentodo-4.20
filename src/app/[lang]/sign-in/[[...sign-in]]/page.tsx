@@ -15,7 +15,7 @@ export default function SignInPage() {
         </div>
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <SignIn
-            redirectUrl={from}
+            fallbackRedirectUrl={from}
             afterSignInUrl={from}
           />
         </div>
