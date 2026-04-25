@@ -15,7 +15,6 @@ export default function SignInPage() {
         </div>
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <SignIn
-            routing={false}
             redirectUrl={from}
             afterSignInUrl={from}
           />
