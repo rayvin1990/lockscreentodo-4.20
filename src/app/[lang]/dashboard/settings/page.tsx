@@ -85,11 +85,7 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
           </div>
           <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
             <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-              {user?.imageUrl ? (
-                <img src={user.imageUrl} className="w-8 h-8 rounded-full" alt="" />
-              ) : (
-                <User className="text-indigo-400" />
-              )}
+              <User className="text-indigo-400" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-white">{user?.primaryEmailAddress?.emailAddress || "Loading..."}</p>
