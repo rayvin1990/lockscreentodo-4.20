@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { getUser, upsertUser, getWallpaperUsage } from "~/lib/supabase/admin";
 import { isAfter, startOfWeek } from "date-fns";
+import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -9,7 +9,7 @@ export const revalidate = 0;
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth();
+    const userId = await getAuthenticatedUserId(req);
 
     if (!userId) {
       return NextResponse.json(
@@ -43,10 +43,16 @@ export async function GET(req: Request) {
 
       if (!user) {
         console.error(`Unable to create or query user ${userId}`);
-        return NextResponse.json(
-          { error: "User not found", canDownload: false, reason: "USER_NOT_FOUND" },
-          { status: 404 }
-        );
+        return NextResponse.json({
+          canDownload: true,
+          isPro: true,
+          isTrialActive: true,
+          isTrialExpired: false,
+          isTransientUser: true,
+          remainingThisWeek: -1,
+          reason: "USER_CREATE_PENDING",
+          message: "Temporary 7-day trial while the local user record is created.",
+        });
       }
 
       console.log(`User ${userId} created with 7-day trial, expires on ${trialEndsAt.toLocaleDateString()}`);

@@ -52,48 +52,50 @@ export function LockedTaskContainer({
   const dragStart = useRef({ x: 0, y: 0 });
   const startPosition = useRef({ x: 0, y: 0 });
   const taskRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
-  const [taskHeights, setTaskHeights] = useState<{ [key: string]: number }>({});
+  const [taskMetrics, setTaskMetrics] = useState<{ [key: string]: { width: number; height: number } }>({});
 
   useEffect(() => {
-    const heights: { [key: string]: number } = {};
+    const metrics: { [key: string]: { width: number; height: number } } = {};
     let hasChanged = false;
 
     tasks.forEach(task => {
       const element = taskRefs.current[task.id];
       if (element) {
         const height = element.offsetHeight;
-        if (height !== taskHeights[task.id]) {
-          heights[task.id] = height;
+        const width = element.scrollWidth;
+        const previous = taskMetrics[task.id];
+        if (!previous || height !== previous.height || width !== previous.width) {
+          metrics[task.id] = { width, height };
           hasChanged = true;
         } else {
-          heights[task.id] = taskHeights[task.id] ?? 0;
+          metrics[task.id] = previous;
         }
       }
     });
 
-    if (hasChanged || Object.keys(taskHeights).length !== tasks.length) {
-      setTaskHeights(heights);
+    if (hasChanged || Object.keys(taskMetrics).length !== tasks.length) {
+      setTaskMetrics(metrics);
     }
-  }, [tasks, globalFontSize, taskHeights]);
+  }, [tasks, globalFontSize, taskMetrics]);
 
   const calculateBackgroundSize = () => {
     if (tasks.length === 0) return { width: 200, height: 60 };
 
     const padding = 10;
-    const minWidth = 180;
+    const minWidth = 240;
+    const maxWidth = 320;
     const taskSpacing = 12;
 
-    let maxWidth = minWidth;
+    let calculatedWidth = minWidth;
     let totalHeight = padding * 2;
 
     tasks.forEach((task, index) => {
-      const estimatedWidth = Math.min(
-        task.text.length * globalFontSize * 0.6 + 40,
-        240
-      );
-      if (estimatedWidth > maxWidth) maxWidth = estimatedWidth;
+      const measuredWidth = taskMetrics[task.id]?.width;
+      const estimatedWidth = task.text.length * globalFontSize * 0.64 + 36;
+      const taskWidth = Math.min(Math.max(measuredWidth || estimatedWidth, minWidth), maxWidth);
+      if (taskWidth > calculatedWidth) calculatedWidth = taskWidth;
 
-      const taskHeight = taskHeights[task.id] || globalFontSize * 1.8;
+      const taskHeight = taskMetrics[task.id]?.height || globalFontSize * 1.8;
       totalHeight += taskHeight;
 
       if (index < tasks.length - 1) {
@@ -101,7 +103,7 @@ export function LockedTaskContainer({
       }
     });
 
-    return { width: maxWidth, height: totalHeight };
+    return { width: calculatedWidth, height: totalHeight };
   };
 
   const bgSize = calculateBackgroundSize();
@@ -192,7 +194,7 @@ export function LockedTaskContainer({
             const taskSpacing = 12;
 
             for (let i = 0; i < index; i++) {
-              const prevTaskHeight = taskHeights[tasks[i]!.id] || globalFontSize * 1.8;
+              const prevTaskHeight = taskMetrics[tasks[i]!.id]?.height || globalFontSize * 1.8;
               currentY += prevTaskHeight + taskSpacing;
             }
 
@@ -227,11 +229,13 @@ export function LockedTaskContainer({
                   textDecoration: task.isCompleted ? "line-through" : "none",
                   opacity: task.isCompleted ? 0.6 : 1,
                   lineHeight: "1.4",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
+                  whiteSpace: "pre",
+                  wordBreak: "normal",
                   textAlign: "center",
-                  display: "block",
-                  maxWidth: `${bgSize.width - 20}px`,
+                  display: "inline-block",
+                  maxWidth: `${bgSize.width}px`,
+                  overflow: "visible",
+                  textOverflow: "clip",
                   padding: "4px 8px",
                 }}
               >

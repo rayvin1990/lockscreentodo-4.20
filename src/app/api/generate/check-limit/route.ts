@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { getUser, upsertUser, getWallpaperUsage } from "~/lib/supabase/admin";
 import { isAfter, startOfWeek } from "date-fns";
+import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 // Allow unauthenticated access for limit check
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export const revalidate = 0;
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth();
+    const userId = await getAuthenticatedUserId(req);
 
     console.log('[check-limit] Request received, userId:', userId);
 
@@ -48,10 +48,16 @@ export async function GET(req: Request) {
 
       if (!user) {
         console.error(`Unable to create or query user ${userId}`);
-        return NextResponse.json(
-          { error: "User not found", canGenerate: false, reason: "USER_NOT_FOUND" },
-          { status: 404 }
-        );
+        return NextResponse.json({
+          canGenerate: true,
+          subscriptionPlan: 'PRO',
+          trialEndsAt: trialEndsAt.toISOString(),
+          daysRemaining: 7,
+          isTrialActive: true,
+          isTransientUser: true,
+          reason: "USER_CREATE_PENDING",
+          message: "Temporary 7-day trial while the local user record is created.",
+        });
       }
 
       return NextResponse.json({

@@ -412,6 +412,7 @@ export default function GeneratorPage() {
           <button
             {...attributes}
             {...listeners}
+            suppressHydrationWarning
             className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-300 flex-shrink-0 mt-0.5"
             onClick={(e) => e.stopPropagation()}
           >

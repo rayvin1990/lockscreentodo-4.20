@@ -18,8 +18,10 @@ import { cn } from "~/components/ui/utils/cn";
 import { Toaster } from "~/components/ui/toaster";
 
 import { ThemeProvider } from "~/components/theme-provider";
+import { ClerkLocalFallbackProvider } from "~/components/clerk-local-fallback-provider";
 import { i18n } from "~/config/i18n-config";
 import { siteConfig } from "~/config/site";
+import { getServerEnvValue } from "~/lib/server-env";
 
 const clerkConfig = {
   telemetry: {
@@ -28,7 +30,7 @@ const clerkConfig = {
   development: process.env.NODE_ENV === 'development',
 };
 
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || null;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -175,42 +177,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Defensive: If no publishable key is found and we're not in dev, 
-  // we still need to render the html/body structure, but maybe skip Clerk features.
-  const content = (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          inter.variable,
-          roboto.variable,
-          poppins.variable,
-          montserrat.variable,
-          openSans.variable,
-          lato.variable,
-          sourceCodePro.variable,
-          firaCode.variable,
-          jetbrainsMono.variable,
-          notoSansSC.variable,
-        )}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
-      </body>
-    </html>
+  const app = (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+    >
+      {children}
+      <Toaster />
+    </ThemeProvider>
   );
 
-  if (!clerkPublishableKey) {
-    return content;
-  }
-
-  return (
+  const clerkWrappedApp = clerkPublishableKey ? (
     <ClerkProvider
       {...clerkConfig}
       publishableKey={clerkPublishableKey}
@@ -234,7 +212,31 @@ export default function RootLayout({
         },
       }}
     >
-      {content}
+      {app}
     </ClerkProvider>
+  ) : (
+    <ClerkLocalFallbackProvider>{app}</ClerkLocalFallbackProvider>
+  );
+
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          inter.variable,
+          roboto.variable,
+          poppins.variable,
+          montserrat.variable,
+          openSans.variable,
+          lato.variable,
+          sourceCodePro.variable,
+          firaCode.variable,
+          jetbrainsMono.variable,
+          notoSansSC.variable,
+        )}
+      >
+        {clerkWrappedApp}
+      </body>
+    </html>
   );
 }

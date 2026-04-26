@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerEnvValue } from "~/lib/server-env";
 
 export const dynamic = 'force-dynamic';
-
-const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
+export const runtime = "nodejs";
 
 async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 8000): Promise<Response> {
   const controller = new AbortController();
@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!UNSPLASH_ACCESS_KEY) {
+    const unsplashAccessKey = getUnsplashAccessKey();
+
+    if (!unsplashAccessKey) {
       return NextResponse.json(
         { error: "Unsplash API key not configured" },
         { status: 500 }
@@ -75,7 +77,7 @@ export async function GET(request: NextRequest) {
         )}&per_page=${perPage}&orientation=portrait`,
         {
           headers: {
-            Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+            Authorization: `Client-ID ${unsplashAccessKey}`,
           },
         },
         2
@@ -116,4 +118,8 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function getUnsplashAccessKey() {
+  return getServerEnvValue("UNSPLASH_ACCESS_KEY");
 }

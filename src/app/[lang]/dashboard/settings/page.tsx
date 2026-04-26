@@ -24,6 +24,7 @@ interface DashboardData {
   };
   usageHistory: Array<{ date: string; count: number; downloadCount: number }>;
   daysRemaining: number;
+  error?: string;
 }
 
 export default function SettingsPage({ params }: { params: { lang: string } }) {
@@ -31,16 +32,31 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
   const lang = params.lang || "en";
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetch('/api/user/dashboard')
-        .then(res => res.json())
-        .then(setData)
-        .catch(console.error)
+        .then(async (res) => {
+          const payload = await res.json();
+          if (!res.ok || !payload.user) {
+            throw new Error(payload.error || "Failed to load dashboard");
+          }
+          return payload as DashboardData;
+        })
+        .then((payload) => {
+          setData(payload);
+          setError(null);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError(err instanceof Error ? err.message : "Failed to load dashboard");
+        })
         .finally(() => setLoading(false));
+    } else if (isLoaded) {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, isLoaded]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
@@ -50,7 +66,7 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
   };
 
   const getPlanBadge = () => {
-    if (!data) return null;
+    if (!data?.user) return null;
     const { subscriptionPlan, isPro, trialEndsAt } = data.user;
     const isTrialActive = trialEndsAt && new Date(trialEndsAt) > new Date();
 
@@ -161,6 +177,10 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
           {loading ? (
             <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
               <p className="text-xs text-slate-500">{lang === "en" ? "Loading..." : "加载中..."}</p>
+            </div>
+          ) : error ? (
+            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
+              <p className="text-xs text-red-400">{error}</p>
             </div>
           ) : data ? (
             <div className="space-y-4">

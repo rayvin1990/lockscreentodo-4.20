@@ -1,21 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { getUser, getWallpaperUsage, getTodayWallpaperUsage } from "~/lib/supabase/admin";
+import { getUser, getWallpaperUsage, getTodayWallpaperUsage, upsertUser } from "~/lib/supabase/admin";
 import { startOfWeek, startOfMonth } from "date-fns";
+import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    const userId = await getAuthenticatedUserId(req);
 
     if (!userId) {
       return NextResponse.json({ error: "Please sign in first" }, { status: 401 });
     }
 
-    const user = await getUser(userId);
+    let user = await getUser(userId);
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+
+      user = await upsertUser(userId, {
+        subscriptionPlan: 'PRO',
+        trialEndsAt: trialEndsAt.toISOString(),
+        isPro: true,
+      });
+
+      if (!user) {
+        user = {
+          id: userId,
+          email: null,
+          name: null,
+          image: null,
+          subscriptionPlan: 'PRO',
+          isPro: true,
+          trialEndsAt: trialEndsAt.toISOString(),
+          subscriptionEndsAt: null,
+          lemonSqueezyCustomerId: null,
+          lemonSqueezySubscriptionId: null,
+          notionAccessToken: null,
+        };
+      }
     }
 
     const now = new Date();
