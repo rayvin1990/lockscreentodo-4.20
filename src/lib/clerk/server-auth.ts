@@ -14,6 +14,7 @@ function getBearerToken(req?: AuthRequest): string | null {
 }
 
 export async function getAuthenticatedUserId(req?: AuthRequest): Promise<string | null> {
+  // Try Clerk's auth() first - works well in most environments
   try {
     const { userId } = await auth();
     if (userId) return userId;
@@ -21,6 +22,7 @@ export async function getAuthenticatedUserId(req?: AuthRequest): Promise<string 
     console.warn("[clerk-auth] auth() failed, trying bearer token fallback", error);
   }
 
+  // Fallback: verify bearer token from Authorization header
   const token = getBearerToken(req);
   if (!token) return null;
 
@@ -31,12 +33,17 @@ export async function getAuthenticatedUserId(req?: AuthRequest): Promise<string 
       : {};
     const verifiedToken = await verifyToken(token, verificationOptions);
 
-    const claims = verifiedToken.data;
-    if (claims && typeof claims === "object" && "sub" in claims && typeof claims.sub === "string") {
-      return claims.sub;
+    // Clerk's verifyToken returns the payload directly or with .data property
+    const payload = (verifiedToken as any).payload || (verifiedToken as any).data;
+    if (payload && typeof payload === "object" && "sub" in payload) {
+      return payload.sub as string;
     }
 
-    console.warn("[clerk-auth] Bearer token verification failed", verifiedToken.errors);
+    // Fallback: check standard JWT claims (azp, iss, sub)
+    const claims = verifiedToken as { sub?: string; [key: string]: unknown };
+    if (claims.sub) return claims.sub;
+
+    console.warn("[clerk-auth] Bearer token verification succeeded but no 'sub' claim found");
     return null;
   } catch (error) {
     console.warn("[clerk-auth] Bearer token verification threw", error);

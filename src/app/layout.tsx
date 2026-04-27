@@ -27,7 +27,15 @@ const clerkConfig = {
   telemetry: {
     disabled: false,
   },
-  development: process.env.NODE_ENV === 'development',
+  signInUrl: "/en/sign-in",
+  signUpUrl: "/en/sign-up",
+  defaultRedirectUrl: "/en/generator",
+  allowedRedirectOrigins: [
+    "https://lockscreentodo.com",
+    "https://www.lockscreentodo.com",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ],
 };
 
 const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || null;
