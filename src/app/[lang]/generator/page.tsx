@@ -197,10 +197,15 @@ export default function GeneratorPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const [isDraggingBg, setIsDraggingBg] = useState(false);
+  const isDraggingBgRef = useRef(false);
   const [dragStartBg, setDragStartBg] = useState({ x: 0, y: 0 });
+  const dragStartBgRef = useRef({ x: 0, y: 0 });
   const [bgStartPos, setBgStartPos] = useState({ x: 0, y: 0 });
+  const bgStartPosRef = useRef({ x: 0, y: 0 });
   const [initialPinchDistance, setInitialPinchDistance] = useState(0);
+  const initialPinchDistanceRef = useRef(0);
   const [initialScale, setInitialScale] = useState(1);
+  const initialScaleRef = useRef(1);
 
   const selectedTask = wallpaperStyle.tasks.find(t => t.id === selectedTaskId);
 
@@ -253,7 +258,10 @@ export default function GeneratorPage() {
     e.preventDefault();
     e.stopPropagation();
 
+    isDraggingBgRef.current = true;
     setIsDraggingBg(true);
+    dragStartBgRef.current = { x: e.clientX, y: e.clientY };
+    bgStartPosRef.current = { ...wallpaperStyle.backgroundPosition };
     setDragStartBg({ x: e.clientX, y: e.clientY });
     setBgStartPos({ ...wallpaperStyle.backgroundPosition });
 
@@ -264,14 +272,14 @@ export default function GeneratorPage() {
   };
 
   const handleBackgroundMouseMove = (e: MouseEvent) => {
-    if (!isDraggingBg) return;
+    if (!isDraggingBgRef.current) return;
 
-    const deltaX = e.clientX - dragStartBg.x;
-    const deltaY = e.clientY - dragStartBg.y;
+    const deltaX = e.clientX - dragStartBgRef.current.x;
+    const deltaY = e.clientY - dragStartBgRef.current.y;
 
     const newPosition = {
-      x: bgStartPos.x + deltaX,
-      y: bgStartPos.y + deltaY,
+      x: bgStartPosRef.current.x + deltaX,
+      y: bgStartPosRef.current.y + deltaY,
     };
 
     console.log('Dragging to', { deltaX, deltaY, newPosition });
@@ -283,6 +291,7 @@ export default function GeneratorPage() {
   };
 
   const handleBackgroundMouseUp = () => {
+    isDraggingBgRef.current = false;
     setIsDraggingBg(false);
     document.removeEventListener("mousemove", handleBackgroundMouseMove as any);
     document.removeEventListener("mouseup", handleBackgroundMouseUp as any);
@@ -295,10 +304,15 @@ export default function GeneratorPage() {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
+      initialPinchDistanceRef.current = distance;
+      initialScaleRef.current = wallpaperStyle.backgroundScale;
       setInitialPinchDistance(distance);
       setInitialScale(wallpaperStyle.backgroundScale);
     } else if (e.touches.length === 1) {
+      isDraggingBgRef.current = true;
       setIsDraggingBg(true);
+      dragStartBgRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      bgStartPosRef.current = { ...wallpaperStyle.backgroundPosition };
       setDragStartBg({ x: e.touches[0].clientX, y: e.touches[0].clientY });
       setBgStartPos({ ...wallpaperStyle.backgroundPosition });
     }
@@ -314,28 +328,29 @@ export default function GeneratorPage() {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-      const scale = distance / initialPinchDistance;
-      const newScale = Math.max(0.5, Math.min(3, initialScale * scale));
+      const scale = distance / initialPinchDistanceRef.current;
+      const newScale = Math.max(0.5, Math.min(3, initialScaleRef.current * scale));
 
       setWallpaperStyle(prev => ({
         ...prev,
         backgroundScale: newScale,
       }));
-    } else if (e.touches.length === 1 && isDraggingBg) {
-      const deltaX = e.touches[0].clientX - dragStartBg.x;
-      const deltaY = e.touches[0].clientY - dragStartBg.y;
+    } else if (e.touches.length === 1 && isDraggingBgRef.current) {
+      const deltaX = e.touches[0].clientX - dragStartBgRef.current.x;
+      const deltaY = e.touches[0].clientY - dragStartBgRef.current.y;
 
       setWallpaperStyle(prev => ({
         ...prev,
         backgroundPosition: {
-          x: bgStartPos.x + deltaX,
-          y: bgStartPos.y + deltaY,
+          x: bgStartPosRef.current.x + deltaX,
+          y: bgStartPosRef.current.y + deltaY,
         },
       }));
     }
   };
 
   const handleTouchEnd = () => {
+    isDraggingBgRef.current = false;
     setIsDraggingBg(false);
     setInitialPinchDistance(0);
   };
@@ -905,70 +920,66 @@ export default function GeneratorPage() {
 
       console.log('Image generated successfully');
 
-      const IMGBB_API_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY || '';
-
-      console.log(`IMGBB API Key: ${IMGBB_API_KEY ? 'configured' : 'NOT CONFIGURED'}`);
-
-      if (!IMGBB_API_KEY) {
-        throw new Error("IMGBB API key not configured");
-      }
-
       const base64Data = dataUrl.split(',')[1];
 
       console.log(`Image size: ${Math.round(base64Data.length * 0.75 / 1024)}KB`);
 
-      const formData = new FormData();
-      formData.append('key', IMGBB_API_KEY);
-      formData.append('image', base64Data);
-
+      // Upload to Cloudflare R2
+      console.log('Uploading to Cloudflare R2...');
       let imageUrl = '';
       let uploadSuccess = false;
       const maxRetries = 3;
 
       for (let attempt = 1; attempt <= maxRetries && !uploadSuccess; attempt++) {
         try {
-          console.log(`Uploading to imgbb... Attempt ${attempt}/${maxRetries}`);
+          console.log(`R2 upload attempt ${attempt}/${maxRetries}`);
 
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-          const imgbbResponse = await fetch('https://api.imgbb.com/1/upload', {
+          const r2Response = await fetchWithClerkAuth('/api/upload/r2', {
             method: 'POST',
-            body: formData,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              image: base64Data,
+              filename: `wallpaper-${Date.now()}.png`,
+            }),
             signal: controller.signal,
           });
 
           clearTimeout(timeoutId);
 
-          console.log(`ImgBB response status: ${imgbbResponse.status}`);
+          console.log(`R2 response status: ${r2Response.status}`);
 
-          if (!imgbbResponse.ok) {
-            const errorText = await imgbbResponse.text();
-            console.error(`ImgBB upload failed (attempt ${attempt}):`, errorText);
-
-            if (attempt < maxRetries) {
-              console.log(`Retrying in 2 seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              continue;
-            }
-            throw new Error(`Failed to upload to imgbb (Status: ${imgbbResponse.status})`);
-          }
-
-          const imgbbData = await imgbbResponse.json();
-          console.log('ImgBB response data:', imgbbData);
-
-          if (!imgbbData.success) {
-            console.error(`ImgBB returned unsuccessful response (attempt ${attempt})`);
+          if (!r2Response.ok) {
+            const errorText = await r2Response.text();
+            console.error(`R2 upload failed (attempt ${attempt}):`, errorText);
 
             if (attempt < maxRetries) {
               console.log(`Retrying in 2 seconds...`);
               await new Promise(resolve => setTimeout(resolve, 2000));
               continue;
             }
-            throw new Error('imgbb upload failed');
+            throw new Error(`Failed to upload to R2 (Status: ${r2Response.status})`);
           }
 
-          imageUrl = imgbbData.data.url;
+          const r2Data = await r2Response.json();
+          console.log('R2 response data:', r2Data);
+
+          if (!r2Data.success || !r2Data.url) {
+            console.error(`R2 returned unsuccessful response (attempt ${attempt})`);
+
+            if (attempt < maxRetries) {
+              console.log(`Retrying in 2 seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              continue;
+            }
+            throw new Error('R2 upload failed');
+          }
+
+          imageUrl = r2Data.url;
           uploadSuccess = true;
           console.log('Upload successful:', imageUrl);
 
