@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         hasApiToken: !!R2_API_TOKEN,
         hasBucket: !!R2_BUCKET_NAME
       });
-      return NextResponse.json({ error: "Storage not configured" }, { status: 500 });
+      return NextResponse.json({ error: "Storage not configured" }, { status: 503 });
     }
 
     // Generate unique filename

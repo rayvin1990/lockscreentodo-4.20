@@ -25,6 +25,15 @@ export const RealisticPhoneMockup = forwardRef<HTMLDivElement, RealisticPhoneMoc
             >
               {children}
 
+              <div className="absolute left-0 right-0 top-[58px] z-20 pointer-events-none text-center text-white">
+                <div className="text-[64px] font-semibold leading-none tracking-normal drop-shadow-[0_3px_24px_rgba(0,0,0,0.34)]">
+                  8:12
+                </div>
+                <div className="mt-2 text-[13px] font-medium text-white/82 drop-shadow-[0_2px_14px_rgba(0,0,0,0.35)]">
+                  Tuesday, April 28
+                </div>
+              </div>
+
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/10 pointer-events-none rounded-[2.3rem]" />
             </div>
 

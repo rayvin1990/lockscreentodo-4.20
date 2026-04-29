@@ -14,7 +14,7 @@ export function SceneBackgroundSelector({
   selectedImage,
 }: SceneBackgroundSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedScene, setSelectedScene] = useState<string | null>(null);
+  const [selectedScene, setSelectedScene] = useState<string | null>("calm-minimal");
   const [images, setImages] = useState<UnsplashImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export function SceneBackgroundSelector({
         const scene = BACKGROUND_SCENES.find((s) => s.id === selectedScene);
         if (!scene) return;
 
-        const query = scene.searchKeywords[0] ?? '';
+        const query = scene.searchKeywords.join(" ");
 
         const response = await fetch(
           `/api/unsplash/photos?query=${encodeURIComponent(query)}&per_page=12`
@@ -89,7 +89,7 @@ export function SceneBackgroundSelector({
                 )}
               </>
             ) : (
-              <span className="text-gray-400">Choose Your Vibe</span>
+              <span className="text-gray-400">Choose a minimal Unsplash set</span>
             )}
           </div>
           {selectedScene ? (
@@ -109,7 +109,7 @@ export function SceneBackgroundSelector({
                     setSelectedScene(scene.id);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 p-3 bg-brand-bg hover:bg-gray-800 border-2 border-gray-700 hover:border-brand-green rounded-xl transition-all hover:scale-[1.02] group"
+                    className="w-full flex items-center gap-3 p-3 bg-brand-bg hover:bg-gray-800 border-2 border-gray-700 hover:border-brand-green rounded-xl transition-all group"
                 >
                   <div className="flex-1 text-left">
                     <div className="text-white font-semibold text-sm">
@@ -136,6 +136,9 @@ export function SceneBackgroundSelector({
                   {currentScene.name}
                 </h3>
                 <p className="text-gray-400 text-sm">{currentScene.description}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Curated for quiet lockscreen reminders from Unsplash.
+                </p>
               </div>
             </div>
 

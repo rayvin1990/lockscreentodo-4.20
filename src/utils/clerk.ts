@@ -19,6 +19,8 @@ export const isPublicRoute = createRouteMatcher([
   "/api/download/check-limit",
   "/api/webhooks/lemon-squeezy",
   "/api/auth/google-callback",
+  "/en/agent-demo",
+  "/zh/agent-demo",
   "/en/generator",
   "/zh/generator",
 ]);

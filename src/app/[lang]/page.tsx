@@ -25,13 +25,8 @@ const InspirationPanel = dynamic(
 
 // 强力显眼的锁屏样板组件
 const ShowcaseWallpaper = () => (
-  <div className="relative h-full w-full bg-[#050508] overflow-hidden flex flex-col items-center pt-16 px-5 font-sans">
+  <div className="relative h-full w-full bg-[#050508] overflow-hidden flex flex-col items-center pt-[190px] px-5 font-sans">
     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent opacity-50" />
-    
-    <div className="relative z-10 text-center space-y-0.5 mb-14 opacity-80">
-      <div className="text-white/50 text-[9px] font-bold tracking-[0.4em] uppercase">Wednesday, April 22</div>
-      <div className="text-white text-5xl font-medium tracking-tight">09:41</div>
-    </div>
 
     <div className="relative z-10 w-full space-y-3.5">
       {[

@@ -49,6 +49,7 @@ export function LockedTaskContainer({
 }: LockedTaskContainerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const startPosition = useRef({ x: 0, y: 0 });
   const taskRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
@@ -79,23 +80,23 @@ export function LockedTaskContainer({
   }, [tasks, globalFontSize, taskMetrics]);
 
   const calculateBackgroundSize = () => {
-    if (tasks.length === 0) return { width: 200, height: 60 };
+    if (tasks.length === 0) return { width: 220, height: 80 };
 
-    const padding = 10;
-    const minWidth = 240;
-    const maxWidth = 320;
-    const taskSpacing = 12;
+    const padding = 14;
+    const minWidth = 196;
+    const maxWidth = 224;
+    const taskSpacing = 10;
 
     let calculatedWidth = minWidth;
     let totalHeight = padding * 2;
 
     tasks.forEach((task, index) => {
       const measuredWidth = taskMetrics[task.id]?.width;
-      const estimatedWidth = task.text.length * globalFontSize * 0.64 + 36;
+      const estimatedWidth = task.text.length * globalFontSize * 0.54 + 52;
       const taskWidth = Math.min(Math.max(measuredWidth || estimatedWidth, minWidth), maxWidth);
       if (taskWidth > calculatedWidth) calculatedWidth = taskWidth;
 
-      const taskHeight = taskMetrics[task.id]?.height || globalFontSize * 1.8;
+      const taskHeight = taskMetrics[task.id]?.height || globalFontSize * 1.55;
       totalHeight += taskHeight;
 
       if (index < tasks.length - 1) {
@@ -108,41 +109,82 @@ export function LockedTaskContainer({
 
   const bgSize = calculateBackgroundSize();
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
+  const updateDragPosition = useCallback((clientX: number, clientY: number) => {
+    if (!isDraggingRef.current) return;
 
-    e.preventDefault();
+    const deltaY = clientY - dragStart.current.y;
 
-    const deltaY = e.clientY - dragStart.current.y;
-
-    const newPosition = {
-      x: startPosition.current.x,
+    onPositionChange({
+      x: 0,
       y: startPosition.current.y + deltaY,
-    };
+    });
+  }, [onPositionChange]);
 
-    onPositionChange(newPosition);
-  }, [isDragging, onPositionChange]);
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+    updateDragPosition(e.clientX, e.clientY);
+  }, [updateDragPosition]);
 
   const handleMouseUp = useCallback(() => {
-    if (!isDragging) return;
-
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsDragging(false);
 
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-  }, [isDragging, handleMouseMove]);
+  }, [handleMouseMove]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
 
+    isDraggingRef.current = true;
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
-    startPosition.current = position;
+    startPosition.current = { x: 0, y: position.y };
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    dragStart.current = { x: touch.clientX, y: touch.clientY };
+    startPosition.current = { x: 0, y: position.y };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch || !isDraggingRef.current) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    updateDragPosition(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
+  useEffect(() => {
+    if (position.x !== 0) {
+      onPositionChange({ x: 0, y: position.y });
+    }
+  }, [onPositionChange, position.x, position.y]);
 
   return (
     <div
@@ -151,47 +193,57 @@ export function LockedTaskContainer({
       style={{
         left: position.x,
         top: position.y,
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
         zIndex: 15,
       }}
     >
       <div
         className="absolute left-1/2 transform -translate-x-1/2"
         style={{
-          width: `${bgSize.width + 40}px`,
-          height: `${bgSize.height + 40}px`,
+          width: `${bgSize.width + 28}px`,
+          height: `${bgSize.height + 52}px`,
           top: -20,
-          cursor: 'move',
+          cursor: "ns-resize",
         }}
         onMouseDown={handleMouseDown}
-        title="Drag to adjust position"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        title="Drag up or down to adjust position"
       >
         <div
-          className="absolute rounded-2xl left-1/2 transform -translate-x-1/2"
+          className="absolute left-1/2 transform -translate-x-1/2 rounded-[22px] border border-white/15"
           style={{
-            width: `${bgSize.width - 30}px`,
-            height: `${bgSize.height}px`,
-            top: 20,
-            backgroundColor: hexToRgba("#ffffff", Math.min(backgroundOpacity, 0.95)),
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06)",
-            pointerEvents: 'none',
-            backdropFilter: 'none',
+            width: `${bgSize.width}px`,
+            height: `${bgSize.height + 18}px`,
+            top: 18,
+            backgroundColor: hexToRgba("#080a0f", Math.max(0.18, Math.min(backgroundOpacity, 0.52))),
+            boxShadow: "0 18px 60px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+            pointerEvents: "none",
+            backdropFilter: "none",
           }}
         />
 
         <div
           className="absolute left-1/2 transform -translate-x-1/2"
           style={{
-            width: `${bgSize.width - 30}px`,
-            height: `${bgSize.height - 20}px`,
-            top: 30,
-            pointerEvents: 'none',
+            width: `${bgSize.width - 26}px`,
+            height: `${bgSize.height}px`,
+            top: 28,
+            pointerEvents: "none",
           }}
         >
+          <div className="mb-3 flex items-center justify-between px-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/58">
+              Today
+            </span>
+            <span className="h-px flex-1 bg-white/16 ml-3" />
+          </div>
           {tasks.map((task, index) => {
-            let currentY = 0;
-            const taskSpacing = 12;
+            let currentY = 28;
+            const taskSpacing = 10;
 
             for (let i = 0; i < index; i++) {
               const prevTaskHeight = taskMetrics[tasks[i]!.id]?.height || globalFontSize * 1.8;
@@ -201,7 +253,7 @@ export function LockedTaskContainer({
             return (
               <div
                 key={task.id}
-                className={`flex items-center justify-center transition-all ${
+                className={`flex items-start transition-all ${
                   selectedTaskId === task.id ? "opacity-100" : "opacity-90 hover:opacity-100"
                 }`}
                 style={{
@@ -209,38 +261,39 @@ export function LockedTaskContainer({
                   top: currentY,
                   left: 0,
                   right: 0,
-                  pointerEvents: 'auto',
-                  cursor: 'pointer',
+                  pointerEvents: "auto",
+                  cursor: "pointer",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelect(task.id);
                 }}
               >
-              <span
-                ref={(el) => { taskRefs.current[task.id] = el; }}
-                className="text-center"
-                style={{
-                  color: task.color,
-                  fontSize: `${globalFontSize / 16}rem`,
-                  fontWeight: task.isBold ? "bold" : "normal",
-                  fontStyle: task.isItalic ? "italic" : "normal",
-                  fontFamily: task.fontFamily,
-                  textDecoration: task.isCompleted ? "line-through" : "none",
-                  opacity: task.isCompleted ? 0.6 : 1,
-                  lineHeight: "1.4",
-                  whiteSpace: "pre",
-                  wordBreak: "normal",
-                  textAlign: "center",
-                  display: "inline-block",
-                  maxWidth: `${bgSize.width}px`,
-                  overflow: "visible",
-                  textOverflow: "clip",
-                  padding: "4px 8px",
-                }}
-              >
-                {task.text}
-              </span>
+                <span className="mt-[0.45em] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-white/72 shadow-[0_0_18px_rgba(255,255,255,0.24)]" />
+                <span
+                  ref={(el) => { taskRefs.current[task.id] = el; }}
+                  className="pl-3"
+                  style={{
+                    color: task.color,
+                    fontSize: `${globalFontSize / 16}rem`,
+                    fontWeight: task.isBold ? 600 : 450,
+                    fontStyle: task.isItalic ? "italic" : "normal",
+                    fontFamily: task.fontFamily,
+                    textDecoration: task.isCompleted ? "line-through" : "none",
+                    opacity: task.isCompleted ? 0.55 : 1,
+                    lineHeight: "1.38",
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                    textAlign: "left",
+                    display: "inline-block",
+                    maxWidth: `${bgSize.width - 52}px`,
+                    overflow: "visible",
+                    textOverflow: "clip",
+                    textShadow: "0 1px 18px rgba(0, 0, 0, 0.42)",
+                  }}
+                >
+                  {task.text}
+                </span>
             </div>
           );
         })}

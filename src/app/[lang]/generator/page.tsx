@@ -118,12 +118,13 @@ export default function GeneratorPage() {
 
   const [wallpaperStyle, setWallpaperStyle] = useState<WallpaperStyle>({
     backgroundType: "preset",
-    backgroundImage: "",
+    backgroundImage: "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)",
     backgroundPosition: { x: 0, y: 0 },
     backgroundScale: 1,
     tasks: [
-      { id: "1", text: "Complete project report", x: 132, y: 200, fontSize: 14, color: "#000000", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "center", fontFamily: "Comic Sans Ms.Fun" },
-      { id: "2", text: "Exercise 30 minutes", x: 132, y: 230, fontSize: 14, color: "#000000", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "center", fontFamily: "Comic Sans Ms.Fun" },
+      { id: "1", text: "8:00 PM - take blood pressure medicine", x: 132, y: 200, fontSize: 13, color: "#F8FAFC", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "left", fontFamily: "Inter, system-ui, sans-serif" },
+      { id: "2", text: "Before leaving - bring passport", x: 132, y: 230, fontSize: 13, color: "#F8FAFC", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "left", fontFamily: "Inter, system-ui, sans-serif" },
+      { id: "3", text: "After work - pick up package", x: 132, y: 260, fontSize: 13, color: "#F8FAFC", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "left", fontFamily: "Inter, system-ui, sans-serif" },
     ],
     stickers: [],
   });
@@ -131,6 +132,7 @@ export default function GeneratorPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [qrUnavailableReason, setQrUnavailableReason] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
@@ -165,16 +167,16 @@ export default function GeneratorPage() {
         text: notionTask.text,
         x: 132,
         y: wallpaperStyle.tasks.length * 30 + (index * 30),
-        fontSize: 14,
-        color: "#000000",
+        fontSize: 13,
+        color: "#F8FAFC",
         backgroundColor: "transparent",
         backgroundOpacity: 0.5,
         opacity: 1,
         isBold: true,
         isItalic: false,
         isCompleted: false,
-        textAlign: "center" as const,
-        fontFamily: "Comic Sans Ms.Fun",
+        textAlign: "left" as const,
+        fontFamily: "Inter, system-ui, sans-serif",
       }));
 
     setWallpaperStyle(prev => ({
@@ -192,9 +194,9 @@ export default function GeneratorPage() {
   }, [syncedNotionTasks, selectedNotionTaskIds, wallpaperStyle.tasks.length, toast]);
 
   const [tasksLocked, setTasksLocked] = useState(true);
-  const [containerPosition, setContainerPosition] = useState({ x: 0, y: 200 });
-  const [globalFontSize, setGlobalFontSize] = useState(14);
-  const [backgroundOpacity, setBackgroundOpacity] = useState(0.65);
+  const [containerPosition, setContainerPosition] = useState({ x: 0, y: 300 });
+  const [globalFontSize, setGlobalFontSize] = useState(13);
+  const [backgroundOpacity, setBackgroundOpacity] = useState(0.34);
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const [isDraggingBg, setIsDraggingBg] = useState(false);
@@ -490,16 +492,16 @@ export default function GeneratorPage() {
       text: "New task",
       x: 132,
       y: wallpaperStyle.tasks.length * 30,
-      fontSize: 14,
-      color: "#000000",
+      fontSize: 13,
+      color: "#F8FAFC",
       backgroundColor: "transparent",
       backgroundOpacity: 0.5,
       opacity: 1,
       isBold: true,
       isItalic: false,
       isCompleted: false,
-      textAlign: "center",
-      fontFamily: "Comic Sans Ms.Fun",
+      textAlign: "left",
+      fontFamily: "Inter, system-ui, sans-serif",
     };
     setWallpaperStyle(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
     setSelectedTaskId(newTask.id);
@@ -539,7 +541,7 @@ export default function GeneratorPage() {
     setWallpaperStyle(prev => ({
       ...prev,
       backgroundType: "preset",
-      backgroundImage: "",
+      backgroundImage: "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)",
       backgroundPosition: { x: 0, y: 0 },
       backgroundScale: 1,
     }));
@@ -589,16 +591,16 @@ export default function GeneratorPage() {
         text: notionTask.text,
         x: 132,
         y: 200 + (index * 30),
-        fontSize: 14,
-        color: "#000000",
+        fontSize: 13,
+        color: "#F8FAFC",
         backgroundColor: "transparent",
         backgroundOpacity: 0.5,
         opacity: 1,
         isBold: true,
         isItalic: false,
         isCompleted: false,
-        textAlign: "center" as const,
-        fontFamily: "Comic Sans Ms.Fun",
+        textAlign: "left" as const,
+        fontFamily: "Inter, system-ui, sans-serif",
       }));
 
       setWallpaperStyle(prev => ({ ...prev, tasks: importedTasks }));
@@ -646,16 +648,16 @@ export default function GeneratorPage() {
           text: task.text,
           x: 132,
           y: 200 + (data.indexOf(task) * 30),
-          fontSize: 14,
-          color: "#000000",
+          fontSize: 13,
+          color: "#F8FAFC",
           backgroundColor: "transparent",
           backgroundOpacity: 0.5,
           opacity: task.completed ? 0.6 : 1,
           isBold: true,
           isItalic: false,
           isCompleted: task.completed,
-          textAlign: "center" as const,
-          fontFamily: "Comic Sans Ms.Fun",
+          textAlign: "left" as const,
+          fontFamily: "Inter, system-ui, sans-serif",
         }));
 
         setWallpaperStyle(prev => ({ ...prev, tasks }));
@@ -884,6 +886,7 @@ export default function GeneratorPage() {
 
     setIsGenerating(true);
     setShareUrl(null);
+    setQrUnavailableReason(null);
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -929,6 +932,7 @@ export default function GeneratorPage() {
       console.log('Uploading to Cloudflare R2...');
       let imageUrl = '';
       let uploadSuccess = false;
+      let uploadErrorMessage = '';
       const maxRetries = 3;
 
       for (let attempt = 1; attempt <= maxRetries && !uploadSuccess; attempt++) {
@@ -957,6 +961,11 @@ export default function GeneratorPage() {
           if (!r2Response.ok) {
             const errorText = await r2Response.text();
             console.error(`R2 upload failed (attempt ${attempt}):`, errorText);
+            uploadErrorMessage = errorText;
+
+            if (errorText.includes("Storage not configured")) {
+              break;
+            }
 
             if (attempt < maxRetries) {
               console.log(`Retrying in 2 seconds...`);
@@ -989,25 +998,30 @@ export default function GeneratorPage() {
 
           if (uploadError.name === 'AbortError') {
             console.error('Upload timeout (30s)');
+            uploadErrorMessage = 'Upload timeout';
             if (attempt < maxRetries) {
               console.log(`Retrying in 2 seconds...`);
               await new Promise(resolve => setTimeout(resolve, 2000));
               continue;
             }
-            throw new Error('Upload timeout. Please try again or use a simpler background.');
+            break;
           }
 
+          uploadErrorMessage = uploadError instanceof Error ? uploadError.message : 'Upload failed';
+
           if (attempt === maxRetries) {
-            throw uploadError;
+            break;
           }
         }
       }
 
       if (!uploadSuccess || !imageUrl) {
-        throw new Error('Failed to upload image after multiple attempts. Please try again.');
+        console.warn('R2 upload unavailable, continuing with local download fallback:', uploadErrorMessage);
+        imageUrl = '';
       }
 
-      setShareUrl(imageUrl);
+      setShareUrl(uploadSuccess ? imageUrl : null);
+      setQrUnavailableReason(uploadSuccess ? null : "QR code needs a public storage URL. Configure R2 to enable phone scanning.");
 
       console.log('Recording wallpaper generation...');
       try {
@@ -1031,27 +1045,31 @@ export default function GeneratorPage() {
         console.error('Error recording generation:', error);
       }
 
-      console.log('Saving wallpaper to history...');
-      try {
-        const saveWallpaperResponse = await fetchWithClerkAuth('/api/wallpaper/save', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            imageUrl: imageUrl,
-            taskCount: wallpaperStyle.tasks.length,
-          }),
-        });
+      if (uploadSuccess && imageUrl) {
+        console.log('Saving wallpaper to history...');
+        try {
+          const saveWallpaperResponse = await fetchWithClerkAuth('/api/wallpaper/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageUrl: imageUrl,
+              taskCount: wallpaperStyle.tasks.length,
+            }),
+          });
 
-        if (saveWallpaperResponse.ok) {
-          console.log('Wallpaper saved to history successfully');
-        } else {
-          const errorText = await saveWallpaperResponse.text();
-          console.error('Failed to save wallpaper to history. Status:', saveWallpaperResponse.status, 'Response:', errorText);
+          if (saveWallpaperResponse.ok) {
+            console.log('Wallpaper saved to history successfully');
+          } else {
+            const errorText = await saveWallpaperResponse.text();
+            console.error('Failed to save wallpaper to history. Status:', saveWallpaperResponse.status, 'Response:', errorText);
+          }
+        } catch (error) {
+          console.error('Error saving wallpaper to history:', error);
         }
-      } catch (error) {
-        console.error('Error saving wallpaper to history:', error);
+      } else {
+        console.log('Skipping wallpaper history save because no remote image URL is available');
       }
 
       await recordDownload();
@@ -1064,7 +1082,7 @@ export default function GeneratorPage() {
 
       toast({
         title: "Wallpaper generated successfully!",
-        description: "Scan QR code to download",
+        description: uploadSuccess ? "Scan QR code to download" : "Download is ready. QR scanning needs R2 storage.",
       });
     } catch (error) {
       console.error("Generation error:", error);
@@ -1303,6 +1321,23 @@ export default function GeneratorPage() {
                           />
                         </>
                       )}
+
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          zIndex: 6,
+                          background:
+                            "linear-gradient(to bottom, rgba(3, 7, 18, 0.38) 0%, rgba(3, 7, 18, 0.06) 34%, rgba(3, 7, 18, 0.22) 64%, rgba(3, 7, 18, 0.72) 100%)",
+                        }}
+                      />
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          zIndex: 7,
+                          background:
+                            "radial-gradient(circle at 50% 18%, rgba(255,255,255,0.16), transparent 28%), linear-gradient(to right, rgba(0,0,0,0.18), transparent 24%, transparent 76%, rgba(0,0,0,0.18))",
+                        }}
+                      />
 
                       {tasksLocked ? (
                         <LockedTaskContainer
@@ -1895,8 +1930,8 @@ export default function GeneratorPage() {
           </DialogHeader>
 
           <div className="space-y-6 mt-4">
-            {shareUrl && (
-              <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              {shareUrl ? (
                 <div className="bg-white p-4 rounded-2xl">
                   <QRCodeSVG
                     value={shareUrl}
@@ -1905,11 +1940,17 @@ export default function GeneratorPage() {
                     includeMargin={false}
                   />
                 </div>
+              ) : (
+                <div className="flex h-[212px] w-[212px] items-center justify-center rounded-2xl border border-gray-700 bg-gray-900 p-4 text-center">
+                  <p className="text-sm leading-5 text-gray-400">
+                    {qrUnavailableReason || "QR code is unavailable because no share URL was created."}
+                  </p>
+                </div>
+              )}
                 <p className="text-sm text-gray-400 text-center">
-                  Scan QR code to download wallpaper
+                  {shareUrl ? "Scan QR code to download wallpaper" : "Use Download Wallpaper on this device"}
                 </p>
-              </div>
-            )}
+            </div>
 
             <Button
               onClick={handleDownload}
