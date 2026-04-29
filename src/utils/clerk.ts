@@ -1,9 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { i18n } from "~/config/i18n-config";
+import { seoScenarios } from "~/lib/seo-scenarios";
 
 const noRedirectRoute = ["/api(.*)", "/trpc(.*)"];
-const noNeedProcessRoute = [".*\\.png", ".*\\.jpg", ".*\\.opengraph-image.png", ".*\\.html", "^/_next/"];
+const noNeedProcessRoute = [
+  ".*\\.png",
+  ".*\\.jpg",
+  ".*\\.opengraph-image.png",
+  ".*\\.html",
+  "^/_next/",
+  "^/sitemap\\.xml$",
+  "^/robots\\.txt$",
+];
 
 export const isPublicRoute = createRouteMatcher([
   "/",
@@ -27,6 +36,10 @@ export const isPublicRoute = createRouteMatcher([
   "/zh/generator",
   "/en/pricing",
   "/zh/pricing",
+  ...seoScenarios.flatMap(s => [
+    `/en/${s.slug}`,
+    `/zh/${s.slug}`,
+  ]),
 ]);
 
 export function getLocale(request: NextRequest): string | undefined {
@@ -65,8 +78,7 @@ export function isNoNeedProcess(request: NextRequest): boolean {
   return noNeedProcessRoute.some((route) => new RegExp(route).test(pathname));
 }
 
-// 实战修正：恢复被注释的中间件逻辑，并确保它重定向到首页而不是工具页
-// 限额接口允许未登录访问（返回明确的错误而不是重定向）
+// Allow limit check routes without auth - returns explicit error instead of redirect
 const limitCheckRoute = ["/api/generate/check-limit", "/api/download/check-limit"];
 
 export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
