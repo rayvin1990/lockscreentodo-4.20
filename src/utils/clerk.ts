@@ -21,8 +21,12 @@ export const isPublicRoute = createRouteMatcher([
   "/api/auth/google-callback",
   "/en/agent-demo",
   "/zh/agent-demo",
+  "/en/developers",
+  "/zh/developers",
   "/en/generator",
   "/zh/generator",
+  "/en/pricing",
+  "/zh/pricing",
 ]);
 
 export function getLocale(request: NextRequest): string | undefined {

@@ -80,8 +80,9 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
             <span className="font-bold tracking-tight text-lg">Lockscreen Todo</span>
           </div>
           <div className="flex items-center gap-4">
-             <Link href={`/${lang}/generator`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Generator</Link>
-           <Link href={`/${lang}/dashboard/settings`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Dashboard</Link>
+            <Link href={`/${lang}/generator`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Generator</Link>
+            <Link href={`/${lang}/developers`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Developers</Link>
+            <Link href={`/${lang}/dashboard/settings`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Dashboard</Link>
           </div>
         </div>
       </nav>
@@ -211,7 +212,7 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
              <div className="w-12 h-px bg-white/30 mx-auto" />
           </div>
           <div className="scale-95 lg:scale-100 origin-top opacity-90 hover:opacity-100 transition-opacity duration-700">
-            <PricingComparisonTable />
+            <PricingComparisonTable lang={lang === "zh" ? "zh" : "en"} />
           </div>
         </div>
       </section>
@@ -226,6 +227,7 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
                 <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Lock Screen Todo</Link></li>
                 <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Reminder Wallpaper</Link></li>
                 <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">Generator</Link></li>
+                <li><Link href={`/${lang}/developers`} className="text-sm text-slate-400 hover:text-white transition-colors">Developers</Link></li>
               </ul>
             </div>
             <div className="space-y-4">

@@ -32,6 +32,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useDownloadLimit } from "~/hooks/use-download-limit";
 import { trackEvent } from "~/lib/analytics";
 import { createClient } from "@supabase/supabase-js";
+import type { AgentReminder } from "~/lib/agent-reminders";
 
 // Initialize Supabase client safely
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -211,6 +212,86 @@ export default function GeneratorPage() {
   const initialScaleRef = useRef(1);
 
   const selectedTask = wallpaperStyle.tasks.find(t => t.id === selectedTaskId);
+
+  const applyAgentRemindersToWallpaper = useCallback((reminders: AgentReminder[]) => {
+    const tasks = reminders.slice(0, 5).map((reminder, index) => ({
+      id: reminder.id || `agent-${index}`,
+      text: formatAgentReminderText(reminder),
+      x: 132,
+      y: 200 + (index * 30),
+      fontSize: 13,
+      color: "#F8FAFC",
+      backgroundColor: "transparent",
+      backgroundOpacity: 0.5,
+      opacity: 1,
+      isBold: true,
+      isItalic: false,
+      isCompleted: false,
+      textAlign: "left" as const,
+      fontFamily: "Inter, system-ui, sans-serif",
+    }));
+
+    if (tasks.length === 0) return;
+
+    setWallpaperStyle(prev => ({
+      ...prev,
+      backgroundType: "preset",
+      backgroundImage: prev.backgroundImage || "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)",
+      tasks,
+    }));
+    setTasksLocked(true);
+    setContainerPosition({ x: 0, y: 300 });
+    setGlobalFontSize(13);
+    setBackgroundOpacity(0.34);
+    setSelectedTaskId(tasks[0]?.id || null);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shouldLoadAgentQueue = params.get("source") === "agent" || params.get("agentQueue") === "true";
+
+    if (!shouldLoadAgentQueue) return;
+
+    let cancelled = false;
+
+    async function loadAgentQueue() {
+      try {
+        const response = await fetch("/api/agent/reminders", { cache: "no-store" });
+        const data = await response.json();
+
+        if (cancelled) return;
+
+        if (!response.ok || !data.ok) {
+          toast({
+            variant: "destructive",
+            title: "Could not load agent reminders",
+            description: data.error || "Please check the MCP debug queue.",
+          });
+          return;
+        }
+
+        applyAgentRemindersToWallpaper(data.lockscreenQueue || []);
+        toast({
+          title: "Agent reminders loaded",
+          description: "The active MCP queue is now in the lockscreen preview.",
+        });
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to load agent queue:", error);
+        toast({
+          variant: "destructive",
+          title: "Could not load agent reminders",
+          description: "Please try again from the MCP debug page.",
+        });
+      }
+    }
+
+    void loadAgentQueue();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyAgentRemindersToWallpaper, toast]);
 
   useEffect(() => {
     console.log('isMouseInPhone changed:', isMouseInPhone);
@@ -2037,8 +2118,24 @@ export default function GeneratorPage() {
       <UpgradeModalPricing
         isOpen={showUpgradeModalPricing}
         onClose={() => setShowUpgradeModalPricing(false)}
-        lang="en"
+        lang={currentLang === "zh" ? "zh" : "en"}
       />
     </div>
   );
+}
+
+function formatAgentReminderText(reminder: AgentReminder) {
+  const prefix = reminder.dueAt ? `${formatReminderTime(reminder.dueAt)} - ` : "";
+  const location = reminder.location ? ` @ ${reminder.location}` : "";
+  return `${prefix}${reminder.title}${location}`;
+}
+
+function formatReminderTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
