@@ -1,27 +1,25 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import {
-  Inter,
-  Roboto,
-  Poppins,
-  Montserrat,
-  Open_Sans,
-  Lato,
-  Source_Code_Pro,
   Fira_Code,
+  Inter,
   JetBrains_Mono,
+  Lato,
+  Montserrat,
   Noto_Sans_SC,
+  Open_Sans,
+  Poppins,
+  Roboto,
+  Source_Code_Pro,
 } from "next/font/google";
 
 import "~/styles/globals.css";
 
-import { cn } from "~/components/ui/utils/cn";
 import { Toaster } from "~/components/ui/toaster";
-
-import { ThemeProvider } from "~/components/theme-provider";
-import { ClerkLocalFallbackProvider } from "~/components/clerk-local-fallback-provider";
+import { cn } from "~/components/ui/utils/cn";
 import { i18n } from "~/config/i18n-config";
 import { siteConfig } from "~/config/site";
-import { getServerEnvValue } from "~/lib/server-env";
+import { ClerkLocalFallbackProvider } from "~/components/clerk-local-fallback-provider";
+import { ThemeProvider } from "~/components/theme-provider";
 
 const clerkConfig = {
   telemetry: {
@@ -119,28 +117,29 @@ export const metadata = {
   keywords: [
     "lockscreen todo",
     "lockscreen reminder wallpaper",
+    "AI lock screen wallpaper generator",
+    "lock screen task wallpaper",
+    "study lock screen wallpaper",
+    "exam countdown wallpaper",
+    "habit tracker lock screen",
+    "ADHD reminder wallpaper",
     "custom lockscreen",
     "daily tasks reminder",
     "medication reminder",
     "habit building",
-    "elderly care",
-    "锁屏待办",
-    "锁屏提醒壁纸",
     "todo wallpaper",
     "daily task reminder",
+    "productivity app",
+    "study planner",
+    "fitness reminder",
+    "锁屏待办",
+    "锁屏提醒壁纸",
     "锁屏壁纸生成器",
     "生产力工具",
     "手机壁纸",
     "任务提醒",
     "待办事项",
-    "new year resolution",
     "新年目标",
-    "productivity app",
-    "study planner",
-    "fitness reminder",
-    "pregnancy tracker",
-    "emergency contacts",
-    "pet care reminder",
   ],
   authors: [
     {
@@ -160,7 +159,7 @@ export const metadata = {
         url: siteConfig.ogImage,
         width: 1200,
         height: 630,
-        alt: "Lockscreen Todo - 锁屏待办提醒壁纸生成器",
+        alt: "Lockscreen Todo - AI lock screen task wallpaper generator",
       },
     ],
   },
@@ -227,7 +226,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={i18n.defaultLocale} suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",

@@ -16,66 +16,35 @@ export function ProUserBadge({ trialEndsAt, subscriptionEndsAt, isPro }: ProUser
   });
 
   React.useEffect(() => {
-    if (isPro && subscriptionEndsAt) {
-      const updateTimeLeft = () => {
-        const now = new Date().getTime();
-        const end = new Date(subscriptionEndsAt).getTime();
-        const diff = end - now;
+    const targetDate = isPro && subscriptionEndsAt ? subscriptionEndsAt : trialEndsAt;
+    if (!targetDate) return;
 
-        if (diff <= 0) {
-          setTimeLeft({ days: 0, hours: 0 });
-          return;
-        }
+    const updateTimeLeft = () => {
+      const now = Date.now();
+      const end = new Date(targetDate).getTime();
+      const diff = end - now;
 
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0 });
+        return;
+      }
 
-        setTimeLeft({ days, hours });
-      };
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-      updateTimeLeft();
-      const interval = setInterval(updateTimeLeft, 60000);
+      setTimeLeft({ days, hours });
+    };
 
-      return () => clearInterval(interval);
-    }
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000);
 
-    if (trialEndsAt) {
-      const updateTimeLeft = () => {
-        const now = new Date().getTime();
-        const trialEnd = new Date(trialEndsAt).getTime();
-        const diff = trialEnd - now;
-
-        if (diff <= 0) {
-          setTimeLeft({ days: 0, hours: 0 });
-          return;
-        }
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-        setTimeLeft({ days, hours });
-      };
-
-      updateTimeLeft();
-      const interval = setInterval(updateTimeLeft, 60000);
-
-      return () => clearInterval(interval);
-    }
+    return () => clearInterval(interval);
   }, [trialEndsAt, subscriptionEndsAt, isPro]);
-
-  if (isPro && !subscriptionEndsAt) {
-    return (
-      <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-2 border-amber-400/50 text-amber-400 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg">
-        <span className="text-lg">👑</span>
-        <span className="text-amber-300">Pro (Yearly)</span>
-      </div>
-    );
-  }
 
   if (isPro && subscriptionEndsAt) {
     return (
       <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-2 border-amber-400/50 text-amber-400 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg">
-        <span className="text-lg">👑</span>
+        <Crown className="h-4 w-4" />
         <span className="text-amber-300">Pro</span>
         <span className="text-amber-300/70 text-xs">
           ({timeLeft.days}d {timeLeft.hours}h left)

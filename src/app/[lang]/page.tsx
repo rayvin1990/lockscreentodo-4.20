@@ -1,133 +1,247 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Button } from "~/components/ui/button";
-import { ArrowRight, Sparkles, Lightbulb, CheckCircle2, Circle, Palette, Zap, QrCode, Smartphone } from "lucide-react";
-import { trackEvent } from "~/lib/analytics";
+import { ArrowRight, CheckCircle2, Circle, Palette, QrCode, Sparkles, Smartphone, Zap } from "lucide-react";
 
-// 使用 dynamic import 并禁用 SSR
+import { Button } from "~/components/ui/button";
+import { trackEvent } from "~/lib/analytics";
+import { seoScenarios } from "~/lib/seo-scenarios";
+
 const RealisticPhoneMockup = dynamic(
-  () => import("~/components/realistic-phone-mockup").then(mod => mod.RealisticPhoneMockup),
-  { ssr: false, loading: () => <div className="w-48 aspect-[9/19] bg-white/5 animate-pulse rounded-[2rem] mx-auto" /> }
+  () => import("~/components/realistic-phone-mockup").then((mod) => mod.RealisticPhoneMockup),
+  { ssr: false, loading: () => <div className="w-48 aspect-[9/19] bg-white/5 animate-pulse rounded-[2rem] mx-auto" /> },
 );
 
 const PricingComparisonTable = dynamic(
-  () => import("~/components/pricing-comparison-table").then(mod => mod.PricingComparisonTable),
-  { ssr: false }
+  () => import("~/components/pricing-comparison-table").then((mod) => mod.PricingComparisonTable),
+  { ssr: false },
 );
 
-const InspirationPanel = dynamic(
-  () => import("~/components/inspiration-panel").then(mod => mod.InspirationPanel),
-  { ssr: false }
-);
+const copy = {
+  en: {
+    navGenerator: "Generator",
+    navPricing: "Pricing",
+    navDashboard: "Dashboard",
+    eyebrow: "AI lock screen task wallpaper generator",
+    title: "Turn today's tasks into a lock screen wallpaper.",
+    subtitle:
+      "Write the tasks you want to see, generate a clean phone wallpaper, scan the QR code, and set it as your lock screen. No app install required.",
+    primaryCta: "Create wallpaper",
+    secondaryCta: "See pricing",
+    useCases: ["Study plans", "Exam countdowns", "Daily tasks", "Habit tracking", "ADHD reminders", "Medication notes"],
+    workflowTitle: "Simple Flow",
+    workflow: [
+      { icon: Palette, title: "Write", desc: "Add tasks, habits, or countdowns." },
+      { icon: Zap, title: "Generate", desc: "Render a clean HD wallpaper." },
+      { icon: QrCode, title: "Scan", desc: "Open the image on your phone." },
+      { icon: Smartphone, title: "Set", desc: "Save it as your lock screen." },
+    ],
+    faqTitle: "Question & Answer",
+    faqs: [
+      {
+        q: "Do I need to install an app?",
+        a: "No. Generate the wallpaper in your browser, scan the QR code on your phone, save the image, and set it as your lock screen.",
+      },
+      {
+        q: "Who is this for?",
+        a: "Students, exam takers, habit builders, ADHD users, and anyone who wants a visible daily task list without opening another app.",
+      },
+      {
+        q: "Does it update my lock screen automatically?",
+        a: "Not yet. iOS and Android limit automatic lock screen changes from websites, so the current workflow is manual but reliable.",
+      },
+    ],
+    pricing: "Pricing",
+    product: "Product",
+    solutions: "Use Cases",
+    legal: "Legal",
+    footerTagline: "Built for focused lock screens",
+    useCaseTitle: "Use Case Stalls",
+    useCaseSubtitle: "Start from a specific situation, then customize the wallpaper in the generator.",
+    links: {
+      lockScreenTodo: "Lock Screen Todo",
+      reminderWallpaper: "Reminder Wallpaper",
+      generator: "Generator",
+      developers: "Developers",
+      dailyTasks: "Daily Tasks",
+      study: "Study Wallpaper",
+      habits: "Habit Tracker",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+    },
+    sampleTasks: [
+      { id: 1, text: "Review exam notes", done: true },
+      { id: 2, text: "Finish workout", done: false },
+      { id: 3, text: "Pay rent before 6 PM", done: false },
+    ],
+  },
+  zh: {
+    navGenerator: "生成器",
+    navPricing: "定价",
+    navDashboard: "仪表盘",
+    eyebrow: "AI 锁屏任务壁纸生成器",
+    title: "把今天要做的事，变成一张锁屏壁纸。",
+    subtitle: "写下任务，生成干净的手机壁纸，扫码保存到手机，再设为锁屏。不需要安装 App。",
+    primaryCta: "开始生成",
+    secondaryCta: "查看价格",
+    useCases: ["学习计划", "考试倒计时", "每日待办", "习惯打卡", "注意力提醒", "用药备注"],
+    workflowTitle: "使用流程",
+    workflow: [
+      { icon: Palette, title: "填写", desc: "输入任务、习惯或倒计时。" },
+      { icon: Zap, title: "生成", desc: "渲染高清锁屏壁纸。" },
+      { icon: QrCode, title: "扫码", desc: "在手机上打开图片。" },
+      { icon: Smartphone, title: "设置", desc: "保存后设为锁屏。" },
+    ],
+    faqTitle: "常见问题",
+    faqs: [
+      {
+        q: "需要安装 App 吗？",
+        a: "不需要。在浏览器生成壁纸，用手机扫码保存图片，然后在系统相册里设为锁屏。",
+      },
+      {
+        q: "适合哪些人用？",
+        a: "更适合学生、考试党、习惯打卡用户、注意力管理用户，以及想把当天重点任务放到锁屏上的人。",
+      },
+      {
+        q: "能自动更新锁屏吗？",
+        a: "暂时不能。iOS 和 Android 都限制网页自动修改锁屏，所以当前流程是手动保存和设置，但更稳定。",
+      },
+    ],
+    pricing: "定价",
+    product: "产品",
+    solutions: "场景",
+    legal: "法律",
+    footerTagline: "为专注锁屏而做",
+    useCaseTitle: "具体场景",
+    useCaseSubtitle: "先从一个明确场景开始，再到生成器里改成自己的内容。",
+    links: {
+      lockScreenTodo: "锁屏待办",
+      reminderWallpaper: "提醒壁纸",
+      generator: "生成器",
+      developers: "开发者",
+      dailyTasks: "每日任务",
+      study: "学习壁纸",
+      habits: "习惯打卡",
+      privacy: "隐私政策",
+      terms: "服务条款",
+    },
+    sampleTasks: [
+      { id: 1, text: "复习考试笔记", done: true },
+      { id: 2, text: "完成今日训练", done: false },
+      { id: 3, text: "18:00 前交房租", done: false },
+    ],
+  },
+} as const;
 
-// 强力显眼的锁屏样板组件
-const ShowcaseWallpaper = () => (
-  <div className="relative h-full w-full bg-[#050508] overflow-hidden flex flex-col items-center pt-[190px] px-5 font-sans">
-    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent opacity-50" />
+function ShowcaseWallpaper({ lang }: { lang: "en" | "zh" }) {
+  const content = copy[lang];
 
-    <div className="relative z-10 w-full space-y-3.5">
-      {[
-        { id: 1, text: "Finish V2 Stress Test", done: true },
-        { id: 2, text: "Review Marketing Assets", done: false },
-        { id: 3, text: "Prepare for Launch", done: false },
-      ].map((task) => (
-        <div 
-          key={task.id} 
-          className={`p-4 rounded-2xl border-2 transition-all shadow-2xl ${
-            task.done 
-            ? "bg-white/5 border-white/5 opacity-40 scale-95" 
-            : "bg-white/15 border-white/20 shadow-indigo-500/20 scale-100"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            {task.done ? (
-              <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0" />
-            ) : (
-              <Circle className="w-5 h-5 text-white/40 shrink-0" />
-            )}
-            <div className={`text-[13px] font-bold tracking-wide truncate ${task.done ? "text-white/40 line-through" : "text-white"}`}>
-              {task.text}
+  return (
+    <div className="relative h-full w-full bg-[#050508] overflow-hidden flex flex-col items-center pt-[190px] px-5 font-sans">
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent opacity-50" />
+
+      <div className="relative z-10 w-full space-y-3.5">
+        {content.sampleTasks.map((task) => (
+          <div
+            key={task.id}
+            className={`p-4 rounded-2xl border-2 transition-all shadow-2xl ${
+              task.done
+                ? "bg-white/5 border-white/5 opacity-40 scale-95"
+                : "bg-white/15 border-white/20 shadow-indigo-500/20 scale-100"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              {task.done ? (
+                <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0" />
+              ) : (
+                <Circle className="w-5 h-5 text-white/40 shrink-0" />
+              )}
+              <div className={`text-[13px] font-bold tracking-wide truncate ${task.done ? "text-white/40 line-through" : "text-white"}`}>
+                {task.text}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
 
-    <div className="absolute bottom-12 flex gap-12 text-white/20">
-      <div className="p-3 rounded-full bg-white/5 border border-white/5"><Sparkles className="w-5 h-5" /></div>
-      <div className="p-3 rounded-full bg-white/5 border border-white/5"><Lightbulb className="w-5 h-5" /></div>
+      <div className="absolute bottom-12 flex gap-12 text-white/20">
+        <div className="p-3 rounded-full bg-white/5 border border-white/5">
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <div className="p-3 rounded-full bg-white/5 border border-white/5">
+          <CheckCircle2 className="w-5 h-5" />
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+}
 
 export default function LocaleHomePage({ params }: { params: { lang: string } }) {
-  const lang = params.lang || "en";
-  const [isInspirationOpen, setIsInspirationOpen] = useState(false);
+  const lang = params.lang === "zh" ? "zh" : "en";
+  const content = copy[lang];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#020205] text-white/90 selection:bg-white/10 font-light tracking-tight antialiased">
-      
-      {/* Navbar */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020205]/80 backdrop-blur-md">
         <div className="container mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href={`/${lang}`} className="flex items-center gap-2">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <CheckCircle2 className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold tracking-tight text-lg">Lockscreen Todo</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-4">
-            <Link href={`/${lang}/generator`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Generator</Link>
-            <Link href={`/${lang}/developers`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Developers</Link>
-            <Link href={`/${lang}/dashboard/settings`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Dashboard</Link>
+            <Link href={`/${lang}/generator`} className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+              {content.navGenerator}
+            </Link>
+            <Link href="#pricing" className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+              {content.navPricing}
+            </Link>
+            <Link href={`/${lang}/dashboard/settings`} className="hidden sm:inline text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+              {content.navDashboard}
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* 结构化数据 SEO */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "Lockscreen Todo",
-            "operatingSystem": "iOS, Android",
-            "applicationCategory": "ProductivityApplication",
-            "description": "Minimalist lockscreen todo wallpaper generator."
-          })
+            name: "Lockscreen Todo",
+            operatingSystem: "iOS, Android",
+            applicationCategory: "ProductivityApplication",
+            description: content.subtitle,
+          }),
         }}
       />
 
-      {/* Hero Section - 已彻底清理背景阴影层 */}
       <section className="relative pt-40 pb-32 px-6">
         <div className="container mx-auto max-w-4xl relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
             <div className="flex-1 space-y-10 text-center lg:text-left">
               <div className="inline-flex items-center space-x-2 text-[9px] font-bold tracking-[0.3em] uppercase text-white/30 border-b border-white/10 pb-1 mx-auto lg:mx-0">
                 <Sparkles className="w-2.5 h-2.5" />
-                <span>The Focus Engine</span>
+                <span>{content.eyebrow}</span>
               </div>
-              
+
               <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1]">
-                Your Tasks. <br/>
-                On Your Lockscreen.
+                {content.title}
               </h1>
-              
-              <p className="text-base text-slate-500 max-w-sm leading-relaxed mx-auto lg:mx-0">
-                Stay focused without unlocking your phone. A minimal, precise workflow for your daily goals.
+
+              <p className="text-base text-slate-500 max-w-md leading-relaxed mx-auto lg:mx-0">
+                {content.subtitle}
               </p>
 
-              <div className="flex items-center justify-center lg:justify-start gap-8 pt-2">
-                <Link
-                  href={`/${lang}/generator`}
-                  onClick={() => trackEvent("home_cta_click", { target: "generator", lang })}
-                >
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                <Link href={`/${lang}/generator`} onClick={() => trackEvent("home_cta_click", { target: "generator", lang })}>
                   <Button variant="outline" className="h-12 px-8 text-[12px] font-bold tracking-widest uppercase border-white/20 hover:bg-white hover:text-black rounded-none transition-all shadow-xl shadow-white/5">
-                    Start Now
+                    {content.primaryCta}
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 <Link
@@ -135,67 +249,85 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
                   className="text-[11px] font-bold tracking-widest uppercase text-white/40 hover:text-white transition-colors"
                   onClick={() => trackEvent("home_pricing_click", { lang })}
                 >
-                  Pricing
+                  {content.secondaryCta}
                 </Link>
               </div>
             </div>
 
             <div className="flex-1 w-full max-w-[320px] relative">
-              {/* 这里原本那个碍眼的“不规则阴影背景层”已被旺财彻底铲除 */}
-              <div className="relative">
-                <RealisticPhoneMockup>
-                  <ShowcaseWallpaper />
-                </RealisticPhoneMockup>
-              </div>
+              <RealisticPhoneMockup>
+                <ShowcaseWallpaper lang={lang} />
+              </RealisticPhoneMockup>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SEO Use Cases */}
       <section className="py-24 border-y border-white/5 bg-white/[0.01]">
         <div className="container mx-auto max-w-4xl px-6">
           <div className="flex flex-wrap justify-center lg:justify-between gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-white/20">
-             {["Students", "Fitness", "Medication", "Reminders", "Habit Building"].map((tag, i) => (
-               <span key={i} className="hover:text-white/40 transition-colors cursor-default">{tag}</span>
-             ))}
+            {content.useCases.map((tag) => (
+              <span key={tag} className="hover:text-white/40 transition-colors cursor-default">
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Workflow */}
       <section className="py-32 border-b border-white/5">
         <div className="container mx-auto max-w-4xl px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-16">
-            {[
-              { icon: Palette, title: "Design", desc: "Minimal style." },
-              { icon: Zap, title: "Build", desc: "HD Render." },
-              { icon: QrCode, title: "Scan", desc: "Safe delivery." },
-              { icon: Smartphone, title: "Set", desc: "Done." },
-            ].map((step, i) => (
-              <div key={i} className="space-y-4 group text-center lg:text-left">
+          <h2 className="sr-only">{content.workflowTitle}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-16">
+            {content.workflow.map((step) => (
+              <div key={step.title} className="space-y-4 group text-center lg:text-left">
                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:text-white group-hover:border-white/30 transition-all mx-auto lg:mx-0">
                   <step.icon className="w-5 h-5" />
                 </div>
                 <h4 className="text-[12px] font-bold uppercase tracking-widest text-white/60">{step.title}</h4>
-                <p className="text-[10px] text-slate-600 uppercase tracking-[0.15em]">{step.desc}</p>
+                <p className="text-[11px] text-slate-600 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
+      <section className="py-32 border-b border-white/5 bg-white/[0.015]">
+        <div className="container mx-auto max-w-6xl px-6">
+          <div className="mb-14 space-y-3 text-center">
+            <h2 className="text-3xl font-bold tracking-tight">{content.useCaseTitle}</h2>
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-500">{content.useCaseSubtitle}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {seoScenarios.map((scenario) => {
+              const Icon = scenario.icon;
+
+              return (
+                <Link
+                  key={scenario.slug}
+                  href={`/${lang}/${scenario.slug}`}
+                  className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]"
+                >
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-300">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mb-2 text-base font-bold text-white">{scenario.eyebrow[lang]}</h3>
+                  <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">{scenario.description[lang]}</p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       <section id="faq" className="py-40 bg-white/[0.01]">
         <div className="container mx-auto max-w-2xl px-6 text-center lg:text-left">
-          <h2 className="text-[10px] font-black mb-24 tracking-[0.6em] uppercase text-white/20 italic mx-auto lg:mx-0">Question & Answer</h2>
+          <h2 className="text-[10px] font-black mb-24 tracking-[0.6em] uppercase text-white/20 italic mx-auto lg:mx-0">
+            {content.faqTitle}
+          </h2>
           <div className="space-y-12">
-            {[
-              { q: "Setup Guide", a: "Generate your custom wallpaper, scan the secure QR code on your mobile device, and set the saved image as your lockscreen via Settings." },
-              { q: "Privacy First", a: "Your tasks are processed in a temporary environment and are never stored on our servers. We value your focus and your data." },
-              { q: "HD Quality", a: "Our rendering engine ensures pixel-perfect clarity for all modern iPhone and Android screen resolutions." }
-            ].map((faq, i) => (
-              <div key={i} className="space-y-3">
+            {content.faqs.map((faq) => (
+              <div key={faq.q} className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400/80">{faq.q}</h4>
                 <p className="text-sm text-slate-500 leading-relaxed font-light">{faq.a}</p>
               </div>
@@ -204,60 +336,51 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
         </div>
       </section>
 
-      {/* Pricing */}
       <section id="pricing" className="py-40 border-t border-white/5">
         <div className="container mx-auto max-w-4xl px-6">
           <div className="text-center mb-20 space-y-3 opacity-40">
-             <h2 className="text-xl font-bold tracking-[0.3em] uppercase">Pricing</h2>
-             <div className="w-12 h-px bg-white/30 mx-auto" />
+            <h2 className="text-xl font-bold tracking-[0.3em] uppercase">{content.pricing}</h2>
+            <div className="w-12 h-px bg-white/30 mx-auto" />
           </div>
           <div className="scale-95 lg:scale-100 origin-top opacity-90 hover:opacity-100 transition-opacity duration-700">
-            <PricingComparisonTable lang={lang === "zh" ? "zh" : "en"} />
+            <PricingComparisonTable lang={lang} />
           </div>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="py-24 border-t border-white/5 bg-black/20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left mb-16">
             <div className="space-y-4">
-              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Product</h4>
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">{content.product}</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Lock Screen Todo</Link></li>
-                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Reminder Wallpaper</Link></li>
-                <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">Generator</Link></li>
-                <li><Link href={`/${lang}/developers`} className="text-sm text-slate-400 hover:text-white transition-colors">Developers</Link></li>
+                <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.generator}</Link></li>
+                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockScreenTodo}</Link></li>
+                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.reminderWallpaper}</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
-              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Solutions</h4>
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">{content.solutions}</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Daily Tasks</Link></li>
-                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Medication Reminders</Link></li>
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Habit Tracker</Link></li>
+                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.dailyTasks}</Link></li>
+                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.study}</Link></li>
+                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.habits}</Link></li>
+                <li><Link href={`/${lang}/developers`} className="text-sm text-slate-500 hover:text-white transition-colors">{content.links.developers}</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
-              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Legal</h4>
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">{content.legal}</h4>
               <ul className="space-y-2">
-                <li><Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href={`/${lang}/terms`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.terms}</Link></li>
+                <li><Link href={`/${lang}/privacy`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.privacy}</Link></li>
               </ul>
             </div>
           </div>
           <div className="text-center opacity-30 pt-8 border-t border-white/5">
-            <p className="text-[9px] font-bold tracking-[0.6em] uppercase">© 2026 Lockscreen Todo • Built for Focus</p>
+            <p className="text-[9px] font-bold tracking-[0.6em] uppercase">2026 Lockscreen Todo - {content.footerTagline}</p>
           </div>
         </div>
       </footer>
-
-      {isInspirationOpen && (
-        <InspirationPanel 
-          isEnglish={lang === 'en'} 
-          onClose={() => setIsInspirationOpen(false)} 
-        />
-      )}
     </div>
   );
 }

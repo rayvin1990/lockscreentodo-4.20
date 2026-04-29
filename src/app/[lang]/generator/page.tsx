@@ -246,9 +246,79 @@ export default function GeneratorPage() {
     setSelectedTaskId(tasks[0]?.id || null);
   }, []);
 
+  const applyTaskTextPresetToWallpaper = useCallback((
+    taskText: string,
+    scenario?: string | null,
+    template?: string | null,
+    background?: string | null,
+  ) => {
+    const lines = taskText
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+
+    if (lines.length === 0) return;
+
+    const largeTemplates = new Set(["large-reminder", "urgent", "interruption", "ops-alert"]);
+    const isLargeTemplate = largeTemplates.has(template || "");
+    const isCountdown = template === "countdown";
+    const isFitness = template === "fitness";
+    const fontSize = isCountdown ? 20 : isLargeTemplate ? 18 : isFitness ? 15 : 13;
+    const yStart = isCountdown ? 228 : isLargeTemplate ? 236 : 200;
+    const rowGap = isLargeTemplate ? 42 : isFitness ? 34 : 30;
+    const shouldMarkFirstDone = template === "calm-list" || !template;
+    const backgroundImage = background || "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)";
+
+    const tasks = lines.map((text, index) => ({
+      id: `preset-${index + 1}`,
+      text,
+      x: 132,
+      y: yStart + (index * rowGap),
+      fontSize,
+      color: "#F8FAFC",
+      backgroundColor: "transparent",
+      backgroundOpacity: 0.5,
+      opacity: 1,
+      isBold: true,
+      isItalic: false,
+      isCompleted: shouldMarkFirstDone && index === 0,
+      textAlign: "left" as const,
+      fontFamily: "Inter, system-ui, sans-serif",
+    }));
+
+    setWallpaperStyle(prev => ({
+      ...prev,
+      backgroundType: "preset",
+      backgroundImage,
+      tasks,
+    }));
+    setTasksLocked(true);
+    setContainerPosition({ x: 0, y: isCountdown ? 255 : isLargeTemplate ? 280 : 300 });
+    setGlobalFontSize(fontSize);
+    setBackgroundOpacity(template === "ops-alert" ? 0.5 : isLargeTemplate ? 0.44 : 0.34);
+    setSelectedTaskId(tasks[0]?.id || null);
+
+    toast({
+      title: "Scenario loaded",
+      description: scenario ? `Loaded ${scenario.replace(/-/g, " ")} tasks.` : "Loaded preset tasks.",
+    });
+  }, [toast]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const shouldLoadAgentQueue = params.get("source") === "agent" || params.get("agentQueue") === "true";
+    const taskPreset = params.get("tasks");
+
+    if (taskPreset) {
+      applyTaskTextPresetToWallpaper(
+        taskPreset,
+        params.get("scenario"),
+        params.get("template"),
+        params.get("bg"),
+      );
+      return;
+    }
 
     if (!shouldLoadAgentQueue) return;
 
@@ -291,7 +361,7 @@ export default function GeneratorPage() {
     return () => {
       cancelled = true;
     };
-  }, [applyAgentRemindersToWallpaper, toast]);
+  }, [applyAgentRemindersToWallpaper, applyTaskTextPresetToWallpaper, toast]);
 
   useEffect(() => {
     console.log('isMouseInPhone changed:', isMouseInPhone);

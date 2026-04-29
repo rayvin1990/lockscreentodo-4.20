@@ -1,6 +1,7 @@
 export const siteConfig = {
-  name: "Lockscreen Todo – Create To-Do List Wallpapers (No App Needed)",
-  description: "Turn your lock screen into a to-do list. Create custom reminder wallpapers instantly — no app needed. Perfect for medication reminders, daily tasks, habit building, and elderly care. Works on iPhone & Android.",
+  name: "Lockscreen Todo - AI Lock Screen Task Wallpaper Generator",
+  description:
+    "Create clean lock screen task wallpapers from your daily tasks, study plans, habits, reminders, and countdowns. No app install required. Works on iPhone and Android.",
   url: "https://lockscreentodo.com",
   ogImage: "/og-image.jpg",
   links: {

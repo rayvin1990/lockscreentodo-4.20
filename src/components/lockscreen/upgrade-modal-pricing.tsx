@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { Check, Copy, Crown, Mail, X } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
@@ -22,6 +23,8 @@ const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@lockscre
 const WECHAT_ID = process.env.NEXT_PUBLIC_WECHAT_ID || "";
 
 export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeModalPricingProps) {
+  const { userId } = useAuth();
+  const { user } = useUser();
   const isZh = lang === "zh";
   const currency = isZh ? "￥" : "$";
   const monthlyPrice = `${currency}9.9`;
@@ -48,10 +51,11 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
         futureUpdates: "有效期内免费获得后续更新",
         action: "联系开通",
         manualTitle: "联系开通",
-        manualBody: "国内在线支付暂未开放。你可以先发邮件联系我们，说明登录邮箱和想开通的方案。我们会人工处理试用或开通请求。",
+        manualBody: "国内在线支付暂未开放。你可以先发邮件联系我，说明登录邮箱和想开通的方案，我会人工处理试用或开通请求。",
         emailLabel: "邮箱",
         wechatLabel: "微信",
         noAutoRenewal: "不自动续费。国内在线支付上线前，不会自动扣款。",
+        copyAction: "复制",
         copied: "已复制",
       }
     : {
@@ -78,14 +82,31 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
         emailLabel: "Email",
         wechatLabel: "WeChat",
         noAutoRenewal: "No auto-renewal. Buy again manually when it expires.",
+        copyAction: "Copy",
         copied: "Copied",
       };
 
+  const buildCheckoutUrl = (baseUrl: string, pass: "monthly" | "yearly") => {
+    const checkoutUrl = new URL(baseUrl);
+    if (userId) {
+      checkoutUrl.searchParams.set("checkout[custom][user_id]", userId);
+    }
+    checkoutUrl.searchParams.set("checkout[custom][pass]", pass);
+
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (email) {
+      checkoutUrl.searchParams.set("checkout[email]", email);
+    }
+
+    return checkoutUrl.toString();
+  };
+
   const handleUpgrade = (variant: "monthly" | "yearly") => {
     if (isZh) {
+      const plan = variant === "monthly" ? "月卡 ￥9.9 / 30 天" : "年卡 ￥59.9 / 365 天";
       const subject = encodeURIComponent(`LockscreenTodo Pro ${variant === "monthly" ? "月卡" : "年卡"}开通咨询`);
       const body = encodeURIComponent(
-        `你好，我想了解 LockscreenTodo Pro ${variant === "monthly" ? "月卡 ￥9.9 / 30 天" : "年卡 ￥59.9 / 365 天"}。\n\n登录邮箱：\n备注：\n`,
+        `你好，我想了解 LockscreenTodo Pro ${plan}。\n\n登录邮箱：${user?.primaryEmailAddress?.emailAddress || ""}\n备注：\n`,
       );
       window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
       return;
@@ -99,7 +120,12 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
       return;
     }
 
-    window.open(checkoutUrl, "_blank");
+    if (!userId) {
+      alert("Please sign in before buying a pass.");
+      return;
+    }
+
+    window.open(buildCheckoutUrl(checkoutUrl, variant), "_blank", "noopener,noreferrer");
   };
 
   const copyText = async (value: string) => {
@@ -150,8 +176,10 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5">
                   <h3 className="text-lg font-bold text-white">{copy.manualTitle}</h3>
                   <p className="mt-2 text-sm leading-6 text-gray-300">{copy.manualBody}</p>
-                  <ContactRow label={copy.emailLabel} value={SUPPORT_EMAIL} onCopy={copyText} />
-                  {WECHAT_ID ? <ContactRow label={copy.wechatLabel} value={WECHAT_ID} onCopy={copyText} /> : null}
+                  <ContactRow label={copy.emailLabel} value={SUPPORT_EMAIL} buttonLabel={copy.copyAction} onCopy={copyText} />
+                  {WECHAT_ID ? (
+                    <ContactRow label={copy.wechatLabel} value={WECHAT_ID} buttonLabel={copy.copyAction} onCopy={copyText} />
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -162,7 +190,7 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
                 price={monthlyPrice}
                 cadence={copy.month}
                 features={[copy.allStyles, copy.uploads, copy.customization]}
-                buttonText={isZh ? `${copy.action}` : `${copy.action} - ${monthlyPrice}`}
+                buttonText={isZh ? copy.action : `${copy.action} - ${monthlyPrice}`}
                 onClick={() => handleUpgrade("monthly")}
               />
 
@@ -174,7 +202,7 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
                 note={copy.save45}
                 highlighted
                 features={[copy.allStyles, copy.uploads, copy.customization, copy.oneYear, copy.futureUpdates]}
-                buttonText={isZh ? `${copy.action}` : `${copy.action} - ${yearlyPrice}`}
+                buttonText={isZh ? copy.action : `${copy.action} - ${yearlyPrice}`}
                 onClick={() => handleUpgrade("yearly")}
               />
             </div>
@@ -192,10 +220,12 @@ export function UpgradeModalPricing({ isOpen, onClose, lang = "en" }: UpgradeMod
 function ContactRow({
   label,
   value,
+  buttonLabel,
   onCopy,
 }: {
   label: string;
   value: string;
+  buttonLabel: string;
   onCopy: (value: string) => void;
 }) {
   return (
@@ -206,7 +236,7 @@ function ContactRow({
       </div>
       <Button size="sm" variant="outline" onClick={() => onCopy(value)}>
         <Copy className="mr-2 h-3.5 w-3.5" />
-        Copy
+        {buttonLabel}
       </Button>
     </div>
   );

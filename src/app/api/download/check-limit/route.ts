@@ -61,24 +61,24 @@ export async function GET(req: Request) {
     const now = new Date();
     const trialEndsAt = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
     const subscriptionEndsAt = user?.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
-    const isTrialActive = trialEndsAt && isAfter(trialEndsAt, now);
-    const isTrialExpired = trialEndsAt && !isTrialActive;
-    const isSubscriptionActive = subscriptionEndsAt && isAfter(subscriptionEndsAt, now);
-    const isPro = user?.isPro || user?.subscriptionPlan === 'PRO' || isSubscriptionActive;
+    const isTrialActive = !!trialEndsAt && isAfter(trialEndsAt, now);
+    const isTrialExpired = !!trialEndsAt && !isTrialActive;
+    const isSubscriptionActive = !!subscriptionEndsAt && isAfter(subscriptionEndsAt, now);
+    const isPaidPro = !!user?.isPro && isSubscriptionActive;
 
     const daysRemaining = trialEndsAt
       ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
 
-    if (isPro || isTrialActive) {
-      console.log(`User ${userId} (${isPro ? 'Pro' : 'Trial'}) - unlimited downloads`);
+    if (isPaidPro || isTrialActive) {
+      console.log(`User ${userId} (${isPaidPro ? 'Pro' : 'Trial'}) - unlimited downloads`);
       return NextResponse.json({
         canDownload: true,
-        isPro: !!isPro,
+        isPro: isPaidPro,
         isTrialActive: !!isTrialActive,
         isTrialExpired: false,
         remainingThisWeek: -1,
-        message: isPro
+        message: isPaidPro
           ? "Pro user - unlimited downloads"
           : `Trial period - ${daysRemaining} days remaining`,
       });

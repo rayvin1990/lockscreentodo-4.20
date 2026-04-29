@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser, getWallpaperUsage, getTodayWallpaperUsage, upsertUser } from "~/lib/supabase/admin";
-import { startOfWeek, startOfMonth } from "date-fns";
+import { isAfter, startOfMonth, startOfWeek } from "date-fns";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +70,8 @@ export async function GET(req: NextRequest) {
     // Subscription info
     const trialEndsAt = user.trialEndsAt ? new Date(user.trialEndsAt) : null;
     const subscriptionEndsAt = user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
+    const isSubscriptionActive = !!subscriptionEndsAt && isAfter(subscriptionEndsAt, now);
+    const isTrialActive = !!trialEndsAt && isAfter(trialEndsAt, now);
     const daysRemaining = trialEndsAt
       ? Math.max(0, Math.floor((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
@@ -79,8 +81,8 @@ export async function GET(req: NextRequest) {
         email: user.email,
         name: user.name,
         image: user.image,
-        subscriptionPlan: user.subscriptionPlan || 'FREE',
-        isPro: user.isPro || false,
+        subscriptionPlan: isSubscriptionActive || isTrialActive ? user.subscriptionPlan || 'PRO' : 'FREE',
+        isPro: isSubscriptionActive,
         trialEndsAt: user.trialEndsAt,
         subscriptionEndsAt: user.subscriptionEndsAt,
         lemonSqueezyCustomerId: user.lemonSqueezyCustomerId,
