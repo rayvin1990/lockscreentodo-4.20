@@ -27,14 +27,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {};
   }
 
+  const canonical = `${siteConfig.url}/use-cases/${scenario.slug}`;
+
   return {
     title: scenario.eyebrow[lang],
     description: scenario.description[lang],
     keywords: scenario.keywords,
     alternates: {
-      canonical: `${siteConfig.url}/en/${scenario.slug}`,
+      canonical,
       languages: {
-        en: `${siteConfig.url}/en/${scenario.slug}`,
+        en: canonical,
         zh: `${siteConfig.url}/zh/${scenario.slug}`,
       },
     },
@@ -50,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: scenario.title[lang],
       description: scenario.description[lang],
-      url: `${siteConfig.url}/en/${scenario.slug}`,
+      url: canonical,
     },
   };
 }

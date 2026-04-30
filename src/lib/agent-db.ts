@@ -27,7 +27,13 @@ export async function getUserByAgentApiKey(apiKey: string) {
   return data as {
     id: string;
     user_id: string;
+    agent_api_key: string;
     device_name: string;
+    device_id: string | null;
+    notification_provider: string | null;
+    tts_enabled: boolean;
+    tts_quiet_hours_start: string | null;
+    tts_quiet_hours_end: string | null;
     User: { id: string; email: string };
   };
 }
@@ -37,6 +43,7 @@ export async function createAgentReminder(params: {
   agentDeviceId?: string;
   title: string;
   note?: string | null;
+  ttsText?: string | null;
   kind: string;
   priority: string;
   dueAt?: string | null;
@@ -49,12 +56,13 @@ export async function createAgentReminder(params: {
   if (!supabaseAgent) return null;
 
   const { data, error } = await supabaseAgent
-    .from("agent_reminders")
+    .from("reminders")
     .insert({
       user_id: params.userId,
       agent_device_id: params.agentDeviceId,
       title: params.title,
       note: params.note,
+      tts_text: params.ttsText,
       kind: params.kind,
       priority: params.priority,
       due_at: params.dueAt,
@@ -75,7 +83,7 @@ export async function getAgentRemindersForUser(userId: string, limit = 100) {
   if (!supabaseAgent) return [];
 
   const { data, error } = await supabaseAgent
-    .from("agent_reminders")
+    .from("reminders")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -91,7 +99,7 @@ export async function getLockscreenQueueForUser(userId: string) {
   const now = new Date().toISOString();
 
   const { data, error } = await supabaseAgent
-    .from("agent_reminders")
+    .from("reminders")
     .select("*")
     .eq("user_id", userId)
     .or(`expires_at.is.null,expires_at.gt.${now}`)
@@ -108,7 +116,7 @@ export async function clearAgentReminder(reminderId: string, userId: string) {
   if (!supabaseAgent) return false;
 
   const { error } = await supabaseAgent
-    .from("agent_reminders")
+    .from("reminders")
     .delete()
     .eq("id", reminderId)
     .eq("user_id", userId);
@@ -120,7 +128,7 @@ export async function clearAllAgentReminders(userId: string) {
   if (!supabaseAgent) return false;
 
   const { error } = await supabaseAgent
-    .from("agent_reminders")
+    .from("reminders")
     .delete()
     .eq("user_id", userId);
 

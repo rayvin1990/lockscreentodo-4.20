@@ -305,7 +305,7 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
               return (
                 <Link
                   key={scenario.slug}
-                  href={`/${lang}/${scenario.slug}`}
+                  href={lang === "en" ? `/use-cases/${scenario.slug}` : `/${lang}/${scenario.slug}`}
                   className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]"
                 >
                   <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-300">

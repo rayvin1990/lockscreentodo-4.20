@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  Brain,
   CalendarDays,
   Dumbbell,
   Focus,
@@ -54,6 +55,102 @@ export type SeoScenario = {
 };
 
 export const seoScenarios: SeoScenario[] = [
+  {
+    slug: "adhd-lockscreen-reminder",
+    icon: Brain,
+    template: "large-reminder",
+    gradient: "linear-gradient(160deg, #111827 0%, #7c3aed 46%, #020617 100%)",
+    eyebrow: {
+      en: "ADHD lock screen reminder",
+      zh: "ADHD 锁屏提醒",
+    },
+    title: {
+      en: "Stop Swiping Away Your Life. A Lock Screen Reminder for ADHD Brains.",
+      zh: "别再把提醒一滑就忘。给 ADHD 大脑的锁屏提醒。",
+    },
+    description: {
+      en: "For people who dismiss a notification once and lose the task completely. Put the reminder on the surface you see every time you wake your phone.",
+      zh: "适合通知一划掉就彻底忘事的人。把提醒放到每次亮屏都会看到的位置。",
+    },
+    audience: {
+      en: "Best for ADHD working-memory gaps, medication reminders, leaving-home checks, and tasks that disappear when they are out of sight.",
+      zh: "适合 ADHD 工作记忆断片、吃药提醒、出门检查，以及所有看不见就会忘的事。",
+    },
+    tasks: {
+      en: ["DO THIS BEFORE YOU FORGET", "Take medication", "Reply to the form", "Keys before leaving"],
+      zh: ["趁没忘，先做这件事", "吃药", "回复表格", "出门前拿钥匙"],
+    },
+    keywords: [
+      "ADHD lock screen reminder",
+      "ADHD reminder wallpaper",
+      "working memory reminder",
+      "out of sight out of mind ADHD",
+    ],
+  },
+  {
+    slug: "n8n-urgent-alerts-lockscreen",
+    icon: ServerCrash,
+    template: "ops-alert",
+    gradient: "linear-gradient(160deg, #020617 0%, #b91c1c 45%, #000000 100%)",
+    eyebrow: {
+      en: "n8n urgent alerts lock screen",
+      zh: "n8n 紧急报警锁屏",
+    },
+    title: {
+      en: "Never Miss a $1,000 Lead Again. Route n8n Urgent Alerts to Your Lock Screen.",
+      zh: "别再漏掉高价值线索。把 n8n 紧急报警推到锁屏上。",
+    },
+    description: {
+      en: "Turn critical workflow outputs, lead alerts, webhook events, and on-call incidents into a visual lock screen takeover.",
+      zh: "把关键工作流输出、客户线索、Webhook 事件和值班故障变成锁屏级视觉提醒。",
+    },
+    audience: {
+      en: "Best for n8n, Zapier, webhooks, indie businesses, sales leads, and small teams that suffer from notification blindness.",
+      zh: "适合 n8n、Zapier、Webhook、独立业务、高价值线索和被通知海淹没的小团队。",
+    },
+    tasks: {
+      en: ["URGENT LEAD: ACME wants demo", "$1,000+ deal possible", "Reply within 10 minutes", "Open CRM now"],
+      zh: ["紧急线索：ACME 想预约演示", "可能是 $1,000+ 订单", "10 分钟内回复", "现在打开 CRM"],
+    },
+    keywords: [
+      "n8n urgent alerts lock screen",
+      "Zapier urgent alert phone",
+      "webhook lock screen alert",
+      "lead notification blindness",
+    ],
+  },
+  {
+    slug: "doomscrolling-blocker-wallpaper",
+    icon: Focus,
+    template: "interruption",
+    gradient: "linear-gradient(160deg, #18181b 0%, #7c2d12 48%, #020617 100%)",
+    eyebrow: {
+      en: "Doomscrolling blocker wallpaper",
+      zh: "刷手机打断锁屏",
+    },
+    title: {
+      en: "Break the Doomscrolling Loop Before You Unlock Your Phone.",
+      zh: "在解锁之前，先打断无意识刷手机循环。",
+    },
+    description: {
+      en: "A blunt lock screen prompt that interrupts the muscle memory of checking the time and falling into TikTok, Reels, Shorts, or feeds.",
+      zh: "用一句直接的锁屏质问，打断拿手机看时间却掉进短视频和信息流的肌肉记忆。",
+    },
+    audience: {
+      en: "Best for digital minimalism, TikTok blockers, Reels habits, late-night scrolling, and people who bypass normal screen-time limits.",
+      zh: "适合数字极简、短视频戒断、睡前刷手机，以及总能绕过屏幕时间限制的人。",
+    },
+    tasks: {
+      en: ["Work, or escape?", "Why did you pick up your phone?", "Do the real task first", "Put it down in 5 minutes"],
+      zh: ["你是要工作，还是逃避？", "你为什么拿起手机？", "先做现实里的任务", "5 分钟后放下"],
+    },
+    keywords: [
+      "doomscrolling blocker wallpaper",
+      "stop doomscrolling lock screen",
+      "digital minimalism wallpaper",
+      "phone addiction lock screen",
+    ],
+  },
   {
     slug: "exam-countdown-wallpaper",
     icon: CalendarDays,

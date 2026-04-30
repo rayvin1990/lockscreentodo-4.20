@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import {
-  createAgentReminder,
-  getAgentRemindersForUser,
-  getLockscreenQueueForUser,
-  clearAgentReminder,
-  clearAllAgentReminders,
   getUserByAgentApiKey,
   updateAgentDeviceLastSeen,
   supabaseAgent,
 } from "~/lib/agent-db";
-import { parseReminderPayload, reminderPrioritySchema } from "~/lib/agent-reminders";
+import {
+  addAgentReminders,
+  clearAgentReminders,
+  getLockscreenQueue,
+  getStoredAgentReminders,
+  parseReminderPayload,
+} from "~/lib/agent-reminders";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,8 +32,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const reminders = await getAgentRemindersForUser(device.user_id);
-  const lockscreenQueue = await getLockscreenQueueForUser(device.user_id);
+  const reminders = await getStoredAgentReminders(device.user_id);
+  const lockscreenQueue = await getLockscreenQueue(device.user_id);
 
   return NextResponse.json({
     ok: true,
@@ -52,38 +53,22 @@ export async function POST(req: Request) {
   try {
     const payload = await req.json();
     const parsedReminders = parseReminderPayload(payload);
-
-    const inserted = [];
-    for (const reminder of parsedReminders) {
-      const created = await createAgentReminder({
-        userId: device.user_id,
-        agentDeviceId: device.id,
-        title: reminder.title,
-        note: reminder.note,
-        kind: reminder.kind,
-        priority: reminder.priority,
-        dueAt: reminder.dueAt,
-        location: reminder.location,
-        requiresHuman: reminder.requiresHuman,
-        expiresAt: reminder.expiresAt,
-        source: reminder.source,
-        externalId: reminder.id,
-      });
-      if (created) inserted.push(created);
-    }
+    const result = await addAgentReminders(parsedReminders, device.user_id, device.id, {
+      provider: (device.notification_provider || "bark") as any,
+      target: device.device_id || "",
+      apiKey: device.agent_api_key,
+    });
 
     // Update last seen
     await updateAgentDeviceLastSeen(device.id);
-
-    const lockscreenQueue = await getLockscreenQueueForUser(device.user_id);
 
     console.log(
       JSON.stringify({
         type: "agent_reminders_created",
         userId: device.user_id,
         deviceId: device.id,
-        accepted: inserted.length,
-        lockscreenQueueSize: lockscreenQueue.length,
+        accepted: result.accepted,
+        lockscreenQueueSize: result.lockscreenQueue.length,
         sources: [...new Set(parsedReminders.map(r => r.source))],
         timestamp: new Date().toISOString(),
       }),
@@ -92,8 +77,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       authMode: "api_key",
-      accepted: inserted.length,
-      lockscreenQueue,
+      accepted: result.accepted,
+      lockscreenQueue: result.lockscreenQueue,
     });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -116,19 +101,13 @@ export async function DELETE(req: Request) {
   const id = url.searchParams.get("id");
   const all = url.searchParams.get("all") === "true";
 
-  if (all) {
-    const cleared = await clearAllAgentReminders(device.user_id);
-    return NextResponse.json({ ok: cleared, cleared: all ? "all" : 0 });
-  }
+  const result = await clearAgentReminders({ id, all }, device.user_id);
 
-  if (!id) {
-    return NextResponse.json({ ok: false, error: "id or all=true required" }, { status: 400 });
-  }
-
-  const cleared = await clearAgentReminder(id, device.user_id);
-  const lockscreenQueue = await getLockscreenQueueForUser(device.user_id);
-
-  return NextResponse.json({ ok: cleared, lockscreenQueue });
+  return NextResponse.json({
+    ok: true,
+    cleared: result.cleared,
+    lockscreenQueue: result.lockscreenQueue,
+  });
 }
 
 export async function OPTIONS() {

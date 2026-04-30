@@ -3,8 +3,19 @@
 import React, { useEffect, useState } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { Button } from "~/components/ui/button";
-import { User, CreditCard, Bell, LogOut, ArrowLeft, Zap, Clock, Download, Image, Calendar, TrendingUp, CheckCircle2, XCircle } from "lucide-react";
+import { User, CreditCard, Bell, LogOut, ArrowLeft, Zap, Clock, Download, Image, Calendar, TrendingUp, CheckCircle2, XCircle, Smartphone, Volume2, ExternalLink } from "lucide-react";
 import Link from "next/link";
+
+interface AgentDevice {
+  id: string;
+  agent_api_key: string;
+  device_name: string;
+  device_id: string | null;
+  notification_provider: string | null;
+  tts_enabled: boolean;
+  tts_quiet_hours_start: string | null;
+  tts_quiet_hours_end: string | null;
+}
 
 interface DashboardData {
   user: {
@@ -31,21 +42,23 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
   const { user, isLoaded } = useUser();
   const lang = params.lang || "en";
   const [data, setData] = useState<DashboardData | null>(null);
+  const [agentDevice, setAgentDevice] = useState<AgentDevice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [savingDevice, setSavingDevice] = useState(false);
 
   useEffect(() => {
     if (user) {
-      fetch('/api/user/dashboard')
-        .then(async (res) => {
-          const payload = await res.json();
-          if (!res.ok || !payload.user) {
-            throw new Error(payload.error || "Failed to load dashboard");
-          }
-          return payload as DashboardData;
-        })
-        .then((payload) => {
+      Promise.all([
+        fetch('/api/user/dashboard').then(res => res.json()),
+        fetch('/api/user/agent-devices').then(res => res.json())
+      ])
+        .then(([payload, devicePayload]) => {
+          if (payload.error) throw new Error(payload.error);
           setData(payload);
+          if (devicePayload.devices && devicePayload.devices.length > 0) {
+            setAgentDevice(devicePayload.devices[0]);
+          }
           setError(null);
         })
         .catch((err) => {
@@ -57,6 +70,44 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
       setLoading(false);
     }
   }, [user, isLoaded]);
+
+  const handleCreateDevice = async () => {
+    setSavingDevice(true);
+    try {
+      const res = await fetch('/api/user/agent-devices?action=create', { method: 'POST' });
+      const { device, error } = await res.json();
+      if (error) throw new Error(error);
+      setAgentDevice(device);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error creating device");
+    } finally {
+      setSavingDevice(false);
+    }
+  };
+
+  const handleUpdateDevice = async (updates: Partial<AgentDevice>) => {
+    if (!agentDevice) return;
+    setSavingDevice(true);
+    // optimistic update
+    const prev = { ...agentDevice };
+    setAgentDevice({ ...agentDevice, ...updates });
+    try {
+      const payload = { ...agentDevice, ...updates };
+      const res = await fetch('/api/user/agent-devices?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const { device, error } = await res.json();
+      if (error) throw new Error(error);
+      setAgentDevice(device);
+    } catch (err) {
+      setAgentDevice(prev);
+      alert(err instanceof Error ? err.message : "Error updating device");
+    } finally {
+      setSavingDevice(false);
+    }
+  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
@@ -269,6 +320,142 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
                 </Button>
               )}
             </div>
+          </div>
+        </section>
+
+        {/* Lockscreen Agent & Push Configuration */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3 opacity-30">
+            <Smartphone className="w-4 h-4" />
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.3em]">{lang === "en" ? "Agent Push & Lockscreen" : "Agent 推送与锁屏"}</h2>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
+            {!agentDevice ? (
+              <div className="text-center py-6">
+                <Smartphone className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
+                <h3 className="text-lg font-bold mb-2">{lang === "en" ? "Enable Lockscreen Agent" : "启用锁屏 Agent"}</h3>
+                <p className="text-xs text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
+                  {lang === "en" 
+                    ? "Connect AI agents (like OpenClaw or Zapier) to push critical tasks directly to your phone lock screen."
+                    : "连接 AI Agent (如 OpenClaw 或 Zapier)，将紧急任务直接推送到手机锁屏。"}
+                </p>
+                <Button onClick={handleCreateDevice} disabled={savingDevice} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold px-8">
+                  {savingDevice ? "..." : (lang === "en" ? "Generate API Key" : "生成 API Key")}
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">1. API Key</h4>
+                  <div className="p-3 bg-black/40 rounded-xl border border-white/5 flex justify-between items-center">
+                    <code className="text-xs text-slate-300 font-mono">{agentDevice.agent_api_key}</code>
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] text-slate-400 hover:text-white" onClick={() => navigator.clipboard.writeText(agentDevice.agent_api_key)}>
+                      {lang === "en" ? "COPY" : "复制"}
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-slate-500">{lang === "en" ? "Use this key in OpenClaw or your Webhook settings." : "在 OpenClaw 或 Webhook 中使用此 Key。"}</p>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">2. iOS Shortcut Setup</h4>
+                  <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                    <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                      {lang === "en" 
+                        ? "To automatically update your wallpaper when an agent pushes a task, you need to set up an iOS Shortcut."
+                        : "为了在 Agent 推送任务时自动更新壁纸，你需要设置一个 iOS 快捷指令。"}
+                    </p>
+                    <a href={`/api/lockscreen/shortcut?key=${agentDevice.agent_api_key}`} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs font-bold text-indigo-400 hover:text-indigo-300">
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {lang === "en" ? "Test Shortcut Endpoint" : "测试快捷指令接口"}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/5">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">3. Push Notifications</h4>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500">Provider</label>
+                      <select 
+                        value={agentDevice.notification_provider || "bark"} 
+                        onChange={(e) => handleUpdateDevice({ notification_provider: e.target.value })}
+                        disabled={savingDevice}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                      >
+                        <option value="none">None (Silent)</option>
+                        <option value="bark">Bark</option>
+                        <option value="pushcut">Pushcut</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500">Device Key (Bark Key / Pushcut Secret)</label>
+                      <input 
+                        type="text" 
+                        value={agentDevice.device_id || ""}
+                        onChange={(e) => setAgentDevice({ ...agentDevice, device_id: e.target.value })}
+                        onBlur={(e) => handleUpdateDevice({ device_id: e.target.value })}
+                        placeholder="e.g. Y7xxxxx"
+                        disabled={savingDevice}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Volume2 className="w-4 h-4 text-indigo-400" />
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">4. Siri TTS (Read Aloud)</h4>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={agentDevice.tts_enabled}
+                        onChange={(e) => handleUpdateDevice({ tts_enabled: e.target.checked })}
+                        disabled={savingDevice}
+                      />
+                      <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500"></div>
+                    </label>
+                  </div>
+                  
+                  {agentDevice.tts_enabled && (
+                    <div className="grid gap-4 sm:grid-cols-2 p-4 bg-white/5 rounded-xl border border-white/5">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500">Quiet Hours Start</label>
+                        <input 
+                          type="time" 
+                          value={agentDevice.tts_quiet_hours_start || "22:00"}
+                          onChange={(e) => setAgentDevice({ ...agentDevice, tts_quiet_hours_start: e.target.value })}
+                          onBlur={(e) => handleUpdateDevice({ tts_quiet_hours_start: e.target.value })}
+                          disabled={savingDevice}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white [color-scheme:dark]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500">Quiet Hours End</label>
+                        <input 
+                          type="time" 
+                          value={agentDevice.tts_quiet_hours_end || "08:00"}
+                          onChange={(e) => setAgentDevice({ ...agentDevice, tts_quiet_hours_end: e.target.value })}
+                          onBlur={(e) => handleUpdateDevice({ tts_quiet_hours_end: e.target.value })}
+                          disabled={savingDevice}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white [color-scheme:dark]"
+                        />
+                      </div>
+                      <p className="sm:col-span-2 text-[10px] text-slate-500 leading-relaxed">
+                        {lang === "en" 
+                          ? "During quiet hours, only 'Critical' priority alerts will be spoken aloud."
+                          : "在免打扰时段内，只有“紧急(Critical)”级别的提醒会被 Siri 播报。"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </section>
 

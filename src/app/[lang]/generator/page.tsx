@@ -198,6 +198,7 @@ export default function GeneratorPage() {
   const [containerPosition, setContainerPosition] = useState({ x: 0, y: 300 });
   const [globalFontSize, setGlobalFontSize] = useState(13);
   const [backgroundOpacity, setBackgroundOpacity] = useState(0.34);
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const [isDraggingBg, setIsDraggingBg] = useState(false);
@@ -243,6 +244,7 @@ export default function GeneratorPage() {
     setContainerPosition({ x: 0, y: 300 });
     setGlobalFontSize(13);
     setBackgroundOpacity(0.34);
+    setActiveTemplate(null);
     setSelectedTaskId(tasks[0]?.id || null);
   }, []);
 
@@ -264,9 +266,9 @@ export default function GeneratorPage() {
     const isLargeTemplate = largeTemplates.has(template || "");
     const isCountdown = template === "countdown";
     const isFitness = template === "fitness";
-    const fontSize = isCountdown ? 20 : isLargeTemplate ? 18 : isFitness ? 15 : 13;
+    const fontSize = isCountdown ? 22 : isLargeTemplate ? 20 : isFitness ? 16 : 13;
     const yStart = isCountdown ? 228 : isLargeTemplate ? 236 : 200;
-    const rowGap = isLargeTemplate ? 42 : isFitness ? 34 : 30;
+    const rowGap = isLargeTemplate ? 42 : isFitness ? 36 : 30;
     const shouldMarkFirstDone = template === "calm-list" || !template;
     const backgroundImage = background || "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)";
 
@@ -275,7 +277,9 @@ export default function GeneratorPage() {
       text,
       x: 132,
       y: yStart + (index * rowGap),
-      fontSize,
+      fontSize: index === 0 && (isLargeTemplate || isCountdown || isFitness)
+        ? fontSize
+        : Math.max(13, fontSize - 4),
       color: "#F8FAFC",
       backgroundColor: "transparent",
       backgroundOpacity: 0.5,
@@ -294,9 +298,10 @@ export default function GeneratorPage() {
       tasks,
     }));
     setTasksLocked(true);
-    setContainerPosition({ x: 0, y: isCountdown ? 255 : isLargeTemplate ? 280 : 300 });
+    setContainerPosition({ x: 0, y: isCountdown ? 248 : isLargeTemplate ? 270 : 300 });
     setGlobalFontSize(fontSize);
     setBackgroundOpacity(template === "ops-alert" ? 0.5 : isLargeTemplate ? 0.44 : 0.34);
+    setActiveTemplate(template || null);
     setSelectedTaskId(tasks[0]?.id || null);
 
     toast({
@@ -1497,6 +1502,7 @@ export default function GeneratorPage() {
                           position={containerPosition}
                           globalFontSize={globalFontSize}
                           backgroundOpacity={backgroundOpacity}
+                          variant={activeTemplate}
                           onSelect={(id) => setSelectedTaskId(id)}
                           onUpdate={(id, updates) => updateTask(id, updates)}
                           onPositionChange={setContainerPosition}

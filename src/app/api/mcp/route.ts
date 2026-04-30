@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import {
-  createAgentReminder,
-  getLockscreenQueueForUser,
-  clearAgentReminder,
-  clearAllAgentReminders,
   getUserByAgentApiKey,
   updateAgentDeviceLastSeen,
   supabaseAgent,
@@ -40,6 +36,7 @@ const reminderInputSchema = {
           source: { type: "string", default: "agent" },
           title: { type: "string", minLength: 1, maxLength: 160 },
           note: { type: ["string", "null"] },
+          ttsText: { type: ["string", "null"], maxLength: 200 },
           kind: {
             type: "string",
             enum: ["medication", "grocery", "errand", "document", "appointment", "family", "payment", "travel", "other"],
@@ -183,28 +180,13 @@ async function handleToolCall(id: JsonRpcId, params: unknown, req: Request) {
 
   if (name === "push_lockscreen_reminders") {
     const reminders = parseReminderPayload(args);
-    const inserted = [];
-
-    for (const reminder of reminders) {
-      const created = await createAgentReminder({
-        userId: device.user_id,
-        agentDeviceId: device.id,
-        title: reminder.title,
-        note: reminder.note,
-        kind: reminder.kind,
-        priority: reminder.priority,
-        dueAt: reminder.dueAt,
-        location: reminder.location,
-        requiresHuman: reminder.requiresHuman,
-        expiresAt: reminder.expiresAt,
-        source: reminder.source,
-        externalId: reminder.id,
-      });
-      if (created) inserted.push(created);
-    }
+    const result = await addAgentReminders(reminders, device.user_id, device.id, {
+      provider: (device.notification_provider || "bark") as any,
+      target: device.device_id || "",
+      apiKey: device.agent_api_key,
+    });
 
     await updateAgentDeviceLastSeen(device.id);
-    const lockscreenQueue = await getLockscreenQueueForUser(device.user_id);
 
     return jsonRpcResult(id, {
       content: [
@@ -213,8 +195,8 @@ async function handleToolCall(id: JsonRpcId, params: unknown, req: Request) {
           text: JSON.stringify(
             {
               ok: true,
-              accepted: inserted.length,
-              lockscreenQueue,
+              accepted: result.accepted,
+              lockscreenQueue: result.lockscreenQueue,
             },
             null,
             2,
@@ -225,7 +207,7 @@ async function handleToolCall(id: JsonRpcId, params: unknown, req: Request) {
   }
 
   if (name === "get_lockscreen_queue") {
-    const lockscreenQueue = await getLockscreenQueueForUser(device.user_id);
+    const lockscreenQueue = await getLockscreenQueue(device.user_id);
     return jsonRpcResult(id, {
       content: [
         {
@@ -237,39 +219,20 @@ async function handleToolCall(id: JsonRpcId, params: unknown, req: Request) {
   }
 
   if (name === "clear_lockscreen_reminder") {
-    const parsed = args as { id?: string; all?: boolean };
-
-    if (parsed.all) {
-      await clearAllAgentReminders(device.user_id);
-      return jsonRpcResult(id, {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ ok: true, cleared: "all", lockscreenQueue: [] }, null, 2),
-          },
-        ],
-      });
-    }
-
-    if (!parsed.id) {
-      return jsonRpcError(id, -32602, "clear_lockscreen_reminder requires id or all=true", 400);
-    }
-
-    await clearAgentReminder(parsed.id, device.user_id);
-    const lockscreenQueue = await getLockscreenQueueForUser(device.user_id);
+    const result = await clearAgentReminders(args, device.user_id);
 
     return jsonRpcResult(id, {
       content: [
         {
           type: "text",
-          text: JSON.stringify({ ok: true, lockscreenQueue }, null, 2),
+          text: JSON.stringify({ ok: true, cleared: result.cleared, lockscreenQueue: result.lockscreenQueue }, null, 2),
         },
       ],
     });
   }
 
   if (name === "render_lockscreen_preview") {
-    const preview = renderLockscreenPreview(args);
+    const preview = await renderLockscreenPreview(args, device.user_id);
 
     return jsonRpcResult(id, {
       content: [

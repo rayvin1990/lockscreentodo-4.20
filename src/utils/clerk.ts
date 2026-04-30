@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { i18n } from "~/config/i18n-config";
 import { seoScenarios } from "~/lib/seo-scenarios";
 
-const noRedirectRoute = ["/api(.*)", "/trpc(.*)"];
+const noRedirectRoute = ["/api(.*)", "/trpc(.*)", "^/use-cases/"];
 const noNeedProcessRoute = [
   ".*\\.png",
   ".*\\.jpg",
@@ -36,6 +36,7 @@ export const isPublicRoute = createRouteMatcher([
   "/zh/generator",
   "/en/pricing",
   "/zh/pricing",
+  "/use-cases/:path*",
   ...seoScenarios.flatMap(s => [
     `/en/${s.slug}`,
     `/zh/${s.slug}`,

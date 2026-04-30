@@ -24,7 +24,7 @@ const baseRoutes = [
   "/zh/developers",
 ];
 
-const scenarioRoutes = seoScenarios.map((scenario) => `/en/${scenario.slug}`);
+const scenarioRoutes = seoScenarios.map((scenario) => `/use-cases/${scenario.slug}`);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

@@ -1,0 +1,3 @@
+## Updates (2026-04-30)
+- **Notifications**: Integrated intelligent Bark/Pushcut notifications. The system now uses specific sounds based on reminder `priority` and `kind` (e.g., `alarm.caf` for critical, `healthnotification.caf` for medication). This prevents notification blindness and aligns with the "Agent Era Primitive" philosophy where agents manage interruption levels.
+- **Siri TTS Integration**: Added an `X-Spoken-Text` HTTP response header to the `/api/lockscreen/shortcut` endpoint. If the user's top queue item is `critical` or `high` priority, this header is populated. iOS Shortcuts can extract this header and use the "Speak Text" action to verbally announce the task at the exact moment the lock screen wallpaper is updated.

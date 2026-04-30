@@ -1,4 +1,12 @@
 import { z } from "zod";
+import {
+  createAgentReminder,
+  getAgentRemindersForUser,
+  getLockscreenQueueForUser,
+  clearAgentReminder as dbClearAgentReminder,
+  clearAllAgentReminders as dbClearAllAgentReminders,
+} from "./agent-db";
+import { sendPushNotification, type NotificationProvider } from "./notifications";
 
 export const reminderKindSchema = z.enum([
   "medication",
@@ -19,6 +27,7 @@ export const agentReminderSchema = z.object({
   source: z.string().trim().min(1).max(80).default("agent"),
   title: z.string().trim().min(1).max(160),
   note: z.string().trim().max(500).nullable().optional(),
+  ttsText: z.string().trim().max(200).nullable().optional(),
   kind: reminderKindSchema.default("other"),
   priority: reminderPrioritySchema.default("medium"),
   dueAt: z.string().datetime({ offset: true }).nullable().optional(),
@@ -63,10 +72,6 @@ const highValueKinds = new Set([
   "travel",
 ]);
 
-const globalStore = globalThis as typeof globalThis & {
-  __lockscreenAgentReminders?: AgentReminder[];
-};
-
 export function parseReminderPayload(payload: unknown): AgentReminder[] {
   const wrapped = normalizePayloadShape(payload);
   const parsed = agentReminderBatchSchema.parse(wrapped);
@@ -79,34 +84,76 @@ export function parseReminderPayload(payload: unknown): AgentReminder[] {
   }));
 }
 
-export function addAgentReminders(reminders: AgentReminder[]) {
-  const existing = globalStore.__lockscreenAgentReminders || [];
-  const next = [...reminders, ...existing]
-    .filter((reminder, index, list) => list.findIndex((item) => item.id === reminder.id) === index)
-    .slice(0, 100);
+export async function addAgentReminders(
+  reminders: AgentReminder[], 
+  userId: string, 
+  agentDeviceId?: string,
+  notification?: {
+    provider: any;
+    target: string;
+    apiKey: string;
+  }
+) {
+  const inserted = [];
+  
+  for (const reminder of reminders) {
+    const created = await createAgentReminder({
+      userId,
+      agentDeviceId,
+      title: reminder.title,
+      note: reminder.note,
+      ttsText: reminder.ttsText,
+      kind: reminder.kind,
+      priority: reminder.priority,
+      dueAt: reminder.dueAt,
+      location: reminder.location,
+      requiresHuman: reminder.requiresHuman,
+      expiresAt: reminder.expiresAt,
+      source: reminder.source,
+      externalId: reminder.id,
+    });
+    if (created) inserted.push(mapDbReminder(created));
+  }
 
-  globalStore.__lockscreenAgentReminders = next;
+  const lockscreenQueue = await getLockscreenQueue(userId);
+
+  // Trigger push notification if configured
+  if (notification?.target && inserted.length > 0) {
+    const topReminder = inserted[0];
+    const isCritical = topReminder.priority === "critical" || topReminder.priority === "high";
+    
+    await sendPushNotification(notification.provider as NotificationProvider, notification.target, {
+      title: isCritical ? `🚨 ${topReminder.title}` : `📌 ${topReminder.title}`,
+      body: inserted.length > 1 
+        ? `And ${inserted.length - 1} other tasks added to your lock screen.`
+        : (topReminder.note || "New agent task pushed to your lock screen."),
+      url: `shortcut://run-shortcut?name=Update%20Lockscreen&input=${encodeURIComponent(notification.apiKey)}`,
+      level: isCritical ? "timeSensitive" : "active",
+      group: "agent-reminders",
+      priority: topReminder.priority,
+      kind: topReminder.kind,
+    });
+  }
 
   return {
-    accepted: reminders.length,
-    reminders: next,
-    lockscreenQueue: getLockscreenQueue(next),
+    accepted: inserted.length,
+    reminders: inserted,
+    lockscreenQueue,
   };
 }
 
-export function getStoredAgentReminders() {
-  return globalStore.__lockscreenAgentReminders || [];
+export async function getStoredAgentReminders(userId: string) {
+  const data = await getAgentRemindersForUser(userId);
+  return data.map(mapDbReminder);
 }
 
-export function clearAgentReminders(payload: unknown) {
+export async function clearAgentReminders(payload: unknown, userId: string) {
   const parsed = clearReminderSchema.parse(payload || {});
-  const existing = getStoredAgentReminders();
-
+  
   if (parsed.all) {
-    globalStore.__lockscreenAgentReminders = [];
-
+    const cleared = await dbClearAllAgentReminders(userId);
     return {
-      cleared: existing.length,
+      cleared: cleared ? "all" : 0,
       reminders: [],
       lockscreenQueue: [],
     };
@@ -116,31 +163,40 @@ export function clearAgentReminders(payload: unknown) {
     throw new Error("clear_lockscreen_reminder requires id or all=true");
   }
 
-  const next = existing.filter((reminder) => reminder.id !== parsed.id);
-  globalStore.__lockscreenAgentReminders = next;
+  const cleared = await dbClearAgentReminder(parsed.id, userId);
+  const lockscreenQueue = await getLockscreenQueue(userId);
 
   return {
-    cleared: existing.length - next.length,
-    reminders: next,
-    lockscreenQueue: getLockscreenQueue(next),
+    cleared: cleared ? 1 : 0,
+    lockscreenQueue,
   };
 }
 
-export function getLockscreenQueue(reminders = getStoredAgentReminders()) {
-  const now = Date.now();
-
-  return reminders
-    .filter((reminder) => !reminder.expiresAt || Date.parse(reminder.expiresAt) > now)
-    .filter(shouldShowOnLockscreen)
-    .sort(compareReminderPriority)
-    .slice(0, 5);
+export async function getLockscreenQueue(userId: string): Promise<AgentReminder[]> {
+  const data = await getLockscreenQueueForUser(userId);
+  return data.map(mapDbReminder);
 }
 
-export function renderLockscreenPreview(payload: unknown = {}): LockscreenPreview {
+export async function renderLockscreenPreview(payload: unknown = {}, userId?: string): Promise<LockscreenPreview> {
   const parsed = renderLockscreenPreviewSchema.parse(payload || {});
-  const previewReminders = parsed.reminders
-    ? getLockscreenQueue(parseReminderPayload({ reminders: parsed.reminders }))
-    : getLockscreenQueue();
+  
+  let previewReminders: AgentReminder[];
+  
+  if (parsed.reminders) {
+    // If reminders are provided in the payload, use them (transient preview)
+    const now = Date.now();
+    previewReminders = parseReminderPayload({ reminders: parsed.reminders })
+      .filter((reminder) => !reminder.expiresAt || Date.parse(reminder.expiresAt) > now)
+      .filter(shouldShowOnLockscreen)
+      .sort(compareReminderPriority)
+      .slice(0, 5);
+  } else if (userId) {
+    // Otherwise, fetch from DB
+    previewReminders = await getLockscreenQueue(userId);
+  } else {
+    previewReminders = [];
+  }
+
   const generatedAt = new Date().toISOString();
   const lines = [
     parsed.title,
@@ -249,4 +305,21 @@ function formatShortTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function mapDbReminder(db: any): AgentReminder {
+  return {
+    id: db.id,
+    source: db.source,
+    title: db.title,
+    note: db.note,
+    ttsText: db.tts_text,
+    kind: db.kind,
+    priority: db.priority,
+    dueAt: db.due_at,
+    location: db.location,
+    requiresHuman: db.requires_human,
+    expiresAt: db.expires_at,
+    createdAt: db.created_at,
+  };
 }
