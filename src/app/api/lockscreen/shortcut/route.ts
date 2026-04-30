@@ -28,46 +28,57 @@ export async function GET(req: NextRequest) {
     tasks = ["No active reminders", "Stay focused!"];
   }
   
-  // Generate the image response directly to bypass WAF / loopback blocks
-  const imageResponse = generateLockscreenImage(tasks, "calm-list");
-  
-  if (!imageResponse.ok) {
-    console.error("[Shortcut API] Direct OG image generation failed");
-    return new NextResponse("Failed to generate image", { status: 500 });
-  }
-
-  const imageBuffer = await imageResponse.arrayBuffer();
-
-  // Determine if we need Siri to speak
-  let spokenText = "";
-  const topReminder = queue[0];
-  
-  if (topReminder && device.tts_enabled) {
-    // Parse user's timezone from query, default to Asia/Shanghai
-    const tz = req.nextUrl.searchParams.get("tz") || "Asia/Shanghai";
-    const isQuiet = isQuietHour(device.tts_quiet_hours_start || "22:00", device.tts_quiet_hours_end || "08:00", tz);
+  let imageResponse: Response;
+  try {
+    // Generate the image response directly to bypass WAF / loopback blocks
+    imageResponse = generateLockscreenImage(tasks, "calm-list");
     
-    // During quiet hours, only speak if critical. Otherwise speak high/critical.
-    const canSpeak = isQuiet ? topReminder.priority === "critical" : ["high", "critical"].includes(topReminder.priority);
-    
-    if (canSpeak) {
-      // Prioritize tts_text -> note (summary) -> title to desensitize payload
-      const contentToSpeak = topReminder.tts_text || topReminder.note || topReminder.title;
-      const prefix = topReminder.priority === "critical" ? "紧急提醒：" : "";
-      spokenText = encodeURIComponent(`${prefix}${contentToSpeak}`);
+    if (!imageResponse.ok) {
+      console.error("[Shortcut API] Direct OG image generation failed", imageResponse.status);
+      return new NextResponse(`Failed to generate image (not ok): ${imageResponse.status}`, { status: 500 });
     }
+  } catch (err: any) {
+    console.error("[Shortcut API] Exception generating image:", err);
+    return new NextResponse(`Error generating image: ${err.message || err.toString()}`, { status: 500 });
   }
 
-  const headers: Record<string, string> = {
-    "Content-Type": "image/png",
-    "Cache-Control": "no-store, must-revalidate",
-  };
+  try {
+    const imageBuffer = await imageResponse.arrayBuffer();
 
-  if (spokenText) {
-    headers["X-Spoken-Text"] = spokenText;
+    // Determine if we need Siri to speak
+    let spokenText = "";
+    const topReminder = queue[0];
+    
+    if (topReminder && device.tts_enabled) {
+      // Parse user's timezone from query, default to Asia/Shanghai
+      const tz = req.nextUrl.searchParams.get("tz") || "Asia/Shanghai";
+      const isQuiet = isQuietHour(device.tts_quiet_hours_start || "22:00", device.tts_quiet_hours_end || "08:00", tz);
+      
+      // During quiet hours, only speak if critical. Otherwise speak high/critical.
+      const canSpeak = isQuiet ? topReminder.priority === "critical" : ["high", "critical"].includes(topReminder.priority);
+      
+      if (canSpeak) {
+        // Prioritize tts_text -> note (summary) -> title to desensitize payload
+        const contentToSpeak = topReminder.tts_text || topReminder.note || topReminder.title;
+        const prefix = topReminder.priority === "critical" ? "紧急提醒：" : "";
+        spokenText = encodeURIComponent(`${prefix}${contentToSpeak}`);
+      }
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "image/png",
+      "Cache-Control": "no-store, must-revalidate",
+    };
+
+    if (spokenText) {
+      headers["X-Spoken-Text"] = spokenText;
+    }
+
+    return new NextResponse(imageBuffer, { headers });
+  } catch (err: any) {
+    console.error("[Shortcut API] Exception converting to arrayBuffer:", err);
+    return new NextResponse(`Error reading image buffer: ${err.message || err.toString()}`, { status: 500 });
   }
-
-  return new NextResponse(imageBuffer, { headers });
 }
 
 function isQuietHour(start: string, end: string, timezone: string) {
