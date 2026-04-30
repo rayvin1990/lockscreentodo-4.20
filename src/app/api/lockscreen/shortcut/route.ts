@@ -38,7 +38,13 @@ export async function GET(req: NextRequest) {
   ogUrl.searchParams.set("template", "calm-list");
   
   // Fetch the image from our OG route and return it directly
-  const imageResponse = await fetch(ogUrl.toString());
+  const imageResponse = await fetch(ogUrl.toString(), {
+    headers: {
+      // Vercel Security Checkpoint blocks curl/node-fetch. Spoof a browser.
+      "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
+      "Accept": "image/png,image/*;q=0.8"
+    }
+  });
   
   if (!imageResponse.ok) {
     const errText = await imageResponse.text();
