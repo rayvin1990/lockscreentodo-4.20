@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuth } from "@clerk/nextjs/server";
 import { randomBytes } from "crypto";
@@ -6,8 +6,8 @@ import { randomBytes } from "crypto";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-export async function POST(req: Request) {
-  const { userId } = await getAuth();
+export async function POST(req: NextRequest) {
+  const { userId } = await getAuth(req);
 
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -76,8 +76,8 @@ export async function POST(req: Request) {
   });
 }
 
-export async function GET(req: Request) {
-  const { userId } = await getAuth();
+export async function GET(req: NextRequest) {
+  const { userId } = await getAuth(req);
 
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -106,8 +106,8 @@ export async function GET(req: Request) {
   });
 }
 
-export async function DELETE(req: Request) {
-  const { userId } = await getAuth();
+export async function DELETE(req: NextRequest) {
+  const { userId } = await getAuth(req);
 
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
