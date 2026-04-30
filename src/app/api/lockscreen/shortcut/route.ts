@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
   const imageResponse = await fetch(ogUrl.toString());
   
   if (!imageResponse.ok) {
-    return new NextResponse("Failed to generate image", { status: 500 });
+    const errText = await imageResponse.text();
+    console.error("[Shortcut API] OG image generation failed:", imageResponse.status, errText, "URL:", ogUrl.toString());
+    return new NextResponse(`Failed to generate image: ${imageResponse.status} ${errText}`, { status: 500 });
   }
 
   const imageBuffer = await imageResponse.arrayBuffer();
