@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserByAgentApiKey, getLockscreenQueueForUser } from "~/lib/agent-db";
+import { generateLockscreenImage } from "~/lib/og-render";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const providedKey = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
@@ -22,34 +23,17 @@ export async function GET(req: NextRequest) {
   const queue = await getLockscreenQueueForUser(device.user_id);
   
   // Format tasks for the OG image API
-  // The OG API expects tasks separated by |
-  const tasks = queue.map(r => r.title).join("|");
-  
-  // Construct the OG image URL
-  // We'll use the absolute URL to ensure it works from everywhere
-  const ogUrl = new URL("/api/og/lockscreen", req.url);
-  if (tasks) {
-    ogUrl.searchParams.set("tasks", tasks);
-  } else {
-    ogUrl.searchParams.set("tasks", "No active reminders|Stay focused!");
+  let tasks = queue.map(r => r.title);
+  if (tasks.length === 0) {
+    tasks = ["No active reminders", "Stay focused!"];
   }
   
-  // Optional: Add other styling parameters if needed
-  ogUrl.searchParams.set("template", "calm-list");
-  
-  // Fetch the image from our OG route and return it directly
-  const imageResponse = await fetch(ogUrl.toString(), {
-    headers: {
-      // Vercel Security Checkpoint blocks curl/node-fetch. Spoof a browser.
-      "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-      "Accept": "image/png,image/*;q=0.8"
-    }
-  });
+  // Generate the image response directly to bypass WAF / loopback blocks
+  const imageResponse = generateLockscreenImage(tasks, "calm-list");
   
   if (!imageResponse.ok) {
-    const errText = await imageResponse.text();
-    console.error("[Shortcut API] OG image generation failed:", imageResponse.status, errText, "URL:", ogUrl.toString());
-    return new NextResponse(`Failed to generate image: ${imageResponse.status} ${errText}`, { status: 500 });
+    console.error("[Shortcut API] Direct OG image generation failed");
+    return new NextResponse("Failed to generate image", { status: 500 });
   }
 
   const imageBuffer = await imageResponse.arrayBuffer();
