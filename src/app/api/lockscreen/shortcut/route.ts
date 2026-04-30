@@ -3,7 +3,7 @@ import { getUserByAgentApiKey, getLockscreenQueueForUser } from "~/lib/agent-db"
 import { generateLockscreenImage } from "~/lib/og-render";
 
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const providedKey = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
