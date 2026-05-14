@@ -68,14 +68,14 @@ export function StyleControls({
   ];
 
   const fonts = [
-    { name: "Inter", value: "var(--font-inter)", category: "Modern UI" },
-    { name: "Roboto", value: "var(--font-roboto)", category: "Modern UI" },
-    { name: "San Francisco", value: "-apple-system, BlinkMacSystemFont, 'SF Pro Display'", category: "System" },
-    { name: "Segoe UI", value: "'Segoe UI', system-ui, sans-serif", category: "System" },
-    { name: "Poppins", value: "var(--font-poppins)", category: "Tech" },
-    { name: "Georgia", value: "Georgia, 'Times New Roman', serif", category: "Classic" },
-    { name: "Arial", value: "Arial, 'Helvetica Neue', sans-serif", category: "Classic" },
-    { name: "Comic Sans MS", value: "'Comic Sans MS', 'Chalkboard SE', sans-serif", category: "Fun" },
+    { name: "Inter", value: "Inter, system-ui, sans-serif" },
+    { name: "Roboto", value: "Roboto, sans-serif" },
+    { name: "San Francisco", value: "-apple-system, BlinkMacSystemFont, sans-serif" },
+    { name: "Segoe UI", value: "'Segoe UI', system-ui, sans-serif" },
+    { name: "Poppins", value: "Poppins, sans-serif" },
+    { name: "Georgia", value: "Georgia, serif" },
+    { name: "Arial", value: "Arial, sans-serif" },
+    { name: "Comic Sans", value: "'Comic Sans MS', sans-serif" },
   ];
 
   return (

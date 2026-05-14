@@ -115,7 +115,7 @@ export function TaskCard({ task, taskIndex, isSelected, isPreview = false, onSel
             ? "0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)"
             : undefined,
           color: task.color,
-          fontSize: `${task.fontSize / 16}rem`,
+          fontSize: `${task.fontSize}px`,
           fontWeight: task.isBold ? "bold" : "normal",
           fontStyle: task.isItalic ? "italic" : "normal",
           textAlign: task.textAlign,

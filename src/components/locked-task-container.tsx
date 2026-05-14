@@ -355,7 +355,7 @@ export function LockedTaskContainer({
                       className="pl-3"
                       style={{
                         color: task.color,
-                        fontSize: `${(task.fontSize || globalFontSize) / 16}rem`,
+                        fontSize: `${task.fontSize || globalFontSize}px`,
                         fontWeight: task.isBold ? 700 : 450,
                         fontStyle: task.isItalic ? "italic" : "normal",
                         fontFamily: task.fontFamily,
