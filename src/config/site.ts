@@ -1,7 +1,7 @@
-export const siteConfig = {
-  name: "Lockscreen Todo - AI Lock Screen Task Wallpaper Generator",
+﻿export const siteConfig = {
+  name: "Lockscreen Todo: To-Do List on Lock Screen Wallpaper",
   description:
-    "Create clean lock screen task wallpapers from your daily tasks, study plans, habits, reminders, and countdowns. No app install required. Works on iPhone and Android.",
+    "Turn your to-do list into a lock screen wallpaper you actually see. Free iPhone and Android wallpaper generator for daily tasks, study plans, habits, reminders, and countdowns. No app install required.",
   url: "https://lockscreentodo.com",
   ogImage: "/og-image.jpg",
   links: {
