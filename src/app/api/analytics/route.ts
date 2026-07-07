@@ -109,7 +109,39 @@ export async function POST(req: Request) {
       console.warn('[analytics] NO SUPABASE ENV, skip insert');
     }
 
-    return NextResponse.json({ ok: true });
+    let dbResult: { status: number; body: string } | null = null;
+    try {
+      const supabaseUrl2 = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey2 = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl2 && supabaseKey2) {
+        const userAgent = req.headers.get('user-agent')?.slice(0, 500) ?? null;
+        const xff = req.headers.get('x-forwarded-for');
+        const ip = xff ? xff.split(',')[0].trim() : req.headers.get('x-real-ip');
+        const row = {
+            event, path, referrer, lang,
+            scenario_slug: scenarioSlug, template, has_scenario_faqs: hasScenarioFaqs,
+            utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
+            target, connected, signed_in: signedIn, reason, properties,
+            user_agent: userAgent, ip_hash: hashIp(ip),
+          };
+        const r = await fetch(supabaseUrl2 + '/rest/v1/analytics_events', {
+          method: 'POST',
+          headers: {
+            apikey: supabaseKey2,
+            Authorization: 'Bearer ' + supabaseKey2,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify(row),
+        });
+        dbResult = { status: r.status, body: (await r.text()).slice(0, 300) };
+      } else {
+        dbResult = { status: 0, body: 'no env (url=' + Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) + ' key=' + Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) + ')' };
+      }
+    } catch (err) {
+      dbResult = { status: 0, body: 'exception: ' + String(err) };
+    }
+    return NextResponse.json({ ok: dbResult?.status === 201, db: dbResult });
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid payload' }, { status: 400 });
   }
