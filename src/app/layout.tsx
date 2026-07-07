@@ -15,6 +15,7 @@ import {
 import "~/styles/globals.css";
 
 import { Toaster } from "~/components/ui/toaster";
+import { Analytics } from "@vercel/analytics/next";
 import { cn } from "~/components/ui/utils/cn";
 import { i18n } from "~/config/i18n-config";
 import { siteConfig } from "~/config/site";
@@ -212,6 +213,7 @@ export default function RootLayout({
     >
       {children}
       <Toaster />
+      <Analytics />
     </ThemeProvider>
   );
 
