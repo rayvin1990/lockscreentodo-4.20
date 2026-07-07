@@ -1,16 +1,4 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import {
-  Fira_Code,
-  Inter,
-  JetBrains_Mono,
-  Lato,
-  Montserrat,
-  Noto_Sans_SC,
-  Open_Sans,
-  Poppins,
-  Roboto,
-  Source_Code_Pro,
-} from "next/font/google";
 
 import "~/styles/globals.css";
 
@@ -39,66 +27,12 @@ const clerkConfig = {
 
 const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || null;
 
+import { Inter, Noto_Sans_SC } from "next/font/google";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  variable: "--font-roboto",
-  weight: ["300", "400", "500", "700"],
-  display: "swap",
-});
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  variable: "--font-poppins",
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  variable: "--font-open-sans",
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const lato = Lato({
-  subsets: ["latin"],
-  variable: "--font-lato",
-  weight: ["300", "400", "700"],
-  display: "swap",
-});
-
-const sourceCodePro = Source_Code_Pro({
-  subsets: ["latin"],
-  variable: "--font-source-code-pro",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const firaCode = Fira_Code({
-  subsets: ["latin"],
-  variable: "--font-fira-code",
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600"],
   display: "swap",
 });
 
@@ -252,16 +186,7 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
-          inter.variable,
-          roboto.variable,
-          poppins.variable,
-          montserrat.variable,
-          openSans.variable,
-          lato.variable,
-          sourceCodePro.variable,
-          firaCode.variable,
-          jetbrainsMono.variable,
-          notoSansSC.variable,
+          inter.variable,          notoSansSC.variable,
         )}
       >
         {clerkWrappedApp}

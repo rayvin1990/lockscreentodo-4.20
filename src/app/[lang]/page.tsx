@@ -9,10 +9,7 @@ import { Button } from "~/components/ui/button";
 import { trackEvent } from "~/lib/analytics";
 import { seoScenarios } from "~/lib/seo-scenarios";
 
-const RealisticPhoneMockup = dynamic(
-  () => import("~/components/realistic-phone-mockup").then((mod) => mod.RealisticPhoneMockup),
-  { ssr: false, loading: () => <div className="w-48 aspect-[9/19] bg-white/5 animate-pulse rounded-[2rem] mx-auto" /> },
-);
+import { RealisticPhoneMockup } from "~/components/realistic-phone-mockup";
 
 const PricingComparisonTable = dynamic(
   () => import("~/components/pricing-comparison-table").then((mod) => mod.PricingComparisonTable),
@@ -24,17 +21,17 @@ const copy = {
     navGenerator: "Generator",
     navPricing: "Pricing",
     navDashboard: "Dashboard",
-    eyebrow: "AI lock screen task wallpaper generator",
-    title: "Turn today's tasks into a lock screen wallpaper.",
+    eyebrow: "Notion task lock screen wallpaper",
+    title: "Turn Notion tasks into a lock screen you cannot ignore.",
     subtitle:
-      "Write the tasks you want to see, generate a clean phone wallpaper, scan the QR code, and set it as your lock screen. No app install required.",
-    primaryCta: "Create wallpaper",
+      "Preview a clean phone wallpaper, then connect Notion to bring today's tasks onto your lock screen. No app install required.",
+    primaryCta: "Try the wallpaper demo",
     secondaryCta: "See pricing",
-    useCases: ["Study plans", "Exam countdowns", "Daily tasks", "Habit tracking", "ADHD reminders", "Medication notes"],
+    useCases: ["Notion tasks", "Today's priorities", "Daily tasks", "Habit tracking", "ADHD reminders", "Medication notes"],
     workflowTitle: "Simple Flow",
     workflow: [
-      { icon: Palette, title: "Write", desc: "Add tasks, habits, or countdowns." },
-      { icon: Zap, title: "Generate", desc: "Render a clean HD wallpaper." },
+      { icon: Palette, title: "Preview", desc: "Start with sample tasks or your own list." },
+      { icon: Zap, title: "Connect", desc: "Import today's tasks from Notion." },
       { icon: QrCode, title: "Scan", desc: "Open the image on your phone." },
       { icon: Smartphone, title: "Set", desc: "Save it as your lock screen." },
     ],
@@ -45,8 +42,12 @@ const copy = {
         a: "No. Generate the wallpaper in your browser, scan the QR code on your phone, save the image, and set it as your lock screen.",
       },
       {
+        q: "Can I use my Notion tasks?",
+        a: "Yes. You can preview the wallpaper first, then connect Notion and import tasks into the generator when you are ready.",
+      },
+      {
         q: "Who is this for?",
-        a: "Students, exam takers, habit builders, ADHD users, and anyone who wants a visible daily task list without opening another app.",
+        a: "Notion users, students, habit builders, ADHD users, and anyone who wants a visible daily task list without opening another app.",
       },
       {
         q: "Does it update my lock screen automatically?",
@@ -58,7 +59,7 @@ const copy = {
     solutions: "Use Cases",
     legal: "Legal",
     footerTagline: "Built for focused lock screens",
-    useCaseTitle: "Use Case Stalls",
+    useCaseTitle: "Use Cases",
     useCaseSubtitle: "Start from a specific situation, then customize the wallpaper in the generator.",
     links: {
       lockScreenTodo: "Lock Screen Todo",
@@ -72,25 +73,25 @@ const copy = {
       terms: "Terms of Service",
     },
     sampleTasks: [
-      { id: 1, text: "Review exam notes", done: true },
-      { id: 2, text: "Finish workout", done: false },
-      { id: 3, text: "Pay rent before 6 PM", done: false },
+      { id: 1, text: "Notion: ship landing page", done: true },
+      { id: 2, text: "Today: follow up with 2 users", done: false },
+      { id: 3, text: "Tonight: plan tomorrow's top 3", done: false },
     ],
   },
   zh: {
     navGenerator: "生成器",
     navPricing: "定价",
     navDashboard: "仪表盘",
-    eyebrow: "AI 锁屏任务壁纸生成器",
-    title: "把今天要做的事，变成一张锁屏壁纸。",
-    subtitle: "写下任务，生成干净的手机壁纸，扫码保存到手机，再设为锁屏。不需要安装 App。",
-    primaryCta: "开始生成",
+    eyebrow: "Notion 待办锁屏壁纸",
+    title: "把 Notion 任务变成无法忽略的锁屏。",
+    subtitle: "先预览一张干净的手机壁纸，再连接 Notion，把今天的任务放到锁屏上。不需要安装 App。",
+    primaryCta: "试用壁纸生成器",
     secondaryCta: "查看价格",
-    useCases: ["学习计划", "考试倒计时", "每日待办", "习惯打卡", "注意力提醒", "用药备注"],
+    useCases: ["Notion 任务", "今日重点", "每日待办", "习惯打卡", "注意力提醒", "用药备注"],
     workflowTitle: "使用流程",
     workflow: [
-      { icon: Palette, title: "填写", desc: "输入任务、习惯或倒计时。" },
-      { icon: Zap, title: "生成", desc: "渲染高清锁屏壁纸。" },
+      { icon: Palette, title: "预览", desc: "先用示例任务或自己的清单试试看。" },
+      { icon: Zap, title: "连接", desc: "从 Notion 导入今天要做的任务。" },
       { icon: QrCode, title: "扫码", desc: "在手机上打开图片。" },
       { icon: Smartphone, title: "设置", desc: "保存后设为锁屏。" },
     ],
@@ -101,8 +102,12 @@ const copy = {
         a: "不需要。在浏览器生成壁纸，用手机扫码保存图片，然后在系统相册里设为锁屏。",
       },
       {
+        q: "可以使用 Notion 里的任务吗？",
+        a: "可以。你可以先预览壁纸效果，准备好后再连接 Notion，把任务导入到生成器里。",
+      },
+      {
         q: "适合哪些人用？",
-        a: "更适合学生、考试党、习惯打卡用户、注意力管理用户，以及想把当天重点任务放到锁屏上的人。",
+        a: "更适合 Notion 用户、学生、习惯打卡用户、注意力管理用户，以及想把当天重点任务放到锁屏上的人。",
       },
       {
         q: "能自动更新锁屏吗？",
@@ -128,9 +133,9 @@ const copy = {
       terms: "服务条款",
     },
     sampleTasks: [
-      { id: 1, text: "复习考试笔记", done: true },
-      { id: 2, text: "完成今日训练", done: false },
-      { id: 3, text: "18:00 前交房租", done: false },
+      { id: 1, text: "Notion：发布首页文案", done: true },
+      { id: 2, text: "今天：跟进 2 个用户", done: false },
+      { id: 3, text: "今晚：写下明天 Top 3", done: false },
     ],
   },
 } as const;
@@ -181,6 +186,10 @@ function ShowcaseWallpaper({ lang }: { lang: "en" | "zh" }) {
 export default function LocaleHomePage({ params }: { params: { lang: string } }) {
   const lang = params.lang === "zh" ? "zh" : "en";
   const content = copy[lang];
+
+  React.useEffect(() => {
+    trackEvent("home_view", { lang });
+  }, [lang]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#020205] text-white/90 selection:bg-white/10 font-light tracking-tight antialiased">
