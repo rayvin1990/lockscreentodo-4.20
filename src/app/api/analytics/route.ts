@@ -1,5 +1,4 @@
 ﻿import { NextResponse } from 'next/server';
-import { getSupabase } from '~/lib/supabase/admin';
 
 const EVENT_NAME_RE = /^[a-z0-9][a-z0-9_:-]{1,80}$/i;
 
@@ -55,15 +54,16 @@ export async function POST(req: Request) {
       }),
     );
 
-    const supabase = getSupabase();
-    if (supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    console.log('[analytics] url set:', Boolean(supabaseUrl), 'key set:', Boolean(supabaseKey));
+
+    if (supabaseUrl && supabaseKey) {
       const userAgent = req.headers.get('user-agent')?.slice(0, 500) ?? null;
       const xff = req.headers.get('x-forwarded-for');
       const ip = xff ? xff.split(',')[0].trim() : req.headers.get('x-real-ip');
 
-      void supabase
-        .from('analytics_events')
-        .insert({
+      const row = {
           event,
           path,
           referrer,
@@ -81,10 +81,32 @@ export async function POST(req: Request) {
           properties,
           user_agent: userAgent,
           ip_hash: hashIp(ip),
-        })
-        .then(({ error }) => {
-          if (error) console.error('analytics_events insert failed', error);
-        });
+        };
+      console.log('[analytics] attempting direct REST insert event=' + event + ' path=' + path);
+
+      (async () => {
+        try {
+          const r = await fetch(supabaseUrl + '/rest/v1/analytics_events', {
+            method: 'POST',
+            headers: {
+              apikey: supabaseKey,
+              Authorization: 'Bearer ' + supabaseKey,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(row),
+          });
+          console.log('[analytics] REST insert status=' + r.status);
+          if (!r.ok) {
+            const txt = await r.text();
+            console.error('[analytics] REST FAILED body=' + txt.slice(0, 500));
+          }
+        } catch (err) {
+          console.error('[analytics] REST EXCEPTION:', String(err));
+        }
+      })();
+    } else {
+      console.warn('[analytics] NO SUPABASE ENV, skip insert');
     }
 
     return NextResponse.json({ ok: true });
