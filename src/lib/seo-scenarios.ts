@@ -4,9 +4,9 @@ export function getSeoScenario(slug: string) {
   return seoScenarios.find((s) => s.slug === slug);
 }
 
-export function getScenarioGeneratorHref(lang: string, scenario: SeoScenario) {
+export function getScenarioGeneratorHref(lang: "en" | "zh", scenario: SeoScenario) {
   const tasks = encodeURIComponent(JSON.stringify(scenario.tasks[lang]));
-  return //generator?template=&gradient=&tasks=;
+  return `/generator?template=&gradient=&tasks=${tasks}`;
 }
 
 export type SeoScenario = {
@@ -46,6 +46,10 @@ export type SeoScenario = {
   }[];
   keywords: string[];
   keywordsZh?: string[];
+  heroMetric?: {
+    en: string;
+    zh: string;
+  };
 };
 
 export const seoScenarios: SeoScenario[] = [
