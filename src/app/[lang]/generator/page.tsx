@@ -93,11 +93,25 @@ export default function GeneratorPage() {
     [getToken],
   );
 
+  const hasTrackedGeneratorView = useRef(false);
+
   useEffect(() => {
     const path = window.location.pathname;
     const lang = path.split('/')[1] || 'en';
     setCurrentLang(lang);
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || hasTrackedGeneratorView.current) return;
+
+    const path = window.location.pathname;
+    const lang = path.split('/')[1] || 'en';
+    trackEvent("generator_view", {
+      lang,
+      signedIn: Boolean(isSignedIn),
+    });
+    hasTrackedGeneratorView.current = true;
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     const handleOpenPricingModal = () => {
@@ -187,6 +201,11 @@ export default function GeneratorPage() {
 
     setSelectedNotionTaskIds(new Set());
     setShowNotionTaskSelector(false);
+
+    trackEvent("notion_tasks_added_to_wallpaper", {
+      selectedCount: tasksToAdd.length,
+      syncedTaskCount: syncedNotionTasks.length,
+    });
 
     toast({
       title: "Tasks Added!",
@@ -711,6 +730,9 @@ export default function GeneratorPage() {
 
   const importFromNotion = async () => {
     if (!isSignedIn) {
+      trackEvent("notion_import_blocked", {
+        reason: "signed_out",
+      });
       toast({
         variant: "destructive",
         title: "Please sign in",
@@ -734,6 +756,9 @@ export default function GeneratorPage() {
       const data = await response.json();
 
       if (!data.success || !data.tasks || data.tasks.length === 0) {
+        trackEvent("notion_import_empty", {
+          signedIn: Boolean(isSignedIn),
+        });
         toast({
           variant: "destructive",
           title: "No tasks found",
@@ -766,8 +791,17 @@ export default function GeneratorPage() {
         description: `Imported ${data.tasks.length} tasks from "${data.databaseName}". Data is only used for your personal wallpaper.`,
       });
 
+      trackEvent("notion_import_success", {
+        taskCount: data.tasks.length,
+        databaseNamePresent: Boolean(data.databaseName),
+      });
+
     } catch (error) {
       console.error("Import from Notion error:", error);
+      trackEvent("notion_import_failure", {
+        signedIn: Boolean(isSignedIn),
+        reason: error instanceof Error ? error.message : "unknown",
+      });
       toast({
         variant: "destructive",
         title: "Import failed",
@@ -924,6 +958,9 @@ export default function GeneratorPage() {
 
     if (isOAuthCallback) {
       setIsNotionConnected(true);
+      trackEvent("notion_oauth_return", {
+        status: "connected",
+      });
       toast({
         title: "Notion Connected!",
         description: "Importing your tasks now...",
@@ -1698,7 +1735,13 @@ export default function GeneratorPage() {
 
                           {/* Notion Task Selector Button */}
                           <button
-                            onClick={() => setShowNotionTaskSelector(!showNotionTaskSelector)}
+                            onClick={() => {
+                              trackEvent("notion_task_selector_toggle", {
+                                open: !showNotionTaskSelector,
+                                syncedTaskCount: syncedNotionTasks.length,
+                              });
+                              setShowNotionTaskSelector(!showNotionTaskSelector);
+                            }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-white/90 disabled:bg-white/50 disabled:text-black/50 text-black rounded-xl font-semibold transition-all text-sm"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

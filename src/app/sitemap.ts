@@ -1,4 +1,4 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 
 import { siteConfig } from "~/config/site";
 import { seoScenarios } from "~/lib/seo-scenarios";
@@ -20,11 +20,17 @@ const baseRoutes = [
   "/en/terms",
   "/zh/terms",
   "/en/agent-demo",
+  "/en/desktop-todo",
+  "/zh/desktop-todo",
   "/en/developers",
   "/zh/developers",
 ];
 
-const scenarioRoutes = seoScenarios.map((scenario) => `/use-cases/${scenario.slug}`);
+const scenarioRoutes = seoScenarios.flatMap((scenario) => [
+  `/use-cases/${scenario.slug}`,
+  `/en/${scenario.slug}`,
+  `/zh/${scenario.slug}`,
+]);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

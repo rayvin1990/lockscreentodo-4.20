@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2, Circle, QrCode, Smartphone, Wand2 } from "lucide-react";
 
+import { SeoScenarioAnalytics, SeoScenarioTrackedLink } from "~/components/seo-scenario-analytics";
 import { Button } from "~/components/ui/button";
 import { getScenarioGeneratorHref, type SeoScenario } from "~/lib/seo-scenarios";
 
@@ -15,6 +16,10 @@ export function SeoScenarioPage({
   const tasks = scenario.tasks[lang];
   const Icon = scenario.icon;
   const generatorHref = getScenarioGeneratorHref(lang, scenario);
+  const scenarioFaqs = scenario.faqs?.map((faq) => ({
+    q: faq.q[lang],
+    a: faq.a[lang],
+  }));
 
   const copy = isZh
     ? {
@@ -80,10 +85,12 @@ export function SeoScenarioPage({
         ],
       };
 
+  const faqs = scenarioFaqs && scenarioFaqs.length > 0 ? scenarioFaqs : copy.faqs;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: copy.faqs.map((item) => ({
+    mainEntity: faqs.map((item) => ({
       "@type": "Question",
       name: item.q,
       acceptedAnswer: {
@@ -95,6 +102,12 @@ export function SeoScenarioPage({
 
   return (
     <div className="min-h-screen bg-[#020205] text-white selection:bg-indigo-500/30">
+      <SeoScenarioAnalytics
+        scenario={scenario.slug}
+        lang={lang}
+        template={scenario.template}
+        hasScenarioFaqs={Boolean(scenarioFaqs?.length)}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#020205]/80 backdrop-blur-md">
@@ -132,15 +145,30 @@ export function SeoScenarioPage({
                 {scenario.description[lang]}
               </p>
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                <Link href={generatorHref}>
+                <SeoScenarioTrackedLink
+                  href={generatorHref}
+                  event="seo_scenario_cta_click"
+                  scenario={scenario.slug}
+                  lang={lang}
+                  template={scenario.template}
+                  target="generator_template"
+                >
                   <Button className="h-12 rounded-full bg-white px-8 font-bold text-black hover:bg-indigo-50">
                     {copy.create}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                </Link>
-                <Link href={`/${lang}`} className="text-xs font-bold uppercase tracking-widest text-white/40 transition-colors hover:text-white">
+                </SeoScenarioTrackedLink>
+                <SeoScenarioTrackedLink
+                  href={`/${lang}`}
+                  className="text-xs font-bold uppercase tracking-widest text-white/40 transition-colors hover:text-white"
+                  event="seo_scenario_secondary_click"
+                  scenario={scenario.slug}
+                  lang={lang}
+                  template={scenario.template}
+                  target="home_use_cases"
+                >
                   {copy.secondary}
-                </Link>
+                </SeoScenarioTrackedLink>
               </div>
             </div>
 
@@ -190,7 +218,7 @@ export function SeoScenarioPage({
           <div className="container mx-auto max-w-3xl">
             <h2 className="mb-12 text-3xl font-bold">{copy.faqTitle}</h2>
             <div className="space-y-5">
-              {copy.faqs.map((faq) => (
+              {faqs.map((faq) => (
                 <div key={faq.q} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
                   <h3 className="mb-2 font-bold text-indigo-300">{faq.q}</h3>
                   <p className="text-sm leading-relaxed text-slate-400">{faq.a}</p>

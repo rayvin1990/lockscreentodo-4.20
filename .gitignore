@@ -1,14 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+﻿# dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
 
 # testing
 /coverage
@@ -28,10 +21,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# local env files
+.env*.local
+.env
 
 # vercel
 .vercel
@@ -40,7 +33,33 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-
-# clerk configuration (can include secrets)
-/.clerk/
+# agent brain and data
+.brain/
+.agents/
+.claude/
+.turbo/
+.playwright-mcp/
+tmp/
+logs/
+reports/
+DeepInsight-Core/
+NobodyEngine/
+android-lockscreen-companion/
+apps/
+firefox/
+lockscreentodo/
+packages/
+team-task/
+tooling/
+vendor/
+*.html
+*.md
+*.json
+*.ps1
+*.sh
+*.bat
+*.reg
+*.py
+*.js
+*.jsx
+*.png

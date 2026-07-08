@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/use-toast";
+import { trackEvent } from "~/lib/analytics";
 import { Loader2, Link as LinkIcon } from "lucide-react";
 
 interface NotionAuthButtonProps {
@@ -19,6 +20,7 @@ export function NotionAuthButton({
 
   const handleConnect = async () => {
     setIsLoading(true);
+    trackEvent("notion_connect_click", { connected: isConnected });
 
     try {
       const state = Math.random().toString(36).substring(2, 15) +
@@ -28,6 +30,7 @@ export function NotionAuthButton({
 
       const notionClientId = process.env.NEXT_PUBLIC_NOTION_CLIENT_ID;
       if (!notionClientId) {
+        trackEvent("notion_connect_config_missing");
         throw new Error('Notion Client ID not configured');
       }
 
@@ -42,6 +45,9 @@ export function NotionAuthButton({
       window.location.href = oauthUrl;
     } catch (error) {
       console.error("Notion auth error:", error);
+      trackEvent("notion_connect_failure", {
+        reason: error instanceof Error ? error.message : "unknown",
+      });
       toast({
         variant: "destructive",
         title: "Connection failed",

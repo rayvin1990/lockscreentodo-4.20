@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SeoScenarioPage } from "~/components/seo-scenario-page";
@@ -28,31 +28,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const canonical = `${siteConfig.url}/use-cases/${scenario.slug}`;
+  const langPath = lang === "zh" ? "/zh" : "/en";
 
   return {
-    title: scenario.eyebrow[lang],
+    title: scenario.title[lang],
     description: scenario.description[lang],
-    keywords: scenario.keywords,
+    keywords: lang === "zh" && scenario.keywordsZh ? scenario.keywordsZh : scenario.keywords,
     alternates: {
       canonical,
       languages: {
-        en: canonical,
+        en: `${siteConfig.url}/en/${scenario.slug}`,
         zh: `${siteConfig.url}/zh/${scenario.slug}`,
       },
     },
-    robots: lang === "zh"
-      ? {
-          index: false,
-          follow: false,
-        }
-      : {
-          index: true,
-          follow: true,
-        },
+    robots: {
+      index: true,
+      follow: true,
+    },
     openGraph: {
       title: scenario.title[lang],
       description: scenario.description[lang],
-      url: canonical,
+      url: `${siteConfig.url}${langPath}/${scenario.slug}`,
     },
   };
 }

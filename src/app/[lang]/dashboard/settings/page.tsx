@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { Button } from "~/components/ui/button";
-import { User, CreditCard, Bell, LogOut, ArrowLeft, Zap, Clock, Download, Image, Calendar, TrendingUp, CheckCircle2, XCircle, Smartphone, Volume2, ExternalLink } from "lucide-react";
+import { User, CreditCard, Bell, LogOut, ArrowLeft, Zap, Clock, Download, Image, Calendar, TrendingUp, CheckCircle2, XCircle, Smartphone, Volume2, ExternalLink, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 interface AgentDevice {
@@ -358,7 +358,29 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-white/5">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">2. iOS Shortcut Setup</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">2. Android Companion</h4>
+                  <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                    <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                      {lang === "en" 
+                        ? "Install the Lockscreen Todo Android App, then click the link below to automatically configure it with your API Key and Server URL."
+                        : "安装 Lockscreen Todo Android 应用，然后点击下方链接自动填充您的 API Key 和服务器地址。"}
+                    </p>
+                    <a 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `lockscreentodo://bind?key=${agentDevice.agent_api_key}&url=${window.location.origin}`;
+                      }}
+                      className="inline-flex items-center text-xs font-bold text-indigo-400 hover:text-indigo-300"
+                    >
+                      <Smartphone className="w-3 h-3 mr-1" />
+                      {lang === "en" ? "Open Android App (Auto-Config)" : "打开 Android 应用 (自动配置)"}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">3. iOS Shortcut Setup</h4>
                   <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
                     <p className="text-xs text-slate-300 leading-relaxed mb-3">
                       {lang === "en" 
@@ -373,7 +395,7 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-white/5">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">3. Push Notifications</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-400">4. Push Notifications</h4>
                   
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
@@ -453,6 +475,19 @@ export default function SettingsPage({ params }: { params: { lang: string } }) {
                       </p>
                     </div>
                   )}
+                </div>
+                <div className="pt-6 border-t border-white/5">
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+                    <ShieldCheck className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-green-400 mb-1">
+                        Privacy First
+                      </p>
+                      <p className="text-[10px] text-slate-400 leading-relaxed">
+                        Your data is strictly yours. We never share your reminders with third parties or use them to train AI models. All rendering happens on protected infrastructure.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
