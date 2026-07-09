@@ -38,6 +38,11 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+// RealisticPhoneMockup is 580px tall. Leave room for the phone's top bar /
+// camera / dynamic-island and a small bottom margin, so the pill can scroll
+// inside the phone without ever being clipped by the phone's overflow-hidden.
+const PHONE_INNER_HEIGHT = 440;
+
 export function LockedTaskContainer({
   tasks,
   selectedTaskId,
@@ -128,6 +133,12 @@ export function LockedTaskContainer({
   const bgSize = calculateBackgroundSize();
   const primaryTask = tasks[0];
   const supportingTasks = tasks.slice(1, 4);
+
+  // Cap the visible height of the pill so it always fits inside the phone.
+  // The pill still sizes to its task list (1 task -> tiny pill, 10+ tasks -> taller pill)
+  // but is bounded by PHONE_INNER_HEIGHT. Anything beyond scrolls inside the
+  // content area; the drag handle and background match the visible (capped) size.
+  const visibleHeight = Math.min(bgSize.height, PHONE_INNER_HEIGHT);
 
   const updateDragPosition = useCallback((clientX: number, clientY: number) => {
     if (!isDraggingRef.current) return;
@@ -222,9 +233,10 @@ export function LockedTaskContainer({
         className="absolute left-1/2 transform -translate-x-1/2"
         style={{
           width: `${bgSize.width + 28}px`,
-          height: `${bgSize.height + 52}px`,
+          height: `${visibleHeight + 52}px`,
           top: -20,
           cursor: "ns-resize",
+          touchAction: "none",
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -296,7 +308,7 @@ export function LockedTaskContainer({
               className="absolute left-1/2 transform -translate-x-1/2 rounded-[22px] border border-white/15"
               style={{
                 width: `${bgSize.width}px`,
-                height: `${bgSize.height + 18}px`,
+                height: `${visibleHeight + 18}px`,
                 top: 18,
                 backgroundColor: hexToRgba("#080a0f", Math.max(0.18, Math.min(backgroundOpacity, 0.52))),
                 boxShadow: "0 18px 60px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
@@ -306,12 +318,14 @@ export function LockedTaskContainer({
             />
 
             <div
-              className="absolute left-1/2 transform -translate-x-1/2"
+              className="absolute left-1/2 transform -translate-x-1/2 overflow-y-auto scrollbar-hide"
               style={{
                 width: `${bgSize.width - 26}px`,
-                height: `${bgSize.height}px`,
+                height: `${visibleHeight}px`,
                 top: 28,
-                pointerEvents: "none",
+                pointerEvents: "auto",
+                touchAction: "pan-y",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               <div className="mb-3 flex items-center justify-between px-1">
