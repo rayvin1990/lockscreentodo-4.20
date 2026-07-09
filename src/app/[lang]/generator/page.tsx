@@ -995,6 +995,10 @@ export default function GeneratorPage() {
         title: "Notion Connected!",
         description: "Importing your tasks now...",
       });
+      // FIX: call importFromNotion directly, bypassing async status check
+      setTimeout(() => {
+        importFromNotion();
+      }, 1500);
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [fetchWithClerkAuth, isSignedIn, isNotionConnected]);
@@ -1330,11 +1334,13 @@ export default function GeneratorPage() {
     if (!canvas) return;
 
     // @ts-expect-error dom-to-image types mismatch
-    import("dom-to-image").then(({ toPng }) => {
-      const rect = canvas.getBoundingClientRect();
-      const scale = 2;
+    const { toPng } = await import("dom-to-image");
+    const rect = canvas.getBoundingClientRect();
+    const scale = 2;
 
-      toPng(canvas, {
+    let dataUrl: string;
+    try {
+      dataUrl = await toPng(canvas, {
         width: rect.width * scale,
         height: rect.height * scale,
         quality: 1,
@@ -1344,18 +1350,62 @@ export default function GeneratorPage() {
           backdropFilter: 'none !important',
           webkitBackdropFilter: 'none !important',
         },
-      }).then(async (dataUrl: string) => {
-        const link = document.createElement("a");
-        link.download = `lockscreen-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
+      });
+    } catch (err) {
+      console.error("Failed to render wallpaper to PNG:", err);
+      toast({
+        title: "Download failed",
+        description: "Could not generate the wallpaper image. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `lockscreen-${Date.now()}.png`, { type: "image/png" });
+
+    // Try Web Share API first. On iOS 12.1+ and modern Android Chrome, this opens
+    // the native share sheet which includes "Save Image" / "Save to Photos",
+    // giving the user a real one-tap "save to phone" experience.
+    if (
+      typeof navigator !== "undefined" &&
+      "canShare" in navigator &&
+      typeof navigator.share === "function" &&
+      navigator.canShare({ files: [file] })
+    ) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "Lock Screen Wallpaper",
+          text: "My Notion tasks as a lock screen",
+        });
         await recordDownload();
         trackEvent("wallpaper_download_success", {
           taskCount: wallpaperStyle.tasks.length,
           signedIn: isSignedIn,
+          method: "web_share_api",
         });
-      });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        console.warn("Web Share API failed, falling back to download link:", err);
+      }
+    }
+
+    // Fallback: <a download> for desktop and older browsers. On mobile this still
+    // opens the image in a new tab where the user can long-press to save.
+    const link = document.createElement("a");
+    link.download = file.name;
+    link.href = dataUrl;
+    link.click();
+
+    await recordDownload();
+    trackEvent("wallpaper_download_success", {
+      taskCount: wallpaperStyle.tasks.length,
+      signedIn: isSignedIn,
+      method: "download_link",
     });
   };
 
@@ -1477,7 +1527,7 @@ export default function GeneratorPage() {
                 size="sm"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                {currentLang === "zh" ? "升级 Pro 版" : "Upgrade to Pro"}
+                {currentLang === "zh" ? "?? Pro ?" : "Upgrade to Pro"}
               </Button>
             </div>
           </div>
@@ -1601,7 +1651,7 @@ export default function GeneratorPage() {
                   onClick={() => setShowTasksSheet(true)}
                   className="flex flex-col items-center gap-1 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/[0.08] rounded-xl text-white text-xs font-medium transition-colors"
                 >
-                  <span aria-hidden className="text-base leading-none">☰</span>
+                  <span aria-hidden className="text-base leading-none">?</span>
                   <span>Tasks</span>
                 </button>
                 <button
@@ -1609,7 +1659,7 @@ export default function GeneratorPage() {
                   onClick={() => setShowBackgroundSheet(true)}
                   className="flex flex-col items-center gap-1 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/[0.08] rounded-xl text-white text-xs font-medium transition-colors"
                 >
-                  <span aria-hidden className="text-base leading-none">▦</span>
+                  <span aria-hidden className="text-base leading-none">?</span>
                   <span>Background</span>
                 </button>
                 <button
@@ -1617,7 +1667,7 @@ export default function GeneratorPage() {
                   onClick={() => setShowNotionSheet(true)}
                   className="flex flex-col items-center gap-1 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/[0.08] rounded-xl text-white text-xs font-medium transition-colors"
                 >
-                  <span aria-hidden className="text-base leading-none">◐</span>
+                  <span aria-hidden className="text-base leading-none">?</span>
                   <span>Notion</span>
                 </button>
               </div>
@@ -2152,7 +2202,7 @@ export default function GeneratorPage() {
                 }}
               />
               <p className="text-[11px] text-gray-500 mt-2">
-                Tip: tap anywhere outside or press <kbd className="px-1 py-0.5 rounded bg-gray-800">⌘/Ctrl+↵</kbd> to save.
+                Tip: tap anywhere outside or press <kbd className="px-1 py-0.5 rounded bg-gray-800">?/Ctrl+?</kbd> to save.
               </p>
               <div className="mt-4 flex gap-2">
                 <button
