@@ -22,12 +22,34 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# local env files — never commit secrets
 .env
+.env*.local
+.env.cloudflare
+.env.vercel
+.env.*
+!.env.example
+!.env.local.example
+!.env.coreldraw-demo.example
+*.env
+lockscreentodo.env
 
 # vercel
 .vercel
+vercel-login-token.txt
+vercel-token-template.txt
+vercel-free-login.txt
+
+# tool configs that frequently carry auth tokens
+.gitconfig
+.npmrc
+.claude.json
+.claude.json.backup
+
+# dev artifacts that may embed credentials
+*.backup
+*.bak
+query.sql
 
 # typescript
 *.tsbuildinfo
