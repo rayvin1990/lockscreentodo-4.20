@@ -148,16 +148,34 @@ export function LockedTaskContainer({
     ? Math.min(bgSize.height, PHONE_INNER_HEIGHT)
     : bgSize.height;
 
+  // The phone screen is 556px tall (288px wide minus 2*p-3 padding on the
+  // phone, 580px tall minus the same). The pill's top is at position.y - 20
+  // and its height is visibleHeight + 52, so the pill must stay within
+  // [20, 576 - (visibleHeight + 52)] to fit. Clamp the rendered position
+  // so the pill is always fully inside the canvas - otherwise dom-to-image
+  // captures only the part of the pill inside the canvas, producing a
+  // wallpaper with a clipped bottom (the "partial download" bug).
+  const PILL_CANVAS_HEIGHT = 556;
+  const pillHeight = visibleHeight + 52;
+  const minPillY = 20;
+  const maxPillY = PILL_CANVAS_HEIGHT - pillHeight + 20;
+  const renderPosition = {
+    x: position.x,
+    y: Math.max(minPillY, Math.min(maxPillY, position.y)),
+  };
+
   const updateDragPosition = useCallback((clientX: number, clientY: number) => {
     if (!isDraggingRef.current) return;
 
     const deltaY = clientY - dragStart.current.y;
+    const newY = startPosition.current.y + deltaY;
+    const clampedY = Math.max(minPillY, Math.min(maxPillY, newY));
 
     onPositionChange({
       x: 0,
-      y: startPosition.current.y + deltaY,
+      y: clampedY,
     });
-  }, [onPositionChange]);
+  }, [onPositionChange, minPillY, maxPillY]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDraggingRef.current) return;
@@ -181,7 +199,7 @@ export function LockedTaskContainer({
     isDraggingRef.current = true;
     setIsDragging(true);
     dragStart.current = { x: e.clientX, y: e.clientY };
-    startPosition.current = { x: 0, y: position.y };
+    startPosition.current = { x: 0, y: renderPosition.y };
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
@@ -195,7 +213,7 @@ export function LockedTaskContainer({
     isDraggingRef.current = true;
     setIsDragging(true);
     dragStart.current = { x: touch.clientX, y: touch.clientY };
-    startPosition.current = { x: 0, y: position.y };
+    startPosition.current = { x: 0, y: renderPosition.y };
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -220,18 +238,18 @@ export function LockedTaskContainer({
   }, [handleMouseMove, handleMouseUp]);
 
   useEffect(() => {
-    if (position.x !== 0) {
-      onPositionChange({ x: 0, y: position.y });
+    if (position.x !== 0 || position.y !== renderPosition.y) {
+      onPositionChange({ x: 0, y: renderPosition.y });
     }
-  }, [onPositionChange, position.x, position.y]);
+  }, [onPositionChange, position.x, position.y, renderPosition.y]);
 
   return (
     <div
       ref={containerRef}
       className="absolute select-none touch-none"
       style={{
-        left: position.x,
-        top: position.y,
+        left: renderPosition.x,
+        top: renderPosition.y,
         width: "100%",
         height: "100%",
         zIndex: 15,

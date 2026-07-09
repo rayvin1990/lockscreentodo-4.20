@@ -243,7 +243,7 @@ export default function GeneratorPage() {
   }, [syncedNotionTasks, selectedNotionTaskIds, wallpaperStyle.tasks.length, toast]);
 
   const [tasksLocked, setTasksLocked] = useState(true);
-  const [containerPosition, setContainerPosition] = useState({ x: 0, y: 300 });
+  const [containerPosition, setContainerPosition] = useState({ x: 0, y: 200 });
   const [globalFontSize, setGlobalFontSize] = useState(13);
   const [backgroundOpacity, setBackgroundOpacity] = useState(0.34);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
