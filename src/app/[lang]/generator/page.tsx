@@ -16,7 +16,6 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
@@ -2256,10 +2255,42 @@ export default function GeneratorPage() {
       <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
         <SheetContent position="bottom" size="lg" className="bg-brand-card border-gray-700 text-white">
           <SheetHeader>
-            <SheetTitle className="text-white">Tasks ({wallpaperStyle.tasks.length})</SheetTitle>
-            <SheetDescription className="text-gray-400">
-              Tap a task to edit it. Drag-reorder is desktop only.
-            </SheetDescription>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <SheetTitle className="text-white">Tasks ({wallpaperStyle.tasks.length})</SheetTitle>
+                <SheetDescription className="text-gray-400">
+                  Tap a task to edit it. Drag-reorder is desktop only.
+                </SheetDescription>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const newTask: Task = {
+                    id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                    text: "New task",
+                    x: 132,
+                    y: wallpaperStyle.tasks.length * 30,
+                    fontSize: 13,
+                    color: "#F8FAFC",
+                    backgroundColor: "transparent",
+                    backgroundOpacity: 0.5,
+                    opacity: 1,
+                    isBold: true,
+                    isItalic: false,
+                    isCompleted: false,
+                    textAlign: "left",
+                    fontFamily: "Inter, system-ui, sans-serif",
+                  };
+                  setWallpaperStyle(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
+                  setShowTasksSheet(false);
+                  setEditingTaskId(newTask.id);
+                }}
+                className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-white text-black rounded-full active:scale-95 transition-transform"
+                aria-label="Add task"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
           </SheetHeader>
           <div className="mt-4 space-y-2 max-h-[60vh] overflow-y-auto pr-1">
             {wallpaperStyle.tasks.map((task, index) => (
@@ -2286,39 +2317,9 @@ export default function GeneratorPage() {
               </div>
             ))}
             {wallpaperStyle.tasks.length === 0 && (
-              <p className="text-center text-sm text-gray-500 py-6">No tasks yet. Add one below.</p>
+              <p className="text-center text-sm text-gray-500 py-6">No tasks yet. Tap + above.</p>
             )}
           </div>
-          <SheetFooter className="mt-4">
-            <button
-              type="button"
-              onClick={() => {
-                const newTask: Task = {
-                  id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-                  text: "New task",
-                  x: 132,
-                  y: wallpaperStyle.tasks.length * 30,
-                  fontSize: 13,
-                  color: "#F8FAFC",
-                  backgroundColor: "transparent",
-                  backgroundOpacity: 0.5,
-                  opacity: 1,
-                  isBold: true,
-                  isItalic: false,
-                  isCompleted: false,
-                  textAlign: "left",
-                  fontFamily: "Inter, system-ui, sans-serif",
-                };
-                setWallpaperStyle(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
-                setShowTasksSheet(false);
-                setEditingTaskId(newTask.id);
-              }}
-              className="w-full py-3 bg-white text-black font-bold rounded-xl active:scale-[0.98] transition-transform"
-            >
-              <Plus className="w-4 h-4 inline mr-2" />
-              Add task
-            </button>
-          </SheetFooter>
         </SheetContent>
       </Sheet>
 
