@@ -129,6 +129,34 @@ export default function GeneratorPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const phoneScreenRef = useRef<HTMLDivElement>(null);
 
+  const previewPageRef = useRef<HTMLDivElement>(null);
+  const editPageRef = useRef<HTMLDivElement>(null);
+  const [mobilePage, setMobilePage] = useState<0 | 1>(0);
+
+  const scrollToMobilePage = useCallback((page: 0 | 1) => {
+    const target = page === 0 ? previewPageRef.current : editPageRef.current;
+    target?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
+          if (entry.target === previewPageRef.current) setMobilePage(0);
+          else if (entry.target === editPageRef.current) setMobilePage(1);
+        });
+      },
+      { threshold: [0.5] },
+    );
+    if (previewPageRef.current) observer.observe(previewPageRef.current);
+    if (editPageRef.current) observer.observe(editPageRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const [backgroundMode, setBackgroundMode] = useState<"scene" | "gradient" | "upload">("scene");
 
   const [wallpaperStyle, setWallpaperStyle] = useState<WallpaperStyle>({
@@ -1453,13 +1481,13 @@ export default function GeneratorPage() {
         </div>
       </nav>
 
-      <div className="pt-16 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-4rem)] lg:h-screen overflow-y-auto lg:overflow-hidden" style={{ height: 'auto' }}>
-        <div className="max-w-7xl mx-auto lg:h-full">
-          {/* Desktop: side-by-side, Mobile: stacked (preview above, edit panel below) */}
-          <div className="grid lg:grid-cols-2 gap-4 lg:h-full">
-            {/* Left panel - Preview (always visible) */}
-            <div className="flex flex-col">
-              <div className="flex flex-col lg:h-full">
+      <div className="pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-4rem)] lg:h-screen overflow-hidden" style={{ height: 'auto' }}>
+        <div className="max-w-7xl mx-auto h-full relative">
+          {/* Mobile: two-page horizontal snap-scroll (preview | edit). Desktop: 2-column grid. */}
+          <div className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible lg:snap-none lg:h-full">
+            {/* Page 1 - Preview (always visible) */}
+            <div ref={previewPageRef} className="w-full flex-shrink-0 snap-center h-full flex flex-col lg:w-auto lg:snap-none">
+              <div className="flex flex-col h-full lg:h-full">
                 <h3 className="text-lg font-bold text-white mb-1 lg:hidden">
                   Preview
                 </h3>
@@ -1582,11 +1610,33 @@ export default function GeneratorPage() {
 
                   </RealisticPhoneMockup>
                 </div>
+
+                <div className="lg:hidden flex flex-col items-center gap-1 pt-4 pb-2">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-500">Step 1 / Preview</span>
+                  <button
+                    type="button"
+                    onClick={() => scrollToMobilePage(1)}
+                    className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg active:scale-95 transition-transform"
+                  >
+                    Next: Edit
+                    <span aria-hidden>→</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col mt-4 lg:mt-0 lg:h-full lg:overflow-hidden">
-              <div className="space-y-3 pb-4 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar">
+            <div ref={editPageRef} className="w-full flex-shrink-0 snap-center h-full flex flex-col mt-4 lg:mt-0 lg:w-auto lg:snap-none lg:h-full lg:overflow-hidden">
+              <div className="flex items-center justify-between px-4 pb-2 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => scrollToMobilePage(0)}
+                  className="text-sm text-gray-300 hover:text-white transition-colors"
+                >
+                  ← Back to Preview
+                </button>
+                <span className="text-xs uppercase tracking-wider text-gray-500">Step 2 / Edit</span>
+              </div>
+              <div className="space-y-3 pb-4 px-4 lg:px-0 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
                   <div className="grid grid-cols-3 gap-2">
@@ -1923,6 +1973,26 @@ export default function GeneratorPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Mobile: page indicator dots (book-flip affordance) */}
+          <div className="lg:hidden absolute bottom-4 left-0 right-0 flex justify-center items-center gap-2 z-30 pointer-events-none">
+            <button
+              type="button"
+              onClick={() => scrollToMobilePage(0)}
+              aria-label="Go to preview page"
+              className={`pointer-events-auto h-2 rounded-full transition-all duration-200 ${
+                mobilePage === 0 ? "w-6 bg-white" : "w-2 bg-white/30"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => scrollToMobilePage(1)}
+              aria-label="Go to edit page"
+              className={`pointer-events-auto h-2 rounded-full transition-all duration-200 ${
+                mobilePage === 1 ? "w-6 bg-white" : "w-2 bg-white/30"
+              }`}
+            />
           </div>
         </div>
       </div>
