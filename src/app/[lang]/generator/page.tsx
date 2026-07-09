@@ -1556,7 +1556,7 @@ export default function GeneratorPage() {
         </div>
       </nav>
 
-      <div className="pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-4rem)] lg:h-screen overflow-hidden" style={{ height: 'auto' }}>
+      <div className="pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-4rem)] lg:h-screen overflow-hidden">
         <div className="max-w-7xl mx-auto h-full relative">
           {/* Mobile: full-screen preview + bottom toolbar. Desktop: 2-column grid below. */}
           <div className="lg:hidden flex flex-col h-full">
