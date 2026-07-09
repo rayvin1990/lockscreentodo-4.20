@@ -1555,17 +1555,17 @@ export default function GeneratorPage() {
                       }}
                     />
 
-                    {wallpaperStyle.tasks.map((task, index) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        taskIndex={index}
-                        isSelected={editingTaskId === task.id}
-                        isPreview={true}
-                        onSelect={() => handleTaskTapForEdit(task.id)}
-                        onUpdate={(updates) => updateTask(task.id, updates)}
-                      />
-                    ))}
+                    <LockedTaskContainer
+                      tasks={wallpaperStyle.tasks}
+                      selectedTaskId={editingTaskId}
+                      position={containerPosition}
+                      globalFontSize={globalFontSize}
+                      backgroundOpacity={backgroundOpacity}
+                      variant={activeTemplate}
+                      onSelect={(id) => handleTaskTapForEdit(id)}
+                      onUpdate={(id, updates) => updateTask(id, updates)}
+                      onPositionChange={setContainerPosition}
+                    />
 
                     {wallpaperStyle.stickers.map((sticker) => (
                       <div

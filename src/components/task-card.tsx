@@ -23,16 +23,18 @@ interface TaskCardProps {
   isSelected: boolean;
   isPreview?: boolean;
   onSelect: () => void;
+  onTap?: () => void;
   onUpdate: (updates: Partial<TaskCardProps["task"]>) => void;
 }
 
-export function TaskCard({ task, taskIndex, isSelected, isPreview = false, onSelect, onUpdate }: TaskCardProps) {
+export function TaskCard({ task, taskIndex, isSelected, isPreview = false, onSelect, onTap, onUpdate }: TaskCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [currentY, setCurrentY] = useState(task.y);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef(0);
   const startPositionY = useRef(0);
+  const hasDragged = useRef(false);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -55,6 +57,7 @@ export function TaskCard({ task, taskIndex, isSelected, isPreview = false, onSel
       onSelect();
     }
 
+    hasDragged.current = false;
     setIsDragging(true);
     dragStartY.current = e.clientY;
     startPositionY.current = currentY;
@@ -69,14 +72,20 @@ export function TaskCard({ task, taskIndex, isSelected, isPreview = false, onSel
     e.preventDefault();
 
     const deltaY = e.clientY - dragStartY.current;
-    const newY = Math.max(20, Math.min(450, startPositionY.current + deltaY));
+    if (Math.abs(deltaY) > 5) {
+      hasDragged.current = true;
+    }
 
+    const newY = Math.max(20, Math.min(450, startPositionY.current + deltaY));
     setCurrentY(newY);
   };
 
   const handleMouseUp = () => {
     if (!isDragging) return;
 
+    if (!hasDragged.current) {
+      onTap?.();
+    }
     onUpdate({ y: currentY });
     setIsDragging(false);
 
