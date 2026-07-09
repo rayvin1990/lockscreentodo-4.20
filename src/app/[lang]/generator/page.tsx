@@ -963,6 +963,11 @@ export default function GeneratorPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const isOAuthCallback = urlParams.get("notion") === "connected";
 
+    // Track any pending import timeout so we can cancel it on unmount or
+    // re-render. Without this, navigating away during the 1500ms window
+    // fires the import against an unmounted component.
+    let importTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const checkNotionConnection = async () => {
       if (!isSignedIn) return;
 
@@ -974,8 +979,10 @@ export default function GeneratorPage() {
           setIsNotionConnected(data.connected);
 
           if (data.connected && !wasConnected) {
-            setTimeout(() => {
-              importFromNotion();
+            importTimeout = setTimeout(() => {
+              importFromNotion().catch((err) => {
+                console.error("Notion import failed after status check:", err);
+              });
             }, 1000);
           }
         }
@@ -995,13 +1002,29 @@ export default function GeneratorPage() {
         title: "Notion Connected!",
         description: "Importing your tasks now...",
       });
-      // FIX: call importFromNotion directly, bypassing async status check
-      setTimeout(() => {
-        importFromNotion();
+      // FIX: call importFromNotion directly, bypassing the status check
+      // (the status API uses a different DB client and can return false
+      // before Notion's backend has finished propagating the OAuth grant).
+      // 1500ms is a margin over the typical 0.5-1s Notion propagation time.
+      // The proper fix is to poll the status check until it returns true;
+      // this delay is the workaround.
+      importTimeout = setTimeout(() => {
+        importFromNotion().catch((err) => {
+          console.error("Notion import failed after OAuth callback:", err);
+          toast({
+            variant: "destructive",
+            title: "Import failed",
+            description: "Could not fetch your Notion tasks. Try tapping Notion again.",
+          });
+        });
       }, 1500);
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [fetchWithClerkAuth, isSignedIn, isNotionConnected]);
+
+    return () => {
+      if (importTimeout) clearTimeout(importTimeout);
+    };
+  }, [fetchWithClerkAuth, isSignedIn, isNotionConnected, importFromNotion]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
