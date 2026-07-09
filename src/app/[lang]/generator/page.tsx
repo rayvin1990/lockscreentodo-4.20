@@ -149,7 +149,6 @@ export default function GeneratorPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [qrUnavailableReason, setQrUnavailableReason] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
   const [hasUploadedImage, setHasUploadedImage] = useState(false);
   const [isMouseInPhone, setIsMouseInPhone] = useState(false);
@@ -1454,13 +1453,13 @@ export default function GeneratorPage() {
         </div>
       </nav>
 
-      <div className="pt-16 px-4 sm:px-6 lg:px-8" style={{ height: 'calc(100vh - 4rem)' }}>
-        <div className="max-w-7xl mx-auto h-full">
-          {/* Desktop: side-by-side layout, Mobile: preview only */}
-          <div className="grid lg:grid-cols-2 gap-4 h-full">
+      <div className="pt-16 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-4rem)] lg:h-screen overflow-y-auto lg:overflow-hidden" style={{ height: 'auto' }}>
+        <div className="max-w-7xl mx-auto lg:h-full">
+          {/* Desktop: side-by-side, Mobile: stacked (preview above, edit panel below) */}
+          <div className="grid lg:grid-cols-2 gap-4 lg:h-full">
             {/* Left panel - Preview (always visible) */}
-            <div className="h-full flex flex-col">
-              <div className="h-full flex flex-col">
+            <div className="flex flex-col">
+              <div className="flex flex-col lg:h-full">
                 <h3 className="text-lg font-bold text-white mb-1 lg:hidden">
                   Preview
                 </h3>
@@ -1586,8 +1585,8 @@ export default function GeneratorPage() {
               </div>
             </div>
 
-            <div className="hidden lg:flex flex-col h-full overflow-hidden">
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3 pb-4">
+            <div className="flex flex-col mt-4 lg:mt-0 lg:h-full lg:overflow-hidden">
+              <div className="space-y-3 pb-4 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
                   <div className="grid grid-cols-3 gap-2">
@@ -1927,182 +1926,6 @@ export default function GeneratorPage() {
           </div>
         </div>
       </div>
-
-      {/* Mobile: Floating button to open settings panel */}
-      <button
-        onClick={() => setShowSettingsPanel(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-brand-green hover:bg-emerald-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-        title="Open Settings"
-      >
-        <Settings className="w-6 h-6" />
-      </button>
-
-      {/* Mobile: Bottom settings panel (drawer) */}
-      {showSettingsPanel && (
-        <div className="lg:hidden fixed inset-0 z-50">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowSettingsPanel(false)}
-          />
-
-          {/* Bottom drawer */}
-          <div className="absolute bottom-0 left-0 right-0 bg-brand-card rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up">
-            {/* Handle bar */}
-            <div className="flex justify-center py-3">
-              <div className="w-12 h-1 bg-gray-600 rounded-full" />
-            </div>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-700">
-              <h3 className="text-lg font-bold text-white">Settings</h3>
-              <button
-                onClick={() => setShowSettingsPanel(false)}
-                className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Settings content - scrollable */}
-            <div className="overflow-y-auto max-h-[calc(85vh-60px)] px-4 py-4 space-y-4">
-              {/* Background Source */}
-              <div>
-                <h4 className="text-sm font-semibold text-white mb-2">Background Source</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setBackgroundMode("scene")}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                      backgroundMode === "scene"
-                        ? "bg-white text-black"
-                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                    }`}
-                  >
-                    Scene
-                  </button>
-                  <button
-                    onClick={() => setBackgroundMode("gradient")}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                      backgroundMode === "gradient"
-                        ? "bg-white text-black"
-                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                    }`}
-                  >
-                    Gradient
-                  </button>
-                  <button
-                    onClick={() => setBackgroundMode("upload")}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                      backgroundMode === "upload"
-                        ? "bg-white text-black"
-                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                    }`}
-                  >
-                    Upload
-                  </button>
-                </div>
-              </div>
-
-              {/* Background selectors */}
-              {backgroundMode === "scene" ? (
-                <SceneBackgroundSelector
-                  selectedImage={wallpaperStyle.backgroundImage}
-                  onSelect={(imageUrl) => {
-                    setWallpaperStyle(prev => ({
-                      ...prev,
-                      backgroundType: "custom",
-                      backgroundImage: imageUrl,
-                      backgroundPosition: { x: 0, y: 0 },
-                      backgroundScale: 1
-                    }))
-                  }}
-                />
-              ) : (
-                <BackgroundSelector
-                  selectedBackground={wallpaperStyle.backgroundImage}
-                  backgroundType={wallpaperStyle.backgroundType}
-                  onSelect={(bg) => {
-                    const gradientMap: Record<string, string> = {
-                      'from-pink-200 to-pink-300': 'linear-gradient(to bottom, #fce7f3, #fbcfe8)',
-                      'from-indigo-900 to-purple-900': 'linear-gradient(to bottom, #312e81, #581c87)',
-                      'from-green-400 to-blue-500': 'linear-gradient(to bottom, #4ade80, #3b82f6)',
-                      'from-gray-700 to-gray-900': 'linear-gradient(to bottom, #374151, #111827)',
-                      'from-orange-400 to-pink-600': 'linear-gradient(to bottom, #fb923c, #db2777)',
-                      'from-gray-100 to-gray-200': 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
-                      'from-purple-500 to-pink-500': 'linear-gradient(to bottom, #a855f7, #ec4899)',
-                      'from-blue-300 to-blue-500': 'linear-gradient(to bottom, #93c5fd, #3b82f6)',
-                      'from-red-300 to-pink-400': 'linear-gradient(to bottom, #fca5a5, #f472b6)',
-                      'from-gray-900 to-black': 'linear-gradient(to bottom, #111827, #000000)',
-                      'from-green-600 to-green-800': 'linear-gradient(to bottom, #16a34a, #166534)',
-                      'from-blue-400 to-teal-600': 'linear-gradient(to bottom, #60a5fa, #0d9488)'
-                    };
-                    const gradient = gradientMap[bg] || bg;
-                    setWallpaperStyle(prev => ({ ...prev, backgroundType: "preset", backgroundImage: gradient, backgroundPosition: { x: 0, y: 0 }, backgroundScale: 1 }))
-                  }}
-                  onUpload={handleBackgroundUpload}
-                  onReset={resetBackground}
-                  fileInputRef={fileInputRef}
-                  hasUploadedImage={hasUploadedImage}
-                />
-              )}
-
-              {/* Tasks section */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-semibold text-white">Tasks</h4>
-                  <button
-                    onClick={addTask}
-                    className="flex items-center gap-1 bg-white hover:bg-white/90 text-black px-3 py-1.5 rounded-xl font-semibold text-xs transition-all"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add
-                  </button>
-                </div>
-
-                {/* Task list - simplified for mobile */}
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {wallpaperStyle.tasks.map((task, index) => (
-                    <div key={task.id} className="flex items-center gap-2 p-2 bg-white/[0.05] rounded-xl border border-gray-700">
-                      <span className="text-xs text-gray-400 w-6">{index + 1}.</span>
-                      <input
-                        type="text"
-                        value={task.text}
-                        onChange={(e) => updateTask(task.id, { text: e.target.value })}
-                        className="flex-1 bg-transparent text-sm text-white focus:outline-none"
-                      />
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="text-red-400 hover:text-red-300 p-1"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Generate button */}
-              <button
-                onClick={() => {
-                  setShowSettingsPanel(false);
-                  generateWallpaper();
-                }}
-                disabled={isGenerating}
-                className="w-full py-3 bg-white hover:bg-white/90 text-black font-bold rounded-2xl transition-all duration-300 disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  "Generate Wallpaper"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showInspiration && (
         <InspirationPanel
