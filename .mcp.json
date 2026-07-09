@@ -4,9 +4,16 @@
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=hhzrbaejfznxukkctotd"
     },
-    "clerk": {
-      "type": "http",
-      "url": "https://mcp.clerk.com/mcp"
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--caps",
+        "vision"
+      ]
     }
   }
 }
