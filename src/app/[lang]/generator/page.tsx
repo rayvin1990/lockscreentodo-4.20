@@ -12,6 +12,14 @@ import { useToast } from "~/components/ui/use-toast";
 import { useAuth } from "@clerk/nextjs";
 import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/ui/sheet";
 import { QRCodeSection } from "~/components/qr-code-section";
 import { BackgroundSelector } from "~/components/background-selector";
 import { SceneBackgroundSelector } from "~/components/scene-background-selector";
@@ -129,33 +137,28 @@ export default function GeneratorPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const phoneScreenRef = useRef<HTMLDivElement>(null);
 
-  const previewPageRef = useRef<HTMLDivElement>(null);
-  const editPageRef = useRef<HTMLDivElement>(null);
-  const [mobilePage, setMobilePage] = useState<0 | 1>(0);
-
-  const scrollToMobilePage = useCallback((page: 0 | 1) => {
-    const target = page === 0 ? previewPageRef.current : editPageRef.current;
-    target?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-  }, []);
+  const [isMobile, setIsMobile] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [showTasksSheet, setShowTasksSheet] = useState(false);
+  const [showBackgroundSheet, setShowBackgroundSheet] = useState(false);
+  const [showNotionSheet, setShowNotionSheet] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.matchMedia("(min-width: 1024px)").matches) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
-          if (entry.target === previewPageRef.current) setMobilePage(0);
-          else if (entry.target === editPageRef.current) setMobilePage(1);
-        });
-      },
-      { threshold: [0.5] },
-    );
-    if (previewPageRef.current) observer.observe(previewPageRef.current);
-    if (editPageRef.current) observer.observe(editPageRef.current);
-    return () => observer.disconnect();
+    const mql = window.matchMedia("(max-width: 1023px)");
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
   }, []);
+
+  const handleTaskTapForEdit = useCallback((taskId: string) => {
+    if (isMobile) {
+      setEditingTaskId(taskId);
+    } else {
+      setSelectedTaskId(taskId);
+    }
+  }, [isMobile]);
 
   const [backgroundMode, setBackgroundMode] = useState<"scene" | "gradient" | "upload">("scene");
 
@@ -1483,11 +1486,166 @@ export default function GeneratorPage() {
 
       <div className="pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-4rem)] lg:h-screen overflow-hidden" style={{ height: 'auto' }}>
         <div className="max-w-7xl mx-auto h-full relative">
-          {/* Mobile: two-page horizontal snap-scroll (preview | edit). Desktop: 2-column grid. */}
-          <div className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible lg:snap-none lg:h-full">
+          {/* Mobile: full-screen preview + bottom toolbar. Desktop: 2-column grid below. */}
+          <div className="lg:hidden flex flex-col h-full">
+            <div className="flex-1 min-h-0 flex flex-col px-1">
+              <h3 className="text-base font-bold text-white mb-0.5">Preview</h3>
+              <p className="text-[11px] text-gray-400 mb-2">Tap any text to edit</p>
+              <div className="flex-1 min-h-0 flex items-center justify-center">
+                <RealisticPhoneMockup
+                  ref={phoneScreenRef}
+                  onScreenMouseEnter={() => setIsMouseInPhone(true)}
+                  onScreenMouseLeave={() => setIsMouseInPhone(false)}
+                >
+                  <div
+                    ref={canvasRef}
+                    className="w-full h-full relative"
+                    style={{
+                      background: wallpaperStyle.backgroundType === "preset" && wallpaperStyle.backgroundImage
+                        ? wallpaperStyle.backgroundImage
+                        : wallpaperStyle.backgroundType === "custom"
+                        ? "transparent"
+                        : "#1f2937",
+                    }}
+                  >
+                    {wallpaperStyle.backgroundType === "custom" && wallpaperStyle.backgroundImage && (
+                      <>
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            backgroundImage: `url(${wallpaperStyle.backgroundImage})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            transform: `translate(${wallpaperStyle.backgroundPosition.x}px, ${wallpaperStyle.backgroundPosition.y}px) scale(${wallpaperStyle.backgroundScale})`,
+                            transformOrigin: 'center center',
+                            zIndex: 0,
+                          }}
+                        />
+                        <div
+                          className="absolute inset-0"
+                          style={{ zIndex: 5 }}
+                          onMouseDown={(e) => {
+                            const target = e.target as HTMLElement;
+                            if (!target.closest('.task-card')) {
+                              handleBackgroundMouseDown(e);
+                            }
+                          }}
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                        />
+                      </>
+                    )}
+
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        zIndex: 6,
+                        background:
+                          "linear-gradient(to bottom, rgba(3, 7, 18, 0.38) 0%, rgba(3, 7, 18, 0.06) 34%, rgba(3, 7, 18, 0.22) 64%, rgba(3, 7, 18, 0.72) 100%)",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        zIndex: 7,
+                        background:
+                          "radial-gradient(circle at 50% 18%, rgba(255,255,255,0.16), transparent 28%), linear-gradient(to right, rgba(0,0,0,0.18), transparent 24%, transparent 76%, rgba(0,0,0,0.18))",
+                      }}
+                    />
+
+                    {wallpaperStyle.tasks.map((task, index) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        taskIndex={index}
+                        isSelected={editingTaskId === task.id}
+                        isPreview={true}
+                        onSelect={() => handleTaskTapForEdit(task.id)}
+                        onUpdate={(updates) => updateTask(task.id, updates)}
+                      />
+                    ))}
+
+                    {wallpaperStyle.stickers.map((sticker) => (
+                      <div
+                        key={sticker.id}
+                        className="absolute text-4xl cursor-move"
+                        style={{ left: sticker.x, top: sticker.y }}
+                      >
+                        {sticker.emoji}
+                      </div>
+                    ))}
+
+                    {phoneNumber && (
+                      <div
+                        className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/20"
+                        style={{ zIndex: 20 }}
+                      >
+                        <div className="text-center whitespace-nowrap">
+                          <div className="text-[9px] text-gray-600/80 font-medium mb-0.5">Emergency Contact</div>
+                          <div className="text-xs font-medium text-gray-800">{phoneNumber}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </RealisticPhoneMockup>
+              </div>
+            </div>
+
+            {/* Mobile: bottom toolbar (Tasks / Background / Notion) + Generate CTA */}
+            <div className="border-t border-gray-800 bg-brand-bg">
+              <div className="grid grid-cols-3 gap-2 px-3 pt-3 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTasksSheet(true)}
+                  className="flex flex-col items-center gap-1 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/[0.08] rounded-xl text-white text-xs font-medium transition-colors"
+                >
+                  <span aria-hidden className="text-base leading-none">☰</span>
+                  <span>Tasks</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBackgroundSheet(true)}
+                  className="flex flex-col items-center gap-1 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/[0.08] rounded-xl text-white text-xs font-medium transition-colors"
+                >
+                  <span aria-hidden className="text-base leading-none">▦</span>
+                  <span>Background</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNotionSheet(true)}
+                  className="flex flex-col items-center gap-1 py-2.5 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/[0.08] rounded-xl text-white text-xs font-medium transition-colors"
+                >
+                  <span aria-hidden className="text-base leading-none">◐</span>
+                  <span>Notion</span>
+                </button>
+              </div>
+              <div className="px-3 pb-3">
+                <button
+                  type="button"
+                  onClick={generateWallpaper}
+                  disabled={isGenerating}
+                  className="w-full py-3 bg-white hover:bg-white/90 text-black font-bold rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Wallpaper"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: 2-column grid (preview | rich edit panel) */}
+          <div className="hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:h-full">
             {/* Page 1 - Preview (always visible) */}
-            <div ref={previewPageRef} className="w-full flex-shrink-0 snap-center h-full flex flex-col lg:w-auto lg:snap-none">
-              <div className="flex flex-col h-full lg:h-full">
+            <div className="flex flex-col">
+              <div className="flex flex-col h-full">
                 <h3 className="text-lg font-bold text-white mb-1 lg:hidden">
                   Preview
                 </h3>
@@ -1611,31 +1769,10 @@ export default function GeneratorPage() {
                   </RealisticPhoneMockup>
                 </div>
 
-                <div className="lg:hidden flex flex-col items-center gap-1 pt-4 pb-2">
-                  <span className="text-[10px] uppercase tracking-widest text-gray-500">Step 1 / Preview</span>
-                  <button
-                    type="button"
-                    onClick={() => scrollToMobilePage(1)}
-                    className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg active:scale-95 transition-transform"
-                  >
-                    Next: Edit
-                    <span aria-hidden>→</span>
-                  </button>
-                </div>
               </div>
             </div>
 
-            <div ref={editPageRef} className="w-full flex-shrink-0 snap-center h-full flex flex-col mt-4 lg:mt-0 lg:w-auto lg:snap-none lg:h-full lg:overflow-hidden">
-              <div className="flex items-center justify-between px-4 pb-2 lg:hidden">
-                <button
-                  type="button"
-                  onClick={() => scrollToMobilePage(0)}
-                  className="text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  ← Back to Preview
-                </button>
-                <span className="text-xs uppercase tracking-wider text-gray-500">Step 2 / Edit</span>
-              </div>
+            <div className="flex flex-col mt-4 lg:mt-0 lg:h-full lg:overflow-hidden">
               <div className="space-y-3 pb-4 px-4 lg:px-0 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar">
                 <div>
                   <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
@@ -1974,28 +2111,272 @@ export default function GeneratorPage() {
               </div>
             </div>
           </div>
-
-          {/* Mobile: page indicator dots (book-flip affordance) */}
-          <div className="lg:hidden absolute bottom-4 left-0 right-0 flex justify-center items-center gap-2 z-30 pointer-events-none">
-            <button
-              type="button"
-              onClick={() => scrollToMobilePage(0)}
-              aria-label="Go to preview page"
-              className={`pointer-events-auto h-2 rounded-full transition-all duration-200 ${
-                mobilePage === 0 ? "w-6 bg-white" : "w-2 bg-white/30"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => scrollToMobilePage(1)}
-              aria-label="Go to edit page"
-              className={`pointer-events-auto h-2 rounded-full transition-all duration-200 ${
-                mobilePage === 1 ? "w-6 bg-white" : "w-2 bg-white/30"
-              }`}
-            />
-          </div>
         </div>
       </div>
+
+      {/* Mobile: Task edit overlay (lift-to-edit) */}
+      {editingTaskId && (() => {
+        const editingTask = wallpaperStyle.tasks.find(t => t.id === editingTaskId);
+        if (!editingTask) return null;
+        return (
+          <div
+            className="lg:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setEditingTaskId(null)}
+          >
+            <div
+              className="w-full max-w-md bg-brand-card border border-gray-700 rounded-2xl p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs uppercase tracking-widest text-gray-400">Edit Task</span>
+                <button
+                  type="button"
+                  onClick={() => setEditingTaskId(null)}
+                  className="p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-800"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <textarea
+                value={editingTask.text}
+                onChange={(e) => updateTask(editingTaskId, { text: e.target.value })}
+                placeholder="What needs to happen today?"
+                rows={4}
+                className="w-full bg-brand-bg border border-gray-700 rounded-xl px-4 py-3 text-white text-base focus:outline-none focus:ring-2 focus:ring-brand-green resize-none"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    setEditingTaskId(null);
+                  }
+                }}
+              />
+              <p className="text-[11px] text-gray-500 mt-2">
+                Tip: tap anywhere outside or press <kbd className="px-1 py-0.5 rounded bg-gray-800">⌘/Ctrl+↵</kbd> to save.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteTask(editingTaskId);
+                    setEditingTaskId(null);
+                  }}
+                  className="flex items-center gap-1 px-3 py-2 text-red-400 hover:text-red-300 text-sm font-medium rounded-xl border border-red-400/20 hover:bg-red-400/5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingTaskId(null)}
+                  className="flex-1 py-2.5 bg-white text-black font-bold rounded-xl active:scale-[0.98] transition-transform"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Mobile: Tasks bottom sheet */}
+      <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
+        <SheetContent position="bottom" size="lg" className="bg-brand-card border-gray-700 text-white">
+          <SheetHeader>
+            <SheetTitle className="text-white">Tasks ({wallpaperStyle.tasks.length})</SheetTitle>
+            <SheetDescription className="text-gray-400">
+              Tap a task to edit it. Drag-reorder is desktop only.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            {wallpaperStyle.tasks.map((task, index) => (
+              <div key={task.id} className="flex items-center gap-2 p-3 bg-white/[0.05] rounded-xl border border-gray-700">
+                <span className="text-xs text-gray-400 w-6 flex-shrink-0">{index + 1}.</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTasksSheet(false);
+                    setEditingTaskId(task.id);
+                  }}
+                  className="flex-1 text-left text-sm text-white line-clamp-2 active:bg-white/[0.05] py-1 px-2 -mx-2 rounded"
+                >
+                  {task.text}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteTask(task.id)}
+                  className="p-1.5 text-red-400 hover:text-red-300 flex-shrink-0"
+                  aria-label="Delete task"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            {wallpaperStyle.tasks.length === 0 && (
+              <p className="text-center text-sm text-gray-500 py-6">No tasks yet. Add one below.</p>
+            )}
+          </div>
+          <SheetFooter className="mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                const newTask: Task = {
+                  id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                  text: "New task",
+                  x: 132,
+                  y: wallpaperStyle.tasks.length * 30,
+                  fontSize: 13,
+                  color: "#F8FAFC",
+                  backgroundColor: "transparent",
+                  backgroundOpacity: 0.5,
+                  opacity: 1,
+                  isBold: true,
+                  isItalic: false,
+                  isCompleted: false,
+                  textAlign: "left",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                };
+                setWallpaperStyle(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
+                setShowTasksSheet(false);
+                setEditingTaskId(newTask.id);
+              }}
+              className="w-full py-3 bg-white text-black font-bold rounded-xl active:scale-[0.98] transition-transform"
+            >
+              <Plus className="w-4 h-4 inline mr-2" />
+              Add task
+            </button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Mobile: Background bottom sheet */}
+      <Sheet open={showBackgroundSheet} onOpenChange={setShowBackgroundSheet}>
+        <SheetContent position="bottom" size="xl" className="bg-brand-card border-gray-700 text-white">
+          <SheetHeader>
+            <SheetTitle className="text-white">Background</SheetTitle>
+            <SheetDescription className="text-gray-400">Pick a scene, gradient, or upload your own.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setBackgroundMode("scene")}
+              className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                backgroundMode === "scene" ? "bg-white text-black" : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
+              }`}
+            >
+              Scene Library
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackgroundMode("gradient")}
+              className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                backgroundMode === "gradient" ? "bg-white text-black" : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
+              }`}
+            >
+              Gradients
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackgroundMode("upload")}
+              className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                backgroundMode === "upload" ? "bg-white text-black" : "bg-white/[0.05] text-white/70 border border-white/[0.08]"
+              }`}
+            >
+              Upload
+            </button>
+          </div>
+          <div className="mt-3 max-h-[55vh] overflow-y-auto pr-1">
+            {backgroundMode === "scene" ? (
+              <SceneBackgroundSelector
+                selectedImage={wallpaperStyle.backgroundImage}
+                onSelect={(imageUrl) => {
+                  setWallpaperStyle(prev => ({
+                    ...prev,
+                    backgroundType: "custom",
+                    backgroundImage: imageUrl,
+                    backgroundPosition: { x: 0, y: 0 },
+                    backgroundScale: 1,
+                  }));
+                  setShowBackgroundSheet(false);
+                }}
+              />
+            ) : (
+              <BackgroundSelector
+                selectedBackground={wallpaperStyle.backgroundImage}
+                backgroundType={wallpaperStyle.backgroundType}
+                onSelect={(bg) => {
+                  const gradientMap: Record<string, string> = {
+                    'from-pink-200 to-pink-300': 'linear-gradient(to bottom, #fce7f3, #fbcfe8)',
+                    'from-indigo-900 to-purple-900': 'linear-gradient(to bottom, #312e81, #581c87)',
+                    'from-green-400 to-blue-500': 'linear-gradient(to bottom, #4ade80, #3b82f6)',
+                    'from-gray-700 to-gray-900': 'linear-gradient(to bottom, #374151, #111827)',
+                    'from-orange-400 to-pink-600': 'linear-gradient(to bottom, #fb923c, #db2777)',
+                    'from-gray-100 to-gray-200': 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
+                    'from-purple-500 to-pink-500': 'linear-gradient(to bottom, #a855f7, #ec4899)',
+                    'from-blue-300 to-blue-500': 'linear-gradient(to bottom, #93c5fd, #3b82f6)',
+                    'from-red-300 to-pink-400': 'linear-gradient(to bottom, #fca5a5, #f472b6)',
+                    'from-gray-900 to-black': 'linear-gradient(to bottom, #111827, #000000)',
+                    'from-green-600 to-green-800': 'linear-gradient(to bottom, #16a34a, #166534)',
+                    'from-blue-400 to-teal-600': 'linear-gradient(to bottom, #60a5fa, #0d9488)',
+                  };
+                  const gradient = gradientMap[bg] || bg;
+                  setWallpaperStyle(prev => ({ ...prev, backgroundType: "preset", backgroundImage: gradient, backgroundPosition: { x: 0, y: 0 }, backgroundScale: 1 }));
+                  setShowBackgroundSheet(false);
+                }}
+                onUpload={handleBackgroundUpload}
+                onReset={resetBackground}
+                fileInputRef={fileInputRef}
+                hasUploadedImage={hasUploadedImage}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Mobile: Notion bottom sheet */}
+      <Sheet open={showNotionSheet} onOpenChange={setShowNotionSheet}>
+        <SheetContent position="bottom" size="xl" className="bg-brand-card border-gray-700 text-white">
+          <SheetHeader>
+            <SheetTitle className="text-white">Notion Integration</SheetTitle>
+            <SheetDescription className="text-gray-400">
+              Import your real tasks from Notion.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <NotionAuthButton isConnected={isNotionConnected} />
+            {isNotionConnected && (
+              <>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <div className={`w-2 h-2 rounded-full ${isSyncing ? "bg-yellow-400 animate-pulse" : "bg-green-400"}`} />
+                  {isSyncing ? "Syncing..." : `Last sync: ${formatLastSyncTime(lastSyncTime)}`}
+                  <button
+                    type="button"
+                    onClick={() => syncNow()}
+                    disabled={isSyncing}
+                    className="ml-auto text-brand-green hover:text-brand-green/80 disabled:opacity-50"
+                  >
+                    Sync now
+                  </button>
+                </div>
+                <NotionTaskSelector
+                  tasks={syncedNotionTasks}
+                  selectedTaskIds={selectedNotionTaskIds}
+                  onToggleTask={handleToggleNotionTask}
+                  onAddSelectedToWallpaper={() => {
+                    handleAddSelectedNotionTasksToWallpaper();
+                    setShowNotionSheet(false);
+                  }}
+                  isLoading={isSyncing && syncedNotionTasks.length === 0}
+                />
+              </>
+            )}
+            <div className="text-[11px] text-gray-500 space-y-1 pt-2 border-t border-gray-700">
+              <p>We never access private data. Read-only on Tasks/Todo databases.</p>
+              <p>Revoke anytime in Notion settings.</p>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {showInspiration && (
         <InspirationPanel
