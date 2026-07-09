@@ -2255,7 +2255,11 @@ export default function GeneratorPage() {
 
       {/* Mobile: Tasks bottom sheet */}
       <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
-        <SheetContent position="bottom" size="lg" className="bg-brand-card border-gray-700 text-white">
+        <SheetContent
+          position="bottom"
+          size="xl"
+          className="bg-brand-card border-gray-700 text-white overflow-y-auto"
+        >
           <SheetHeader>
             <SheetTitle className="text-white">Tasks ({wallpaperStyle.tasks.length})</SheetTitle>
             <SheetDescription className="text-gray-400">
@@ -2263,7 +2267,7 @@ export default function GeneratorPage() {
             </SheetDescription>
           </SheetHeader>
           <div className="mt-4">
-            <div className="flex justify-start mb-2">
+            <div className="flex justify-start mb-3">
               <button
                 type="button"
                 onClick={() => {
@@ -2293,7 +2297,7 @@ export default function GeneratorPage() {
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-2 pr-1">
               {wallpaperStyle.tasks.map((task, index) => (
                 <div key={task.id} className="flex items-center gap-2 p-3 bg-white/[0.05] rounded-xl border border-gray-700">
                   <span className="text-xs text-gray-400 w-6 flex-shrink-0">{index + 1}.</span>
