@@ -29,6 +29,11 @@ interface LockedTaskContainerProps {
   onSelect: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onPositionChange: (position: { x: number; y: number }) => void;
+  // Mobile: cap the pill height at PHONE_INNER_HEIGHT and enable internal
+  // scroll. Desktop: leave the pill at its full natural height and let the
+  // phone mockup's overflow-hidden clip anything that doesn't fit. No scroll
+  // on desktop, the preview shows whatever fits in the phone.
+  isMobile?: boolean;
 }
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -53,6 +58,7 @@ export function LockedTaskContainer({
   onSelect,
   onUpdate,
   onPositionChange,
+  isMobile = false,
 }: LockedTaskContainerProps) {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,11 +140,13 @@ export function LockedTaskContainer({
   const primaryTask = tasks[0];
   const supportingTasks = tasks.slice(1, 4);
 
-  // Cap the visible height of the pill so it always fits inside the phone.
-  // The pill still sizes to its task list (1 task -> tiny pill, 10+ tasks -> taller pill)
-  // but is bounded by PHONE_INNER_HEIGHT. Anything beyond scrolls inside the
-  // content area; the drag handle and background match the visible (capped) size.
-  const visibleHeight = Math.min(bgSize.height, PHONE_INNER_HEIGHT);
+  // Mobile: cap the visible height of the pill so it always fits inside
+  // the phone. Anything beyond scrolls inside the content area. Desktop:
+  // use the full natural height; the phone mockup's overflow-hidden clips
+  // anything that doesn't fit, no internal scroll.
+  const visibleHeight = isMobile
+    ? Math.min(bgSize.height, PHONE_INNER_HEIGHT)
+    : bgSize.height;
 
   const updateDragPosition = useCallback((clientX: number, clientY: number) => {
     if (!isDraggingRef.current) return;
@@ -318,14 +326,17 @@ export function LockedTaskContainer({
             />
 
             <div
-              className="absolute left-1/2 transform -translate-x-1/2 overflow-y-auto scrollbar-hide"
+              className={`absolute left-1/2 transform -translate-x-1/2 ${
+                isMobile ? "overflow-y-auto scrollbar-hide" : ""
+              }`}
               style={{
                 width: `${bgSize.width - 26}px`,
                 height: `${visibleHeight}px`,
                 top: 28,
                 pointerEvents: "auto",
-                touchAction: "pan-y",
-                WebkitOverflowScrolling: "touch",
+                ...(isMobile
+                  ? { touchAction: "pan-y", WebkitOverflowScrolling: "touch" }
+                  : {}),
               }}
             >
               <div className="mb-3 flex items-center justify-between px-1">

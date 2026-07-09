@@ -1637,6 +1637,7 @@ export default function GeneratorPage() {
                       onSelect={(id) => handleTaskTapForEdit(id)}
                       onUpdate={(id, updates) => updateTask(id, updates)}
                       onPositionChange={setContainerPosition}
+                      isMobile
                     />
 
                     {wallpaperStyle.stickers.map((sticker) => (
@@ -1800,6 +1801,7 @@ export default function GeneratorPage() {
                           onSelect={(id) => setSelectedTaskId(id)}
                           onUpdate={(id, updates) => updateTask(id, updates)}
                           onPositionChange={setContainerPosition}
+                          isMobile={false}
                         />
                       ) : (
                         wallpaperStyle.tasks.map((task, index) => (
@@ -2255,13 +2257,13 @@ export default function GeneratorPage() {
       <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
         <SheetContent position="bottom" size="lg" className="bg-brand-card border-gray-700 text-white">
           <SheetHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <SheetTitle className="text-white">Tasks ({wallpaperStyle.tasks.length})</SheetTitle>
-                <SheetDescription className="text-gray-400">
-                  Tap a task to edit it. Drag-reorder is desktop only.
-                </SheetDescription>
-              </div>
+            <SheetTitle className="text-white">Tasks ({wallpaperStyle.tasks.length})</SheetTitle>
+            <SheetDescription className="text-gray-400">
+              Tap a task to edit it. Drag-reorder is desktop only.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4">
+            <div className="flex justify-start mb-2">
               <button
                 type="button"
                 onClick={() => {
@@ -2285,40 +2287,40 @@ export default function GeneratorPage() {
                   setShowTasksSheet(false);
                   setEditingTaskId(newTask.id);
                 }}
-                className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-white text-black rounded-full active:scale-95 transition-transform"
+                className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/15 active:bg-white/20 text-white rounded-full transition-colors"
                 aria-label="Add task"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
-          </SheetHeader>
-          <div className="mt-4 space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-            {wallpaperStyle.tasks.map((task, index) => (
-              <div key={task.id} className="flex items-center gap-2 p-3 bg-white/[0.05] rounded-xl border border-gray-700">
-                <span className="text-xs text-gray-400 w-6 flex-shrink-0">{index + 1}.</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTasksSheet(false);
-                    setEditingTaskId(task.id);
-                  }}
-                  className="flex-1 text-left text-sm text-white line-clamp-2 active:bg-white/[0.05] py-1 px-2 -mx-2 rounded"
-                >
-                  {task.text}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteTask(task.id)}
-                  className="p-1.5 text-red-400 hover:text-red-300 flex-shrink-0"
-                  aria-label="Delete task"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-            {wallpaperStyle.tasks.length === 0 && (
-              <p className="text-center text-sm text-gray-500 py-6">No tasks yet. Tap + above.</p>
-            )}
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+              {wallpaperStyle.tasks.map((task, index) => (
+                <div key={task.id} className="flex items-center gap-2 p-3 bg-white/[0.05] rounded-xl border border-gray-700">
+                  <span className="text-xs text-gray-400 w-6 flex-shrink-0">{index + 1}.</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowTasksSheet(false);
+                      setEditingTaskId(task.id);
+                    }}
+                    className="flex-1 text-left text-sm text-white line-clamp-2 active:bg-white/[0.05] py-1 px-2 -mx-2 rounded"
+                  >
+                    {task.text}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteTask(task.id)}
+                    className="p-1.5 text-red-400 hover:text-red-300 flex-shrink-0"
+                    aria-label="Delete task"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              {wallpaperStyle.tasks.length === 0 && (
+                <p className="text-center text-sm text-gray-500 py-6">No tasks yet. Tap + above.</p>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>
