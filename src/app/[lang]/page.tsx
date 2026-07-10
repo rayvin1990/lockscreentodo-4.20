@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Circle, Palette, QrCode, Sparkles, Smartphone, Zap } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { siteConfig } from "~/config/site";
 import { trackEvent } from "~/lib/analytics";
 import { seoScenarios } from "~/lib/seo-scenarios";
 
@@ -191,6 +192,62 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
     trackEvent("home_view", { lang });
   }, [lang]);
 
+  const NOTION_INTEGRATION_URL = "https://www.notion.com/integrations/lockscreen-todo";
+  const inLanguage = lang === "zh" ? "zh-Hans" : "en-US";
+  const pageUrl = `${siteConfig.url}${lang === "zh" ? "/zh" : "/en"}`;
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteConfig.name,
+    description: siteConfig.description,
+    url: pageUrl,
+    inLanguage,
+    publisher: { "@type": "Organization", name: siteConfig.organization.name, url: siteConfig.url },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteConfig.url}${lang === "zh" ? "/zh" : "/en"}/use-cases/{search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const softwareApplicationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Lockscreen Todo",
+    applicationCategory: "ProductivityApplication",
+    operatingSystem: "iOS, Android, Web",
+    description: content.subtitle,
+    url: pageUrl,
+    inLanguage,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD", availability: "https://schema.org/InStock" },
+    sameAs: [NOTION_INTEGRATION_URL, siteConfig.links.productHunt, siteConfig.links.github],
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    inLanguage,
+    mainEntity: content.faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: { "@type": "Answer", text: faq.a },
+    })),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: lang === "zh" ? "首页" : "Home", item: pageUrl },
+    ],
+  };
+
+  const homepageSchemas = [websiteJsonLd, softwareApplicationJsonLd, faqJsonLd, breadcrumbJsonLd];
+
   return (
     <div className="flex flex-col min-h-screen bg-[#020205] text-white/90 selection:bg-white/10 font-light tracking-tight antialiased">
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#020205]/80 backdrop-blur-md">
@@ -215,19 +272,13 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
         </div>
       </nav>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "Lockscreen Todo",
-            operatingSystem: "iOS, Android",
-            applicationCategory: "ProductivityApplication",
-            description: content.subtitle,
-          }),
-        }}
-      />
+      {homepageSchemas.map((schema, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
 
       <section className="relative pt-40 pb-32 px-6">
         <div className="container mx-auto max-w-4xl relative z-10">
