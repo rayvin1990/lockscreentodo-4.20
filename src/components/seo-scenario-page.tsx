@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, Circle, QrCode, Smartphone, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Circle, ExternalLink, QrCode, Smartphone, Wand2 } from "lucide-react";
 
 import { SeoScenarioAnalytics, SeoScenarioTrackedLink } from "~/components/seo-scenario-analytics";
 import { Button } from "~/components/ui/button";
+import { siteConfig } from "~/config/site";
 import { getScenarioGeneratorHref, type SeoScenario } from "~/lib/seo-scenarios";
+
+const NOTION_INTEGRATION_URL = "https://www.notion.com/integrations/lockscreen-todo";
+const PRODUCT_HUNT_URL = "https://www.producthunt.com/products/lockscreen-todo";
 
 export function SeoScenarioPage({
   lang,
@@ -87,9 +91,12 @@ export function SeoScenarioPage({
 
   const faqs = scenarioFaqs && scenarioFaqs.length > 0 ? scenarioFaqs : copy.faqs;
 
-  const jsonLd = {
+  const inLanguage = lang === "zh" ? "zh-Hans" : "en-US";
+
+  const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    inLanguage,
     mainEntity: faqs.map((item) => ({
       "@type": "Question",
       name: item.q,
@@ -100,6 +107,58 @@ export function SeoScenarioPage({
     })),
   };
 
+  const softwareApplicationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Lockscreen Todo",
+    applicationCategory: "LifestyleApplication",
+    operatingSystem: "iOS, Android, Web",
+    description: isZh
+      ? "把你的待办事项变成锁屏壁纸，每看一次手机就提醒一次。免费 iPhone 和 Android 壁纸生成器，支持每日任务、学习计划、习惯打卡、提醒和倒计时。无需安装 app。"
+      : "Turn your to-do list into a lock screen wallpaper you actually see. Free iPhone and Android wallpaper generator for daily tasks, study plans, habits, reminders, and countdowns. No app install required.",
+    url: siteConfig.url,
+    inLanguage,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+    sameAs: [NOTION_INTEGRATION_URL, PRODUCT_HUNT_URL],
+  };
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: scenario.title[lang],
+    description: scenario.description[lang],
+    inLanguage,
+    datePublished: "2026-07-10",
+    dateModified: "2026-07-10",
+    author: {
+      "@type": "Organization",
+      name: "Lockscreen Todo",
+      url: siteConfig.url,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Lockscreen Todo",
+      url: siteConfig.url,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteConfig.url}/og-image.jpg`,
+      },
+    },
+    sameAs: [NOTION_INTEGRATION_URL],
+    about: [
+      { "@type": "Thing", name: isZh ? "Notion 集成" : "Notion integration" },
+      { "@type": "Thing", name: isZh ? "锁屏壁纸" : "Lock screen wallpaper" },
+    ],
+  };
+
+  const schemaBlocks = [faqJsonLd, softwareApplicationJsonLd, articleJsonLd];
+  const notionBadgeLabel = isZh ? "Notion 官方集成" : "Official Notion Integration";
+
   return (
     <div className="min-h-screen bg-[#020205] text-white selection:bg-indigo-500/30">
       <SeoScenarioAnalytics
@@ -108,7 +167,13 @@ export function SeoScenarioPage({
         template={scenario.template}
         hasScenarioFaqs={Boolean(scenarioFaqs?.length)}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {schemaBlocks.map((schema, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
 
       <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#020205]/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -134,6 +199,19 @@ export function SeoScenarioPage({
           <div className="pointer-events-none absolute left-1/2 top-0 h-full w-full -translate-x-1/2 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.12),transparent_55%)]" />
           <div className="container relative z-10 mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-[1fr_360px]">
             <div className="space-y-8 text-center lg:text-left">
+              <a
+                href={NOTION_INTEGRATION_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mx-auto inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-200 transition-colors hover:bg-indigo-500/25 lg:mx-0"
+                title={notionBadgeLabel}
+              >
+                <svg viewBox="0 0 24 24" className="h-3 w-3 fill-current" aria-hidden="true">
+                  <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952l1.448.327s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.933.653.933 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.448-1.632z" />
+                </svg>
+                <span>{notionBadgeLabel}</span>
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </a>
               <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300 lg:mx-0">
                 <Icon className="h-3.5 w-3.5" />
                 <span>{scenario.eyebrow[lang]}</span>
