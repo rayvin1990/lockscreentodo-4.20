@@ -1,4 +1,5 @@
-﻿import { ClerkProvider } from "@clerk/nextjs";
+﻿import Script from "next/script";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Inter, Noto_Sans_SC } from "next/font/google";
 
 import "~/styles/globals.css";
@@ -82,6 +83,33 @@ export const metadata = {
   metadataBase: new URL(siteConfig.url),
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: siteConfig.organization.name,
+  description: siteConfig.organization.description,
+  url: siteConfig.url,
+  logo: `${siteConfig.url}/icon.png`,
+  foundingDate: siteConfig.organization.foundingDate,
+  founder: {
+    "@type": "Person",
+    name: siteConfig.organization.founderName,
+    url: siteConfig.organization.founderGithub,
+  },
+  sameAs: [
+    siteConfig.links.notionIntegration,
+    siteConfig.links.productHunt,
+    siteConfig.links.github,
+  ],
+  knowsAbout: [
+    "Lock screen productivity",
+    "Notion integrations",
+    "iPhone lock screen widgets",
+    "Lock screen wallpaper design",
+    "Passive reminder systems",
+  ],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -93,6 +121,11 @@ export default function RootLayout({
       defaultTheme="dark"
       enableSystem={false}
     >
+      <Script
+        id="ld-organization"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       {children}
       <Toaster />
       <Analytics />
