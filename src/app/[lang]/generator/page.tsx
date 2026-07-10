@@ -842,10 +842,11 @@ export default function GeneratorPage() {
   };
 
   const hasLoadedFromSupabase = useRef(false);
+  const notionImportDoneRef = useRef(false);
 
   const loadTasksFromSupabase = async (userId: string) => {
-    if (hasLoadedFromSupabase.current) {
-      console.log('Already loaded from Supabase, skipping');
+    if (hasLoadedFromSupabase.current || notionImportDoneRef.current) {
+      console.log('Already loaded from Supabase or Notion import done, skipping');
       return;
     }
 
@@ -962,10 +963,8 @@ export default function GeneratorPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const isOAuthCallback = urlParams.get("notion") === "connected";
 
-    // Track any pending import timeout so we can cancel it on unmount or
-    // re-render. Without this, navigating away during the 1500ms window
-    // fires the import against an unmounted component.
-    let importTimeout: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
     const checkNotionConnection = async () => {
       if (!isSignedIn) return;
@@ -978,11 +977,8 @@ export default function GeneratorPage() {
           setIsNotionConnected(data.connected);
 
           if (data.connected && !wasConnected) {
-            importTimeout = setTimeout(() => {
-              importFromNotion().catch((err) => {
-                console.error("Notion import failed after status check:", err);
-              });
-            }, 1000);
+            // Already connected (not via OAuth callback) — import immediately
+            void importFromNotion();
           }
         }
       } catch (error) {
@@ -994,36 +990,110 @@ export default function GeneratorPage() {
 
     if (isOAuthCallback) {
       setIsNotionConnected(true);
-      trackEvent("notion_oauth_return", {
-        status: "connected",
-      });
+      trackEvent("notion_oauth_return", { status: "connected" });
       toast({
         title: "Notion Connected!",
         description: "Importing your tasks now...",
       });
-      // FIX: call importFromNotion directly, bypassing the status check
-      // (the status API uses a different DB client and can return false
-      // before Notion's backend has finished propagating the OAuth grant).
-      // 1500ms is a margin over the typical 0.5-1s Notion propagation time.
-      // The proper fix is to poll the status check until it returns true;
-      // this delay is the workaround.
-      importTimeout = setTimeout(() => {
-        importFromNotion().catch((err) => {
-          console.error("Notion import failed after OAuth callback:", err);
+      window.history.replaceState({}, "", window.location.pathname);
+
+      // Poll /api/notion/tasks with retries instead of a single fragile setTimeout.
+      // The OAuth token may take a moment to propagate through the DB.
+      let attempt = 0;
+      const maxAttempts = 10;
+      const pollInterval = 1000;
+
+      const tryImport = async () => {
+        if (cancelled) return;
+        attempt++;
+        console.log("[Notion OAuth] Import attempt " + attempt + "/" + maxAttempts);
+
+        try {
+          const response = await fetchWithClerkAuth("/api/notion/tasks");
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.tasks && data.tasks.length > 0) {
+              console.log("[Notion OAuth] Success: " + data.tasks.length + " tasks from \"" + data.databaseName + "\"");
+              const importedTasks = data.tasks.map((notionTask: any, index: number) => ({
+                id: notionTask.id,
+                text: notionTask.text,
+                x: 132,
+                y: 200 + (index * 30),
+                fontSize: 13,
+                color: "#F8FAFC",
+                backgroundColor: "transparent",
+                backgroundOpacity: 0.5,
+                opacity: 1,
+                isBold: true,
+                isItalic: false,
+                isCompleted: false,
+                textAlign: "left" as const,
+                fontFamily: "Inter, system-ui, sans-serif",
+              }));
+              setWallpaperStyle(prev => ({ ...prev, tasks: importedTasks }));
+              notionImportDoneRef.current = true;
+              toast({
+                title: "Tasks Imported!",
+                description: "Imported " + data.tasks.length + " tasks from \"" + data.databaseName + "\".",
+              });
+              trackEvent("notion_import_success", {
+                taskCount: data.tasks.length,
+                databaseNamePresent: Boolean(data.databaseName),
+              });
+              return;
+            }
+
+            if (data.tasks && data.tasks.length === 0) {
+              console.log("[Notion OAuth] Database \"" + data.databaseName + "\" has no tasks");
+              toast({
+                title: "No tasks found",
+                description: "Database \"" + data.databaseName + "\" is empty. Add tasks in Notion first.",
+              });
+              return;
+            }
+
+            console.log("[Notion OAuth] Response not ready:", data);
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.log("[Notion OAuth] API returned " + response.status + ":", errorData);
+
+            // If 400 (Notion not connected), token hasn't propagated yet — retry
+            // If 401 (Unauthorized), user might not be signed in — retry
+            // If 404 (No databases), stop polling
+            if (response.status === 404) {
+              toast({
+                variant: "destructive",
+                title: "No databases found",
+                description: errorData.message || "Create a database in Notion first.",
+              });
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("[Notion OAuth] Attempt " + attempt + " failed:", err);
+        }
+
+        if (attempt < maxAttempts && !cancelled) {
+          pollTimer = setTimeout(tryImport, pollInterval);
+        } else if (!cancelled) {
+          console.error("[Notion OAuth] All " + maxAttempts + " attempts failed");
           toast({
             variant: "destructive",
-            title: "Import failed",
-            description: "Could not fetch your Notion tasks. Try tapping Notion again.",
+            title: "Import timed out",
+            description: "Could not fetch your Notion tasks. Try clicking 'Select Tasks from Notion' manually.",
           });
-        });
-      }, 1500);
-      window.history.replaceState({}, "", window.location.pathname);
+        }
+      };
+
+      pollTimer = setTimeout(tryImport, 500);
     }
 
     return () => {
-      if (importTimeout) clearTimeout(importTimeout);
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [fetchWithClerkAuth, isSignedIn, isNotionConnected, importFromNotion]);
+  }, [fetchWithClerkAuth, isSignedIn, isNotionConnected]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
