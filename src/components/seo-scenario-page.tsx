@@ -156,7 +156,53 @@ export function SeoScenarioPage({
     ],
   };
 
-  const schemaBlocks = [faqJsonLd, softwareApplicationJsonLd, articleJsonLd];
+  const howToSteps = isZh
+    ? [
+        { name: "打开场景生成器", text: "访问该场景的生成器页面，URL 在浏览器地址栏。" },
+        { name: "接 Notion（或改示例任务）", text: "点 Connect Notion 走 OAuth，或直接编辑预填的示例任务。" },
+        { name: "个性化你的任务", text: "把示例改成你今天真实要做的内容。" },
+        { name: "生成壁纸", text: "点 Generate Wallpaper，几秒内出 1080×1920 PNG。" },
+        { name: "扫码保存", text: "手机上扫生成器上的 QR 码，下载壁纸图。" },
+        { name: "设为锁屏", text: "iOS 设置 > 壁纸 > 选图；Android 长按图片 > 设为壁纸。" },
+      ]
+    : [
+        { name: "Open the scenario generator", text: "Visit the generator page for this scenario, link in your browser." },
+        { name: "Connect Notion (or edit the example tasks)", text: "Click Connect Notion to OAuth, or just edit the prefilled example tasks." },
+        { name: "Personalize your tasks", text: "Replace the example with what you actually need to do today." },
+        { name: "Generate the wallpaper", text: "Click Generate Wallpaper. A 1080x1920 PNG renders in seconds." },
+        { name: "Scan to save", text: "Scan the QR code on the generator with your phone to download the image." },
+        { name: "Set as lock screen", text: "iOS: Settings > Wallpaper > Add New Wallpaper > Photos. Android: long-press the image > Set as wallpaper." },
+      ];
+
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: isZh
+      ? `怎么把${scenario.title.zh}放上锁屏壁纸`
+      : `How to put ${scenario.title.en} on your lock screen wallpaper`,
+    description: isZh
+      ? `${scenario.description.zh}一步步在 iPhone 或 Android 上搭起来。`
+      : `${scenario.description.en} Step-by-step setup for iPhone or Android.`,
+    inLanguage,
+    totalTime: "PT5M",
+    estimatedCost: { "@type": "MonetaryAmount", value: "0", currency: "USD" },
+    supply: [
+      { "@type": "HowToSupply", name: isZh ? "iPhone 或 Android 手机" : "iPhone or Android phone" },
+      { "@type": "HowToSupply", name: isZh ? "Notion 账号（可选）" : "Notion account (optional)" },
+    ],
+    tool: [
+      { "@type": "HowToTool", name: "Lockscreen Todo Generator" },
+      { "@type": "HowToTool", name: isZh ? "手机相机（扫 QR 码）" : "Phone camera (for QR code)" },
+    ],
+    step: howToSteps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+
+  const schemaBlocks = [faqJsonLd, softwareApplicationJsonLd, articleJsonLd, howToJsonLd];
   const notionBadgeLabel = isZh ? "Notion 官方集成" : "Official Notion Integration";
 
   return (
