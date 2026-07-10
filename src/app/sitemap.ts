@@ -11,6 +11,8 @@ const baseRoutes = [
   "/zh/generator",
   "/en/lock-screen-todo",
   "/zh/lock-screen-todo",
+  "/en/lock-screen-widget-vs-wallpaper",
+  "/zh/lock-screen-widget-vs-wallpaper",
   "/en/reminder-wallpaper",
   "/zh/reminder-wallpaper",
   "/en/pricing",
@@ -44,7 +46,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ? 1
       : scenarioRoutes.includes(route)
         ? 0.85
-        : (route.includes("/generator") || route.includes("/lock-screen-todo") || route.includes("/reminder-wallpaper"))
+        : (route.includes("/generator") || route.includes("/lock-screen-todo") || route.includes("/reminder-wallpaper") || route.includes("/lock-screen-widget-vs-wallpaper"))
           ? 0.9
           : 0.6,
   }));
