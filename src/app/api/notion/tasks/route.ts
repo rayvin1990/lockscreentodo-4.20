@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!process.env.NEXT_PUBLIC_NEON_DATABASE_URL) {
-      console.error('Neon 环境变量未配置');
+      console.error('Neon environment variable not configured');
       return NextResponse.json(
         { error: "Server configuration error: Neon not configured" },
         { status: 500 }
@@ -106,25 +106,27 @@ export async function GET(req: NextRequest) {
 
     const searchData: NotionSearchResponse = await searchResponse.json();
 
-    const taskDatabases = searchData.results.filter((item): item is NotionDatabase => {
+    // Use ALL databases returned by Notion - no keyword filter.
+    // Users name their databases differently (e.g. "Daily Plan", "????", "Projects"),
+    // and a restrictive filter was the #1 reason tasks never appeared after OAuth.
+    const allDatabases = searchData.results.filter((item): item is NotionDatabase => {
       if (!("title" in item)) return false;
-      const title = item.title?.[0]?.plain_text?.toLowerCase() || "";
-      return title.includes("task") ||
-             title.includes("todo") ||
-             title.includes("待办") ||
-             title.includes("任务") ||
-             title.includes("to-do");
+      return true;
     });
 
-    if (taskDatabases.length === 0) {
+    console.log("Notion databases found:", allDatabases.map((db) => db.title?.[0]?.plain_text || "(untitled)"));
+
+    if (allDatabases.length === 0) {
       return NextResponse.json(
         {
-          error: "No task databases found",
-          message: "Please create a database in Notion with 'task' or 'todo' in the name",
+          error: "No databases found in Notion",
+          message: "Please create a database in Notion first, then reconnect.",
         },
         { status: 404 }
       );
     }
+
+    const taskDatabases = allDatabases;
 
     const databaseId = taskDatabases[0]?.id ?? "";
 
