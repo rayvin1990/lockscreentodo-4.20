@@ -842,6 +842,7 @@ export default function GeneratorPage() {
   };
 
   const hasLoadedFromSupabase = useRef(false);
+  const isNotionConnectedRef = useRef(false);
   const notionImportDoneRef = useRef(false);
 
   const loadTasksFromSupabase = async (userId: string) => {
@@ -975,6 +976,7 @@ export default function GeneratorPage() {
           const data = await response.json();
           const wasConnected = isNotionConnected;
           setIsNotionConnected(data.connected);
+          isNotionConnectedRef.current = data.connected;
 
           if (data.connected && !wasConnected) {
             // Already connected (not via OAuth callback) — import immediately
@@ -990,6 +992,7 @@ export default function GeneratorPage() {
 
     if (isOAuthCallback) {
       setIsNotionConnected(true);
+      isNotionConnectedRef.current = true;
       trackEvent("notion_oauth_return", { status: "connected" });
       toast({
         title: "Notion Connected!",
@@ -1093,7 +1096,7 @@ export default function GeneratorPage() {
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [fetchWithClerkAuth, isSignedIn, isNotionConnected]);
+  }, [fetchWithClerkAuth, isSignedIn]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
