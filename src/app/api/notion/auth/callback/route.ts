@@ -83,21 +83,29 @@ export async function GET(req: NextRequest) {
     const existingUser = existingUsers[0];
 
     if (!existingUser) {
-      console.error("User not found in database:", userId);
-      const origin = new URL(req.url).origin;
-      return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=user_not_found`)
-      );
-    }
-
-    try {
-      await sql`UPDATE "User" SET "notionAccessToken" = ${tokenData.access_token}, "notionWorkspaceId" = ${tokenData.workspace_id} WHERE "id" = ${userId}`;
-    } catch (updateError) {
-      console.error("Failed to update user:", updateError);
-      const origin = new URL(req.url).origin;
-      return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=update_failed`)
-      );
+      // User doesn't exist in Neon yet (likely created in Supabase via check-limit).
+      // Create the record here so the token can be saved.
+      console.log("User not found in Neon, creating record:", userId);
+      try {
+        await sql`INSERT INTO "User" ("id", "notionAccessToken", "notionWorkspaceId") VALUES (${userId}, ${tokenData.access_token}, ${tokenData.workspace_id})`;
+        console.log("User created with Notion token:", userId);
+      } catch (insertError) {
+        console.error("Failed to create user in Neon:", insertError);
+        const origin = new URL(req.url).origin;
+        return NextResponse.redirect(
+          new URL(`${origin}/en/generator?error=user_create_failed`)
+        );
+      }
+    } else {
+      try {
+        await sql`UPDATE "User" SET "notionAccessToken" = ${tokenData.access_token}, "notionWorkspaceId" = ${tokenData.workspace_id} WHERE "id" = ${userId}`;
+      } catch (updateError) {
+        console.error("Failed to update user:", updateError);
+        const origin = new URL(req.url).origin;
+        return NextResponse.redirect(
+          new URL(`${origin}/en/generator?error=update_failed`)
+        );
+      }
     }
 
     console.log("Notion token saved for user:", userId);
