@@ -1108,7 +1108,7 @@ export default function GeneratorPage() {
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [isLoaded, fetchWithClerkAuth]);
+  }, [isLoaded, isSignedIn, fetchWithClerkAuth]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;

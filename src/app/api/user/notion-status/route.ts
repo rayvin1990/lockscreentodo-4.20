@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getUser } from "~/lib/supabase/admin";
+﻿import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "~/lib/supabase/server";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
@@ -12,7 +12,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ connected: false }, { status: 401 });
     }
 
-    const user = await getUser(userId);
+    const sql = createServerSupabaseClient();
+
+    const users = await sql`SELECT "notionAccessToken", "notionWorkspaceId" FROM "User" WHERE id = ${userId}`;
+
+    const user = users[0];
 
     return NextResponse.json({
       connected: Boolean(user?.notionAccessToken),
