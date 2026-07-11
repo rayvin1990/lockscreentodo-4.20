@@ -1108,7 +1108,7 @@ export default function GeneratorPage() {
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [isLoaded, isSignedIn, fetchWithClerkAuth]);
+  }, [isLoaded, fetchWithClerkAuth]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
@@ -1800,8 +1800,95 @@ export default function GeneratorPage() {
           </div>
 
           {/* Desktop: 2-column grid (preview | rich edit panel) */}
-          <div className="hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:h-full">
-            {/* Page 1 - Preview (always visible) */}
+          <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:h-full">
+            {/* Left column: Background Source (lg only) */}
+            <div className="hidden lg:flex lg:flex-col lg:h-full lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar lg:gap-3 lg:pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setBackgroundMode("scene")}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      backgroundMode === "scene"
+                        ? "bg-white text-black"
+                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
+                    }`}
+                  >
+                    Scene Library
+                  </button>
+                  <button
+                    onClick={() => setBackgroundMode("gradient")}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      backgroundMode === "gradient"
+                        ? "bg-white text-black"
+                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
+                    }`}
+                  >
+                    Gradients
+                  </button>
+                  <button
+                    onClick={() => setBackgroundMode("upload")}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      backgroundMode === "upload"
+                        ? "bg-white text-black"
+                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
+                    }`}
+                  >
+                    Upload
+                  </button>
+                </div>
+              </div>
+
+              {backgroundMode === "scene" ? (
+                <SceneBackgroundSelector
+                  selectedImage={wallpaperStyle.backgroundImage}
+                  onSelect={(imageUrl) => {
+                    setWallpaperStyle(prev => ({
+                      ...prev,
+                      backgroundType: "custom",
+                      backgroundImage: imageUrl,
+                      backgroundPosition: { x: 0, y: 0 },
+                      backgroundScale: 1,
+                    }));
+                  }}
+                />
+              ) : (
+                <BackgroundSelector
+                  selectedBackground={wallpaperStyle.backgroundImage}
+                  backgroundType={wallpaperStyle.backgroundType}
+                  onSelect={(bg) => {
+                    const gradientMap: Record<string, string> = {
+                      "from-pink-200 to-pink-300": "linear-gradient(to bottom, #fce7f3, #fbcfe8)",
+                      "from-indigo-900 to-purple-900": "linear-gradient(to bottom, #312e81, #581c87)",
+                      "from-green-400 to-blue-500": "linear-gradient(to bottom, #4ade80, #3b82f6)",
+                      "from-gray-700 to-gray-900": "linear-gradient(to bottom, #374151, #111827)",
+                      "from-orange-400 to-pink-600": "linear-gradient(to bottom, #fb923c, #db2777)",
+                      "from-gray-100 to-gray-200": "linear-gradient(to bottom, #f3f4f6, #e5e7eb)",
+                      "from-purple-500 to-pink-500": "linear-gradient(to bottom, #a855f7, #ec4899)",
+                      "from-blue-300 to-blue-500": "linear-gradient(to bottom, #93c5fd, #3b82f6)",
+                      "from-red-300 to-pink-400": "linear-gradient(to bottom, #fca5a5, #f472b6)",
+                      "from-gray-900 to-black": "linear-gradient(to bottom, #111827, #000000)",
+                      "from-green-600 to-green-800": "linear-gradient(to bottom, #16a34a, #166534)",
+                      "from-blue-400 to-teal-600": "linear-gradient(to bottom, #60a5fa, #0d9488)",
+                    };
+                    const gradient = gradientMap[bg] || bg;
+                    setWallpaperStyle((prev) => ({
+                      ...prev,
+                      backgroundType: "preset",
+                      backgroundImage: gradient,
+                      backgroundPosition: { x: 0, y: 0 },
+                      backgroundScale: 1,
+                    }));
+                  }}
+                  onUpload={handleBackgroundUpload}
+                  onReset={resetBackground}
+                  fileInputRef={fileInputRef}
+                  hasUploadedImage={hasUploadedImage}
+                />
+              )}
+            </div>
+
+            {/* Page 1 - Preview (always visible, middle column on lg) */}
             <div className="flex flex-col">
               <div className="flex flex-col h-full">
                 <h3 className="text-lg font-bold text-white mb-1 lg:hidden">
@@ -1929,88 +2016,28 @@ export default function GeneratorPage() {
                 </div>
 
               </div>
+              {/* Generate button — modest size, centered, always visible below the preview on lg */}
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={generateWallpaper}
+                  disabled={isGenerating}
+                  className="px-8 py-3 bg-white hover:bg-white/90 text-black font-bold rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Wallpaper"
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col mt-4 lg:mt-0 lg:h-full lg:overflow-hidden">
               <div className="space-y-3 pb-4 px-4 lg:px-0 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => setBackgroundMode("scene")}
-                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                        backgroundMode === "scene"
-                          ? "bg-white text-black"
-                          : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                      }`}
-                    >
-                      Scene Library
-                    </button>
-                    <button
-                      onClick={() => setBackgroundMode("gradient")}
-                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                        backgroundMode === "gradient"
-                          ? "bg-white text-black"
-                          : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                      }`}
-                    >
-                      Gradients
-                    </button>
-                    <button
-                      onClick={() => setBackgroundMode("upload")}
-                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                        backgroundMode === "upload"
-                          ? "bg-white text-black"
-                          : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                      }`}
-                    >
-                      Upload
-                    </button>
-                  </div>
-                </div>
-
-                {backgroundMode === "scene" ? (
-                  <SceneBackgroundSelector
-                    selectedImage={wallpaperStyle.backgroundImage}
-                    onSelect={(imageUrl) => {
-                      setWallpaperStyle(prev => ({
-                        ...prev,
-                        backgroundType: "custom",
-                        backgroundImage: imageUrl,
-                        backgroundPosition: { x: 0, y: 0 },
-                        backgroundScale: 1
-                      }))
-                    }}
-                  />
-                ) : (
-                  <BackgroundSelector
-                    selectedBackground={wallpaperStyle.backgroundImage}
-                    backgroundType={wallpaperStyle.backgroundType}
-                    onSelect={(bg) => {
-                      const gradientMap: Record<string, string> = {
-                        'from-pink-200 to-pink-300': 'linear-gradient(to bottom, #fce7f3, #fbcfe8)',
-                        'from-indigo-900 to-purple-900': 'linear-gradient(to bottom, #312e81, #581c87)',
-                        'from-green-400 to-blue-500': 'linear-gradient(to bottom, #4ade80, #3b82f6)',
-                        'from-gray-700 to-gray-900': 'linear-gradient(to bottom, #374151, #111827)',
-                        'from-orange-400 to-pink-600': 'linear-gradient(to bottom, #fb923c, #db2777)',
-                        'from-gray-100 to-gray-200': 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
-                        'from-purple-500 to-pink-500': 'linear-gradient(to bottom, #a855f7, #ec4899)',
-                        'from-blue-300 to-blue-500': 'linear-gradient(to bottom, #93c5fd, #3b82f6)',
-                        'from-red-300 to-pink-400': 'linear-gradient(to bottom, #fca5a5, #f472b6)',
-                        'from-gray-900 to-black': 'linear-gradient(to bottom, #111827, #000000)',
-                        'from-green-600 to-green-800': 'linear-gradient(to bottom, #16a34a, #166534)',
-                        'from-blue-400 to-teal-600': 'linear-gradient(to bottom, #60a5fa, #0d9488)'
-                      };
-                      const gradient = gradientMap[bg] || bg;
-                      setWallpaperStyle(prev => ({ ...prev, backgroundType: "preset", backgroundImage: gradient, backgroundPosition: { x: 0, y: 0 }, backgroundScale: 1 }))
-                    }}
-                    onUpload={handleBackgroundUpload}
-                    onReset={resetBackground}
-                    fileInputRef={fileInputRef}
-                    hasUploadedImage={hasUploadedImage}
-                  />
-                )}
-
                 <div>
                   <div className="mb-4 p-3 bg-white/[0.03] rounded-xl border border-white/[0.06]">
                     <div className="flex items-center justify-between mb-2">
@@ -2250,23 +2277,6 @@ export default function GeneratorPage() {
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="flex-shrink-0 pt-2 px-4 pb-4">
-                <button
-                  onClick={generateWallpaper}
-                  disabled={isGenerating}
-                  className="w-full py-3 bg-white hover:bg-white/90 text-black font-bold rounded-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    "Generate Wallpaper"
-                  )}
-                </button>
               </div>
             </div>
           </div>
