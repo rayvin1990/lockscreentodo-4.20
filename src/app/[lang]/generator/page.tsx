@@ -1734,6 +1734,18 @@ export default function GeneratorPage() {
                         {sticker.emoji}
                       </div>
                     ))}
+
+                    {phoneNumber && (
+                      <div
+                        className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/20"
+                        style={{ zIndex: 20 }}
+                      >
+                        <div className="text-center whitespace-nowrap">
+                          <div className="text-[9px] text-gray-600/80 font-medium mb-0.5">Emergency Contact</div>
+                          <div className="text-xs font-medium text-gray-800">{phoneNumber}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </RealisticPhoneMockup>
               </div>
@@ -1786,92 +1798,11 @@ export default function GeneratorPage() {
               </div>
             </div>
           </div>
-        </div>
 
-          {/* Desktop: 3-column on lg (Background | Preview+Generate | Notion+Tasks) */}
-          <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:h-full">
-            {/* Left column: Background Source (lg only) */}
-            <div className="hidden lg:flex lg:flex-col lg:h-full lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar lg:gap-3 lg:pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setBackgroundMode("scene")}
-                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      backgroundMode === "scene"
-                        ? "bg-white text-black"
-                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                    }`}
-                  >
-                    Scene Library
-                  </button>
-                  <button
-                    onClick={() => setBackgroundMode("gradient")}
-                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      backgroundMode === "gradient"
-                        ? "bg-white text-black"
-                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                    }`}
-                  >
-                    Gradients
-                  </button>
-                  <button
-                    onClick={() => setBackgroundMode("upload")}
-                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      backgroundMode === "upload"
-                        ? "bg-white text-black"
-                        : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
-                    }`}
-                  >
-                    Upload
-                  </button>
-                </div>
-              </div>
-
-              {backgroundMode === "scene" ? (
-                <SceneBackgroundSelector
-                  selectedImage={wallpaperStyle.backgroundImage}
-                  onSelect={(imageUrl) => {
-                    setWallpaperStyle(prev => ({
-                      ...prev,
-                      backgroundType: "custom",
-                      backgroundImage: imageUrl,
-                      backgroundPosition: { x: 0, y: 0 },
-                      backgroundScale: 1
-                    }))
-                  }}
-                />
-              ) : (
-                <BackgroundSelector
-                  selectedBackground={wallpaperStyle.backgroundImage}
-                  backgroundType={wallpaperStyle.backgroundType}
-                  onSelect={(bg) => {
-                    const gradientMap: Record<string, string> = {
-                      'from-pink-200 to-pink-300': 'linear-gradient(to bottom, #fce7f3, #fbcfe8)',
-                      'from-indigo-900 to-purple-900': 'linear-gradient(to bottom, #312e81, #581c87)',
-                      'from-green-400 to-blue-500': 'linear-gradient(to bottom, #4ade80, #3b82f6)',
-                      'from-gray-700 to-gray-900': 'linear-gradient(to bottom, #374151, #111827)',
-                      'from-orange-400 to-pink-600': 'linear-gradient(to bottom, #fb923c, #db2777)',
-                      'from-gray-100 to-gray-200': 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
-                      'from-purple-500 to-pink-500': 'linear-gradient(to bottom, #a855f7, #ec4899)',
-                      'from-blue-300 to-blue-500': 'linear-gradient(to bottom, #93c5fd, #3b82f6)',
-                      'from-red-300 to-pink-400': 'linear-gradient(to bottom, #fca5a5, #f472b6)',
-                      'from-gray-900 to-black': 'linear-gradient(to bottom, #111827, #000000)',
-                      'from-green-600 to-green-800': 'linear-gradient(to bottom, #16a34a, #166534)',
-                      'from-blue-400 to-teal-600': 'linear-gradient(to bottom, #60a5fa, #0d9488)'
-                    };
-                    const gradient = gradientMap[bg] || bg;
-                    setWallpaperStyle(prev => ({ ...prev, backgroundType: "preset", backgroundImage: gradient, backgroundPosition: { x: 0, y: 0 }, backgroundScale: 1 }))
-                  }}
-                  onUpload={handleBackgroundUpload}
-                  onReset={resetBackground}
-                  fileInputRef={fileInputRef}
-                  hasUploadedImage={hasUploadedImage}
-                />
-              )}
-            </div>
-            {/* Page 1 - Preview (always visible, middle column on lg) */}
-            <div className="hidden lg:flex lg:flex-col lg:h-full">
+          {/* Desktop: 2-column grid (preview | rich edit panel) */}
+          <div className="hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:h-full">
+            {/* Page 1 - Preview (always visible) */}
+            <div className="flex flex-col">
               <div className="flex flex-col h-full">
                 <h3 className="text-lg font-bold text-white mb-1 lg:hidden">
                   Preview
@@ -1980,31 +1911,106 @@ export default function GeneratorPage() {
                           {sticker.emoji}
                         </div>
                       ))}
+
+                      {phoneNumber && (
+                        <div
+                          className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/20"
+                          style={{ zIndex: 20 }}
+                        >
+                          <div className="text-center whitespace-nowrap">
+                            <div className="text-[9px] text-gray-600/80 font-medium mb-0.5">Emergency Contact</div>
+                            <div className="text-xs font-medium text-gray-800">{phoneNumber}</div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                   </RealisticPhoneMockup>
                 </div>
-                {/* Generate button inside middle column, below the inner wrapper */}
-                <div className="mt-4 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={generateWallpaper}
-                    disabled={isGenerating}
-                    className="px-8 py-3 bg-white hover:bg-white/90 text-black font-bold rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      "Generate Wallpaper"
-                    )}
-                  </button>
-                </div>
+
+              </div>
+            </div>
 
             <div className="flex flex-col mt-4 lg:mt-0 lg:h-full lg:overflow-hidden">
               <div className="space-y-3 pb-4 px-4 lg:px-0 lg:flex-1 lg:overflow-y-auto lg:pr-2 lg:custom-scrollbar">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-3">Background Source</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setBackgroundMode("scene")}
+                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                        backgroundMode === "scene"
+                          ? "bg-white text-black"
+                          : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
+                      }`}
+                    >
+                      Scene Library
+                    </button>
+                    <button
+                      onClick={() => setBackgroundMode("gradient")}
+                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                        backgroundMode === "gradient"
+                          ? "bg-white text-black"
+                          : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
+                      }`}
+                    >
+                      Gradients
+                    </button>
+                    <button
+                      onClick={() => setBackgroundMode("upload")}
+                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                        backgroundMode === "upload"
+                          ? "bg-white text-black"
+                          : "bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.08]"
+                      }`}
+                    >
+                      Upload
+                    </button>
+                  </div>
+                </div>
+
+                {backgroundMode === "scene" ? (
+                  <SceneBackgroundSelector
+                    selectedImage={wallpaperStyle.backgroundImage}
+                    onSelect={(imageUrl) => {
+                      setWallpaperStyle(prev => ({
+                        ...prev,
+                        backgroundType: "custom",
+                        backgroundImage: imageUrl,
+                        backgroundPosition: { x: 0, y: 0 },
+                        backgroundScale: 1
+                      }))
+                    }}
+                  />
+                ) : (
+                  <BackgroundSelector
+                    selectedBackground={wallpaperStyle.backgroundImage}
+                    backgroundType={wallpaperStyle.backgroundType}
+                    onSelect={(bg) => {
+                      const gradientMap: Record<string, string> = {
+                        'from-pink-200 to-pink-300': 'linear-gradient(to bottom, #fce7f3, #fbcfe8)',
+                        'from-indigo-900 to-purple-900': 'linear-gradient(to bottom, #312e81, #581c87)',
+                        'from-green-400 to-blue-500': 'linear-gradient(to bottom, #4ade80, #3b82f6)',
+                        'from-gray-700 to-gray-900': 'linear-gradient(to bottom, #374151, #111827)',
+                        'from-orange-400 to-pink-600': 'linear-gradient(to bottom, #fb923c, #db2777)',
+                        'from-gray-100 to-gray-200': 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
+                        'from-purple-500 to-pink-500': 'linear-gradient(to bottom, #a855f7, #ec4899)',
+                        'from-blue-300 to-blue-500': 'linear-gradient(to bottom, #93c5fd, #3b82f6)',
+                        'from-red-300 to-pink-400': 'linear-gradient(to bottom, #fca5a5, #f472b6)',
+                        'from-gray-900 to-black': 'linear-gradient(to bottom, #111827, #000000)',
+                        'from-green-600 to-green-800': 'linear-gradient(to bottom, #16a34a, #166534)',
+                        'from-blue-400 to-teal-600': 'linear-gradient(to bottom, #60a5fa, #0d9488)'
+                      };
+                      const gradient = gradientMap[bg] || bg;
+                      setWallpaperStyle(prev => ({ ...prev, backgroundType: "preset", backgroundImage: gradient, backgroundPosition: { x: 0, y: 0 }, backgroundScale: 1 }))
+                    }}
+                    onUpload={handleBackgroundUpload}
+                    onReset={resetBackground}
+                    fileInputRef={fileInputRef}
+                    hasUploadedImage={hasUploadedImage}
+                  />
+                )}
+
                 <div>
                   <div className="mb-4 p-3 bg-white/[0.03] rounded-xl border border-white/[0.06]">
                     <div className="flex items-center justify-between mb-2">
@@ -2105,15 +2111,48 @@ export default function GeneratorPage() {
                   </div>
 
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xl font-bold text-white">Tasks</h3>
-                    <button
-                      onClick={addTask}
-                      className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-3 py-1.5 rounded-xl font-semibold transition-all hover:scale-105 text-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add
-                    </button>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-bold text-white">
+                        Tasks
+                      </h3>
+                      <button
+                        onClick={() => setTasksLocked(!tasksLocked)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                          tasksLocked
+                            ? "bg-brand-green/20 text-brand-green border border-brand-green"
+                            : "bg-gray-700 text-gray-300 border border-gray-600"
+                        }`}
+                        title={tasksLocked ? "Click to unlock individual editing" : "Click to lock all tasks together"}
+                      >
+                        {tasksLocked ? (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span>Locked</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                            </svg>
+                            <span>Unlocked</span>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1 rounded-lg border border-white/20">
+                        <span className="text-xs text-white font-medium">Bg Opacity</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={backgroundOpacity * 100}
+                          onChange={(e) => setBackgroundOpacity(Number(e.target.value) / 100)}
+                          className="w-16 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <span className="text-xs text-white font-medium w-8">{Math.round(backgroundOpacity * 100)}%</span>
+                      </div>
                     </div>
                     <button
                       onClick={addTask}
@@ -2123,6 +2162,28 @@ export default function GeneratorPage() {
                       Add
                     </button>
                   </div>
+
+                  {tasksLocked && (
+                    <div className="mb-3 p-3 bg-brand-bg rounded-xl border border-gray-700">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-gray-300 font-medium">Font Size</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-xs text-gray-400">A</span>
+                          <input
+                            type="range"
+                            min="10"
+                            max="24"
+                            step="1"
+                            value={globalFontSize}
+                            onChange={(e) => setGlobalFontSize(Number(e.target.value))}
+                            className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-brand-green"
+                          />
+                          <span className="text-sm text-gray-400 font-bold">A</span>
+                        </div>
+                        <span className="text-xs text-brand-green font-bold w-8 text-center">{globalFontSize}</span>
+                      </div>
+                    </div>
+                  )}
 
                   <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={wallpaperStyle.tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
@@ -2141,8 +2202,73 @@ export default function GeneratorPage() {
                       </div>
                     </SortableContext>
                   </DndContext>
+
+                  <button
+                    onClick={() => setShowInspiration(!showInspiration)}
+                    className="w-full mt-3 py-2 bg-brand-blue/20 hover:bg-brand-blue/30 text-brand-blue border-2 border-brand-blue/50 rounded-xl font-semibold transition-all text-sm"
+                  >
+                    Get Inspiration
+                  </button>
+                </div>
+
+                {selectedTask && (
+                  <StyleControls
+                    task={selectedTask}
+                    onUpdate={(updates) => updateTask(selectedTask.id, updates)}
+                    isEnglish={true}
+                    isPro={true}
+                    daysRemaining={0}
+                  />
+                )}
+
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-3">
+                    Emergency Contact
+                    <span className="text-xs text-gray-400 font-normal ml-2">(Optional)</span>
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Add emergency contact number for Alzheimer's patients
+                  </p>
+                  <input
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="e.g., +1 234 567 8900"
+                    className="w-full px-4 py-2 bg-brand-bg border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent transition-all"
+                  />
+                  {phoneNumber && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-gray-400">
+                        Will show at bottom of wallpaper
+                      </span>
+                      <button
+                        onClick={() => setPhoneNumber("")}
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              <div className="flex-shrink-0 pt-2 px-4 pb-4">
+                <button
+                  onClick={generateWallpaper}
+                  disabled={isGenerating}
+                  className="w-full py-3 bg-white hover:bg-white/90 text-black font-bold rounded-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Wallpaper"
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
