@@ -961,6 +961,12 @@ export default function GeneratorPage() {
   };
 
   useEffect(() => {
+    // Wait for Clerk to finish loading before running any logic.
+    // Using isLoaded instead of isSignedIn prevents the effect from
+    // re-running (and cancelling polling) when isSignedIn transitions
+    // from undefined to true after Clerk initializes.
+    if (!isLoaded || !isSignedIn) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const isOAuthCallback = urlParams.get("notion") === "connected";
 
@@ -968,15 +974,21 @@ export default function GeneratorPage() {
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
     const checkNotionConnection = async () => {
-      if (!isSignedIn) return;
-
       try {
         const response = await fetchWithClerkAuth("/api/user/notion-status");
         if (response.ok) {
           const data = await response.json();
-          const wasConnected = isNotionConnected;
-          setIsNotionConnected(data.connected);
-          isNotionConnectedRef.current = data.connected;
+          // Use ref to avoid stale closure: the OAuth path may have already
+          // set isNotionConnected to true before this async call returns.
+          const wasConnected = isNotionConnectedRef.current;
+
+          // Only update state if the value actually changed. This prevents
+          // the OAuth path's setIsNotionConnected(true) from being overridden
+          // when notion-status returns false (token in Neon vs Supabase).
+          if (data.connected !== wasConnected) {
+            setIsNotionConnected(data.connected);
+            isNotionConnectedRef.current = data.connected;
+          }
 
           if (data.connected && !wasConnected) {
             // Already connected (not via OAuth callback) — import immediately
@@ -988,6 +1000,9 @@ export default function GeneratorPage() {
       }
     };
 
+    // Fire-and-forget: check connection status in the background.
+    // For the OAuth callback path, this won't interfere because
+    // isNotionConnectedRef is already true by the time this returns.
     checkNotionConnection();
 
     if (isOAuthCallback) {
@@ -1061,9 +1076,6 @@ export default function GeneratorPage() {
             const errorData = await response.json().catch(() => ({}));
             console.log("[Notion OAuth] API returned " + response.status + ":", errorData);
 
-            // If 400 (Notion not connected), token hasn't propagated yet — retry
-            // If 401 (Unauthorized), user might not be signed in — retry
-            // If 404 (No databases), stop polling
             if (response.status === 404) {
               toast({
                 variant: "destructive",
@@ -1096,7 +1108,7 @@ export default function GeneratorPage() {
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [fetchWithClerkAuth, isSignedIn]);
+  }, [isLoaded, fetchWithClerkAuth]);
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
