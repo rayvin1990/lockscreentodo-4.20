@@ -1223,7 +1223,6 @@ export default function GeneratorPage() {
     setQrUnavailableReason(null);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const domtoimage = require("dom-to-image") as typeof import("dom-to-image");
       const toPng = (domtoimage as unknown as { toPng: Function }).toPng;
 
@@ -2254,7 +2253,7 @@ export default function GeneratorPage() {
                     <span className="text-xs text-gray-400 font-normal ml-2">(Optional)</span>
                   </h3>
                   <p className="text-xs text-gray-400 mb-3">
-                    Add emergency contact number for Alzheimer's patients
+                    Add emergency contact number for Alzheimer&rsquo;s patients
                   </p>
                   <input
                     type="text"

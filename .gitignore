@@ -77,6 +77,7 @@ vendor/
 *.html
 *.md
 *.json
+!.eslintrc.json
 *.ps1
 *.sh
 *.bat

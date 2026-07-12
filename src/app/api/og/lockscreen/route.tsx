@@ -5,6 +5,8 @@ import { getLockscreenQueue } from "~/lib/agent-reminders";
 
 // export const runtime = 'edge';
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

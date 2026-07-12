@@ -51,7 +51,7 @@ export function WelcomeTrialModal({
 
         <div className="space-y-4 mb-6">
           <p className="text-gray-300 text-center text-lg leading-relaxed">
-            You've received a <span className="text-brand-green font-bold">7-day free trial</span>
+            You&rsquo;ve received a <span className="text-brand-green font-bold">7-day free trial</span>
           </p>
           <p className="text-gray-400 text-center text-sm leading-relaxed">
             <Sparkles className="w-4 h-4 inline mr-1 text-brand-green" />

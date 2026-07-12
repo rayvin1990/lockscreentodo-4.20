@@ -252,7 +252,7 @@ export default function AuditPage() {
                             {result.decision} Status
                           </span>
                           <p className="text-lg text-slate-200 leading-relaxed italic">
-                            "{result.main_reason}"
+                            &ldquo;{result.main_reason}&rdquo;
                           </p>
                         </div>
                         <div className="flex items-center justify-center md:justify-start gap-4 pt-2">

@@ -36,9 +36,7 @@ export const AnimatedTooltip = ({
     springConfig,
   );
   const handleMouseMove = (event: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const halfWidth = event.target.offsetWidth / 2;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     x.set(event.nativeEvent.offsetX - halfWidth); // set the x value, which is then used in transform and rotate
   };
 

@@ -59,7 +59,7 @@ export function TrialExpiredModal({
               Thank You for Trying
             </h2>
             <p className="text-gray-400 text-sm">
-              You've used your {daysUsed}-day free trial
+              You&rsquo;ve used your {daysUsed}-day free trial
             </p>
           </div>
 

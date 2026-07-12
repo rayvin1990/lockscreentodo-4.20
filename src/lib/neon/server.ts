@@ -21,7 +21,6 @@ export function createNeonClient(databaseUrl?: string) {
   const baseNeon = neon(url);
 
   // 包装成带重试的 sql 函数
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sqlWithRetry = async (strings: TemplateStringsArray, ...params: any[]) => {
     const maxRetries = 3;
     let lastError: Error | null = null;

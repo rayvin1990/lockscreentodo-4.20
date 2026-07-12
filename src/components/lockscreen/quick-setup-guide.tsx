@@ -130,7 +130,7 @@ export function QuickSetupGuide({ showAfterDownload, imageUrl }: QuickSetupGuide
 
         <div className="pt-2 border-t border-slate-600/50 space-y-1">
           <p className="text-[10px] text-yellow-400/90">
-            ⚠️ Preview time/date won't be included in downloaded wallpaper
+            ⚠️ Preview time/date won&rsquo;t be included in downloaded wallpaper
           </p>
           {platform === 'ios' && (
             <p className="text-[10px] text-blue-400/90">
