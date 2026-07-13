@@ -841,56 +841,59 @@ export default function GeneratorPage() {
     }
   };
 
-  const hasLoadedFromSupabase = useRef(false);
+  const hasLoadedTasksRef = useRef(false);
   const isNotionConnectedRef = useRef(false);
   const notionImportDoneRef = useRef(false);
 
-  const loadTasksFromSupabase = async (userId: string) => {
-    if (hasLoadedFromSupabase.current || notionImportDoneRef.current) {
-      console.log('Already loaded from Supabase or Notion import done, skipping');
+  const loadTasksFromServer = async (userId: string) => {
+    if (hasLoadedTasksRef.current || notionImportDoneRef.current) {
+      console.log('Tasks already loaded or Notion import done, skipping');
       return;
     }
 
-    if (!supabase) return;
-
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .is('deleted_at', null); // Only load non-deleted tasks
+      const response = await fetchWithClerkAuth("/api/notion/tasks");
+      if (!response.ok) {
+        const status = response.status;
+        if (status === 400) {
+          console.log('Notion not connected, skipping task load');
+        } else if (status === 404) {
+          console.log('No databases found in Notion, skipping task load');
+        } else {
+          console.error('Failed to load tasks from server:', status);
+        }
+        hasLoadedTasksRef.current = true;
+        return;
+      }
 
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const tasks: Task[] = data.map((task: any) => ({
-          id: task.notion_task_id || task.id,
+      const data = await response.json();
+      if (data?.success && Array.isArray(data.tasks) && data.tasks.length > 0) {
+        const tasks: Task[] = data.tasks.map((task: any, index: number) => ({
+          id: task.id,
           text: task.text,
           x: 132,
-          y: 200 + (data.indexOf(task) * 30),
+          y: 200 + (index * 30),
           fontSize: 13,
           color: "#F8FAFC",
           backgroundColor: "transparent",
           backgroundOpacity: 0.5,
-          opacity: task.completed ? 0.6 : 1,
+          opacity: 1,
           isBold: true,
           isItalic: false,
-          isCompleted: task.completed,
+          isCompleted: false,
           textAlign: "left" as const,
           fontFamily: "Inter, system-ui, sans-serif",
         }));
 
         setWallpaperStyle(prev => ({ ...prev, tasks }));
-        hasLoadedFromSupabase.current = true;
-        console.log('Loaded tasks from Supabase:', tasks.length);
+        console.log('Loaded tasks from Notion:', tasks.length);
       } else {
-        console.log('No tasks in Supabase, using local state');
-        hasLoadedFromSupabase.current = true;
+        console.log('No tasks returned from Notion, using local state');
       }
+      hasLoadedTasksRef.current = true;
     } catch (error) {
-      console.error('Failed to load tasks from Supabase:', error);
-      hasLoadedFromSupabase.current = true;
+      console.error('Failed to load tasks from server:', error);
+      hasLoadedTasksRef.current = true;
     }
   };
 
@@ -1113,7 +1116,7 @@ export default function GeneratorPage() {
   useEffect(() => {
     if (!isSignedIn || !userId) return;
 
-    loadTasksFromSupabase(userId);
+    loadTasksFromServer(userId);
   }, [isSignedIn, userId]);
 
   useEffect(() => {
