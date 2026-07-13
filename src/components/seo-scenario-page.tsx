@@ -114,8 +114,8 @@ export function SeoScenarioPage({
     applicationCategory: "LifestyleApplication",
     operatingSystem: "iOS, Android, Web",
     description: isZh
-      ? "把你的待办事项变成锁屏壁纸，每看一次手机就提醒一次。免费 iPhone 和 Android 壁纸生成器，支持每日任务、学习计划、习惯打卡、提醒和倒计时。无需安装 app。"
-      : "Turn your to-do list into a lock screen wallpaper you actually see. Free iPhone and Android wallpaper generator for daily tasks, study plans, habits, reminders, and countdowns. No app install required.",
+      ? "Lockscreen Todo 是一个免费网页工具,把 Notion 任务和每日优先级变成 iPhone 和 Android 锁屏壁纸。适合 Notion 重度用户、ADHD、学生、习惯养成者。无需安装 app。"
+      : "Lockscreen Todo is a free web tool that turns your Notion tasks and daily priorities into iPhone and Android lock screen wallpapers. Best for Notion users, ADHD, students, and habit builders. No app install required.",
     url: siteConfig.url,
     inLanguage,
     offers: {
@@ -133,8 +133,8 @@ export function SeoScenarioPage({
     headline: scenario.title[lang],
     description: scenario.description[lang],
     inLanguage,
-    datePublished: "2026-07-10",
-    dateModified: "2026-07-10",
+    datePublished: scenario.lastModified ?? "2026-07-10",
+    dateModified: scenario.lastModified ?? "2026-07-10",
     author: {
       "@type": "Organization",
       name: "Lockscreen Todo",

@@ -50,12 +50,14 @@ export type SeoScenario = {
     en: string;
     zh: string;
   };
+  lastModified?: string;
 };
 
 export const seoScenarios: SeoScenario[] = [
   {
     slug: "notion-task-lock-screen",
     icon: ListChecks,
+    lastModified: "2026-07-06",
     template: "calm-list",
     gradient: "linear-gradient(160deg, #0f172a 0%, #2563eb 46%, #020617 100%)",
     eyebrow: {
@@ -145,6 +147,7 @@ export const seoScenarios: SeoScenario[] = [
   {
     slug: "adhd-lockscreen-reminder",
     icon: Brain,
+    lastModified: "2026-07-12",
     template: "bold-minimal",
     gradient: "linear-gradient(160deg, #7c3aed 0%, #ec4899 46%, #020617 100%)",
     eyebrow: {
@@ -198,6 +201,7 @@ export const seoScenarios: SeoScenario[] = [
   },
   {
     slug: "exam-countdown-lock-screen",
+    lastModified: "2026-07-12",
     icon: Timer,
     template: "countdown-bold",
     gradient: "linear-gradient(160deg, #ef4444 0%, #f97316 46%, #020617 100%)",
@@ -254,6 +258,7 @@ export const seoScenarios: SeoScenario[] = [
   },
   {
     slug: "study-plan-lock-screen",
+    lastModified: "2026-07-12",
     icon: BookOpen,
     template: "calm-list",
     gradient: "linear-gradient(160deg, #10b981 0%, #3b82f6 46%, #020617 100%)",
@@ -308,6 +313,7 @@ export const seoScenarios: SeoScenario[] = [
   },
   {
     slug: "workout-routine-lock-screen",
+    lastModified: "2026-07-12",
     icon: Dumbbell,
     template: "bold-minimal",
     gradient: "linear-gradient(160deg, #84cc16 0%, #10b981 46%, #020617 100%)",
@@ -361,6 +367,7 @@ export const seoScenarios: SeoScenario[] = [
   },
   {
     slug: "medication-reminder-lock-screen",
+    lastModified: "2026-07-12",
     icon: Pill,
     template: "simple-text",
     gradient: "linear-gradient(160deg, #06b6d4 0%, #8b5cf6 46%, #020617 100%)",
