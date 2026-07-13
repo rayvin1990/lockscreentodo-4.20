@@ -166,11 +166,7 @@ export default function GeneratorPage() {
     backgroundImage: "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)",
     backgroundPosition: { x: 0, y: 0 },
     backgroundScale: 1,
-    tasks: [
-      { id: "1", text: "8:00 PM - take blood pressure medicine", x: 132, y: 200, fontSize: 13, color: "#F8FAFC", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "left", fontFamily: "Inter, system-ui, sans-serif" },
-      { id: "2", text: "Before leaving - bring passport", x: 132, y: 230, fontSize: 13, color: "#F8FAFC", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "left", fontFamily: "Inter, system-ui, sans-serif" },
-      { id: "3", text: "After work - pick up package", x: 132, y: 260, fontSize: 13, color: "#F8FAFC", backgroundColor: "transparent", backgroundOpacity: 0.5, opacity: 1, isBold: true, isItalic: false, isCompleted: false, textAlign: "left", fontFamily: "Inter, system-ui, sans-serif" },
-    ],
+    tasks: [],
     stickers: [],
   });
 
