@@ -66,8 +66,11 @@ export async function GET(req: NextRequest) {
       const errorText = await tokenResponse.text();
       console.error("Token exchange failed:", errorText);
       const origin = new URL(req.url).origin;
+      const errorSummary = errorText.slice(0, 120).replace(/[^\x20-\x7E]/g, "");
       return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=token_exchange_failed`)
+        new URL(
+          `${origin}/en/generator?error=token_exchange_failed&detail=${encodeURIComponent(errorSummary)}`
+        )
       );
     }
 
