@@ -1,50 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "~/lib/supabase/server";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
+import {
+  discoverBestSource,
+  fetchTasksFromSource,
+  NotionTask,
+  NotionTaskSource,
+} from "~/lib/notion/sources";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-interface NotionTask {
-  id: string;
-  text: string;
-  dueDate?: string;
-  lastEditedTime?: string;
-}
-
-interface NotionPage {
-  id: string;
-  properties: Record<string, any>;
-  last_edited_time: string;
-}
-
-interface NotionDatabase {
-  id: string;
-  title: Array<{ plain_text: string }>;
-}
-
-interface NotionSearchResponse {
-  results: Array<NotionDatabase | NotionPage>;
-}
-
-interface NotionQueryResponse {
-  results: NotionPage[];
-  next_cursor?: string;
-  has_more: boolean;
+interface TaskRow {
+  notion_task_id: string;
+  notion_database_id: string | null;
+  notion_last_edited_time: string | null;
+  deleted_at: string | null;
 }
 
 export async function GET(req: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(req);
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const sql = createServerSupabaseClient();
 
-    // Get user's Notion access token
     const users = await sql`
       SELECT "notionAccessToken" FROM "User" WHERE id = ${userId}
     `;
@@ -53,199 +34,106 @@ export async function GET(req: NextRequest) {
 
     if (!user || !user.notionAccessToken) {
       return NextResponse.json(
-        { error: "Notion not connected. Please connect your Notion account first." },
+        {
+          error: "Notion not connected. Please connect your Notion account first.",
+        },
         { status: 400 }
       );
     }
 
     const notionToken = user.notionAccessToken;
 
-    // Search for task databases in Notion
-    const searchResponse = await fetch("https://api.notion.com/v1/search", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${notionToken}`,
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28",
-      },
-      body: JSON.stringify({
-        filter: {
-          value: "database",
-          property: "object",
-        },
-        sort: {
-          direction: "descending",
-          timestamp: "last_edited_time",
-        },
-      }),
-    });
+    const url = new URL(req.url);
+    const explicitDbId = url.searchParams.get("databaseId");
+    const explicitPageId = url.searchParams.get("pageId");
 
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error("Notion search failed:", errorText);
-      return NextResponse.json(
-        { error: "Failed to search Notion databases" },
-        { status: searchResponse.status }
-      );
-    }
+    let source: NotionTaskSource | null = null;
+    let allNotionTasks: NotionTask[] = [];
 
-    const searchData: NotionSearchResponse = await searchResponse.json();
-
-    // Use ALL databases returned by Notion - no keyword filter.
-    // Users name their databases differently (e.g. "Daily Plan", "????", "Projects"),
-    // and a restrictive filter was the #1 reason tasks never appeared after OAuth.
-    const allDatabases = searchData.results.filter((item): item is NotionDatabase => {
-      if (!("title" in item)) return false;
-      return true;
-    });
-
-    console.log("Notion databases found (sync):", allDatabases.map((db) => db.title?.[0]?.plain_text || "(untitled)"));
-
-    if (allDatabases.length === 0) {
-      return NextResponse.json(
-        { error: "No databases found in Notion", message: "Please create a database in Notion first, then reconnect." },
-        { status: 404 }
-      );
-    }
-
-    const taskDatabases = allDatabases;
-    const databaseId = taskDatabases[0].id;
-    const databaseName = taskDatabases[0].title?.[0]?.plain_text || "Untitled";
-
-    // Fetch all tasks from Notion with pagination
-    const allNotionTasks: NotionTask[] = [];
-    let cursor: string | undefined;
-
-    do {
-      const queryBody: Record<string, any> = {};
-      if (cursor) {
-        queryBody.start_cursor = cursor;
-      }
-
-      const queryResponse = await fetch(
-        `https://api.notion.com/v1/databases/${databaseId}/query`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${notionToken}`,
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28",
-          },
-          body: JSON.stringify(queryBody),
-        }
-      );
-
-      if (!queryResponse.ok) {
-        const errorText = await queryResponse.text();
-        console.error("Notion query failed:", errorText);
+    if (explicitDbId) {
+      source = {
+        id: explicitDbId,
+        type: "database",
+        title: "Manual selection",
+        taskCount: 0,
+      };
+      allNotionTasks = await fetchTasksFromSource(notionToken, source);
+    } else if (explicitPageId) {
+      source = {
+        id: explicitPageId,
+        type: "page",
+        title: "Manual selection",
+        taskCount: 0,
+      };
+      allNotionTasks = await fetchTasksFromSource(notionToken, source);
+    } else {
+      const result = await discoverBestSource(notionToken);
+      if (!result) {
         return NextResponse.json(
-          { error: "Failed to query tasks from Notion" },
-          { status: 500 }
+          {
+            error: "No Notion sources found",
+            message: "Could not find a task-like database or page in Notion.",
+          },
+          { status: 404 }
         );
       }
+      source = result.source;
+      allNotionTasks = result.tasks;
+    }
 
-      const queryData: NotionQueryResponse = await queryResponse.json();
+    console.log(
+      `[Notion] /sync source "${source.title}" (${source.type}) → ${allNotionTasks.length} tasks`
+    );
 
-      for (const page of queryData.results) {
-        // Extract title
-        let title = "Untitled";
-        const titleProp = Object.entries(page.properties).find(
-          ([key, value]) =>
-            value.type === "title" ||
-            key.toLowerCase().includes("name") ||
-            key.toLowerCase().includes("title")
-        );
-
-        if (titleProp) {
-          const titleValue = titleProp[1];
-          if (titleValue.type === "title" && titleValue.title?.[0]?.plain_text) {
-            title = titleValue.title[0].plain_text;
-          }
-        }
-
-        // Extract due date
-        let dueDate: string | undefined;
-        const dateProp = Object.entries(page.properties).find(
-          ([_, value]) => value.type === "date"
-        );
-
-        if (dateProp) {
-          const dateValue = dateProp[1];
-          if (dateValue.type === "date" && dateValue.date?.start) {
-            dueDate = dateValue.date.start;
-          }
-        }
-
-        allNotionTasks.push({
-          id: page.id,
-          text: title,
-          dueDate,
-          lastEditedTime: page.last_edited_time,
-        });
-      }
-
-      cursor = queryData.next_cursor;
-    } while (cursor);
-
-    console.log(`Fetched ${allNotionTasks.length} tasks from Notion`);
-
-    // Get existing tasks from Supabase for this user
     const existingTasks = await sql`
-      SELECT id, notion_task_id, notion_last_edited_time, deleted_at
+      SELECT id, notion_task_id, notion_database_id, notion_last_edited_time, deleted_at
       FROM tasks
       WHERE user_id = ${userId}
     `;
-
-    interface TaskRow {
-  notion_task_id: string;
-  notion_last_edited_time: string | null;
-  deleted_at: string | null;
-}
 
     const existingByNotionId = new Map<string, TaskRow>(
       existingTasks.map((t: TaskRow) => [t.notion_task_id, t])
     );
 
-    const currentNotionIds = new Set<string>(allNotionTasks.map(t => t.id));
+    const currentNotionIds = new Set<string>(allNotionTasks.map((t) => t.id));
 
-    // Calculate sync changes
     const added: NotionTask[] = [];
     const updated: NotionTask[] = [];
     const deleted: string[] = [];
 
-    // Find added and updated tasks
     for (const notionTask of allNotionTasks) {
       const existing = existingByNotionId.get(notionTask.id);
 
       if (!existing) {
-        // New task
         added.push(notionTask);
       } else if (
         existing.notion_last_edited_time &&
-        new Date(notionTask.lastEditedTime!) > new Date(existing.notion_last_edited_time)
+        notionTask.lastEditedTime &&
+        new Date(notionTask.lastEditedTime) >
+          new Date(existing.notion_last_edited_time)
       ) {
-        // Task has been updated
         updated.push(notionTask);
       }
     }
 
-    // Find deleted tasks (exist in DB but not in Notion anymore)
     for (const existing of existingTasks) {
-      if (existing.notion_task_id && !currentNotionIds.has(existing.notion_task_id)) {
-        deleted.push(existing.notion_task_id);
-      }
+      if (!existing.notion_task_id) continue;
+      if (currentNotionIds.has(existing.notion_task_id)) continue;
+      if (existing.notion_database_id !== source.id) continue;
+      deleted.push(existing.notion_task_id);
     }
 
-    // Save new and updated tasks to Supabase
     if (added.length > 0 || updated.length > 0) {
-      const tasksToUpsert = [...added, ...updated].map(task => ({
+      const tasksToUpsert = [...added, ...updated].map((task) => ({
         user_id: userId,
         text: task.text,
         completed: false,
         notion_task_id: task.id,
-        notion_database_id: databaseId,
-        notion_last_edited_time: task.lastEditedTime ? new Date(task.lastEditedTime) : null,
-        deleted_at: null, // Clear deleted_at if task is back
+        notion_database_id: source!.id,
+        notion_last_edited_time: task.lastEditedTime
+          ? new Date(task.lastEditedTime)
+          : null,
+        deleted_at: null,
       }));
 
       for (const task of tasksToUpsert) {
@@ -270,7 +158,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Soft delete tasks that no longer exist in Notion
     for (const notionTaskId of deleted) {
       await sql`
         UPDATE tasks
@@ -289,11 +176,11 @@ export async function GET(req: NextRequest) {
       updated: updated.length,
       deleted: deleted.length,
       totalInNotion: allNotionTasks.length,
-      databaseName,
-      databaseId,
+      databaseName: source.title,
+      sourceType: source.type,
+      sourceId: source.id,
       lastSyncTime,
     });
-
   } catch (error) {
     console.error("Notion sync error:", error);
     return NextResponse.json(

@@ -1,45 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "~/lib/supabase/server";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
+import {
+  discoverBestSource,
+  fetchTasksFromSource,
+  NotionTask,
+  NotionTaskSource,
+} from "~/lib/notion/sources";
 
-export const dynamic = 'force-dynamic';
-
-interface NotionTask {
-  id: string;
-  text: string;
-  dueDate?: string;
-}
-
-interface NotionPage {
-  id: string;
-  properties: Record<string, any>;
-}
-
-interface NotionDatabase {
-  id: string;
-  title: Array<{ plain_text: string }>;
-}
-
-interface NotionSearchResponse {
-  results: Array<NotionDatabase | NotionPage>;
-}
-
-interface NotionQueryResponse {
-  results: NotionPage[];
-}
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(req);
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!process.env.NEXT_PUBLIC_NEON_DATABASE_URL) {
-      console.error('Neon environment variable not configured');
+      console.error("Neon environment variable not configured");
       return NextResponse.json(
         { error: "Server configuration error: Neon not configured" },
         { status: 500 }
@@ -51,155 +30,69 @@ export async function GET(req: NextRequest) {
     const users = await sql`
       SELECT "notionAccessToken" FROM "User" WHERE id = ${userId}
     `;
-
-    console.log("User lookup for notion token:", {
-      userId,
-      usersFound: users.length,
-      hasToken: users[0]?.notionAccessToken ? "YES" : "NO"
-    });
-
     const user = users[0];
 
     if (!user || !user.notionAccessToken) {
       return NextResponse.json(
-        { error: "Notion not connected. Please connect your Notion account first." },
+        {
+          error: "Notion not connected. Please connect your Notion account first.",
+        },
         { status: 400 }
       );
     }
 
-    const searchResponse = await fetch("https://api.notion.com/v1/search", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${user.notionAccessToken}`,
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28",
-      },
-      body: JSON.stringify({
-        filter: {
-          value: "database",
-          property: "object",
-        },
-        sort: {
-          direction: "descending",
-          timestamp: "last_edited_time",
-        },
-      }),
-    });
+    const token = user.notionAccessToken;
+    const url = new URL(req.url);
+    const explicitDbId = url.searchParams.get("databaseId");
+    const explicitPageId = url.searchParams.get("pageId");
 
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error("Notion search failed:", errorText);
+    let source: NotionTaskSource | null = null;
+    let tasks: NotionTask[] = [];
 
-      let errorMessage = "Failed to search Notion databases";
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.message || errorJson.error || errorMessage;
-      } catch (e) {
-        errorMessage = errorText.substring(0, 200);
+    if (explicitDbId) {
+      source = {
+        id: explicitDbId,
+        type: "database",
+        title: "Manual selection",
+        taskCount: 0,
+      };
+      tasks = await fetchTasksFromSource(token, source);
+    } else if (explicitPageId) {
+      source = {
+        id: explicitPageId,
+        type: "page",
+        title: "Manual selection",
+        taskCount: 0,
+      };
+      tasks = await fetchTasksFromSource(token, source);
+    } else {
+      const result = await discoverBestSource(token);
+      if (!result) {
+        return NextResponse.json(
+          {
+            error: "No Notion sources found",
+            message:
+              "Could not find a task-like database or page in your Notion workspace. Share a page or database with the integration first.",
+          },
+          { status: 404 }
+        );
       }
-
-      return NextResponse.json(
-        { error: "Notion API error", message: errorMessage },
-        { status: searchResponse.status }
-      );
+      source = result.source;
+      tasks = result.tasks;
     }
 
-    const searchData: NotionSearchResponse = await searchResponse.json();
-
-    // Use ALL databases returned by Notion - no keyword filter.
-    // Users name their databases differently (e.g. "Daily Plan", "????", "Projects"),
-    // and a restrictive filter was the #1 reason tasks never appeared after OAuth.
-    const allDatabases = searchData.results.filter((item): item is NotionDatabase => {
-      if (!("title" in item)) return false;
-      return true;
-    });
-
-    console.log("Notion databases found:", allDatabases.map((db) => db.title?.[0]?.plain_text || "(untitled)"));
-
-    if (allDatabases.length === 0) {
-      return NextResponse.json(
-        {
-          error: "No databases found in Notion",
-          message: "Please create a database in Notion first, then reconnect.",
-        },
-        { status: 404 }
-      );
-    }
-
-    const taskDatabases = allDatabases;
-
-    const databaseId = taskDatabases[0]?.id ?? "";
-
-    const queryResponse = await fetch(
-      `https://api.notion.com/v1/databases/${databaseId}/query`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${user.notionAccessToken}`,
-          "Content-Type": "application/json",
-          "Notion-Version": "2022-06-28",
-        },
-        body: JSON.stringify({}),
-      }
+    console.log(
+      `[Notion] /tasks returned ${tasks.length} tasks from "${source.title}" (${source.type})`
     );
-
-    if (!queryResponse.ok) {
-      const errorText = await queryResponse.text();
-      console.error("Notion query failed:", errorText);
-      return NextResponse.json(
-        { error: "Failed to query tasks from database" },
-        { status: 500 }
-      );
-    }
-
-    const queryData: NotionQueryResponse = await queryResponse.json();
-
-    const tasks: NotionTask[] = [];
-
-    for (const page of queryData.results) {
-      let title = "Untitled";
-      const titleProp = Object.entries(page.properties).find(
-        ([key, value]) =>
-          value.type === "title" ||
-          key.toLowerCase().includes("name") ||
-          key.toLowerCase().includes("title")
-      );
-
-      if (titleProp) {
-        const titleValue = titleProp[1];
-        if (titleValue.type === "title" && titleValue.title?.[0]?.plain_text) {
-          title = titleValue.title[0].plain_text;
-        }
-      }
-
-      let dueDate: string | undefined;
-      const dateProp = Object.entries(page.properties).find(
-        ([_, value]) => value.type === "date"
-      );
-
-      if (dateProp) {
-        const dateValue = dateProp[1];
-        if (dateValue.type === "date" && dateValue.date?.start) {
-          dueDate = dateValue.date.start;
-        }
-      }
-
-      tasks.push({
-        id: page.id,
-        text: title,
-        dueDate,
-      });
-    }
-
-    console.log(`Fetched ${tasks.length} tasks from Notion`);
 
     return NextResponse.json({
       success: true,
       tasks,
-      databaseName: taskDatabases[0]?.title?.[0]?.plain_text || "Untitled",
+      databaseName: source.title,
+      sourceType: source.type,
+      sourceId: source.id,
       count: tasks.length,
     });
-
   } catch (error) {
     console.error("Notion tasks fetch error:", error);
     return NextResponse.json(
