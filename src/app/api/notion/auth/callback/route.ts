@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createServerSupabaseClient } from "~/lib/supabase/server";
+import { getSupabase } from "~/lib/supabase/admin";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -77,35 +77,31 @@ export async function GET(req: NextRequest) {
       workspace_id: tokenData.workspace_id,
     });
 
-    const sql = createServerSupabaseClient();
+    const supabase = getSupabase();
+    if (!supabase) {
+      const origin = new URL(req.url).origin;
+      return NextResponse.redirect(
+        new URL(`${origin}/en/generator?error=db_unavailable`)
+      );
+    }
 
-    const existingUsers = await sql`SELECT "id" FROM "User" WHERE "id" = ${userId} LIMIT 1`;
-    const existingUser = existingUsers[0];
+    const { error: upsertError } = await supabase
+      .from("User")
+      .upsert(
+        {
+          id: userId,
+          notionAccessToken: tokenData.access_token,
+          notionWorkspaceId: tokenData.workspace_id,
+        },
+        { onConflict: "id" }
+      );
 
-    if (!existingUser) {
-      // User doesn't exist in Neon yet (likely created in Supabase via check-limit).
-      // Create the record here so the token can be saved.
-      console.log("User not found in Neon, creating record:", userId);
-      try {
-        await sql`INSERT INTO "User" ("id", "notionAccessToken", "notionWorkspaceId") VALUES (${userId}, ${tokenData.access_token}, ${tokenData.workspace_id})`;
-        console.log("User created with Notion token:", userId);
-      } catch (insertError) {
-        console.error("Failed to create user in Neon:", insertError);
-        const origin = new URL(req.url).origin;
-        return NextResponse.redirect(
-          new URL(`${origin}/en/generator?error=user_create_failed`)
-        );
-      }
-    } else {
-      try {
-        await sql`UPDATE "User" SET "notionAccessToken" = ${tokenData.access_token}, "notionWorkspaceId" = ${tokenData.workspace_id} WHERE "id" = ${userId}`;
-      } catch (updateError) {
-        console.error("Failed to update user:", updateError);
-        const origin = new URL(req.url).origin;
-        return NextResponse.redirect(
-          new URL(`${origin}/en/generator?error=update_failed`)
-        );
-      }
+    if (upsertError) {
+      console.error("Failed to save Notion token to Supabase:", upsertError);
+      const origin = new URL(req.url).origin;
+      return NextResponse.redirect(
+        new URL(`${origin}/en/generator?error=user_upsert_failed`)
+      );
     }
 
     console.log("Notion token saved for user:", userId);
@@ -113,7 +109,6 @@ export async function GET(req: NextRequest) {
     const origin = new URL(req.url).origin;
     const redirectUrl = `${origin}/en/generator?notion=connected`;
     return NextResponse.redirect(redirectUrl);
-
   } catch (error) {
     console.error("Notion OAuth callback error:", error);
     const origin = new URL(req.url).origin;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "~/lib/supabase/server";
+import { getSupabase } from "~/lib/supabase/admin";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 import {
   discoverBestSource,
@@ -17,20 +17,35 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!process.env.NEXT_PUBLIC_NEON_DATABASE_URL) {
-      console.error("Neon environment variable not configured");
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      console.error("Supabase environment variable not configured");
       return NextResponse.json(
-        { error: "Server configuration error: Neon not configured" },
+        { error: "Server configuration error: Supabase not configured" },
         { status: 500 }
       );
     }
 
-    const sql = createServerSupabaseClient();
+    const supabase = getSupabase();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Server configuration error: Supabase not configured" },
+        { status: 500 }
+      );
+    }
 
-    const users = await sql`
-      SELECT "notionAccessToken" FROM "User" WHERE id = ${userId}
-    `;
-    const user = users[0];
+    const { data: user, error: userError } = await supabase
+      .from("User")
+      .select("notionAccessToken")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (userError) {
+      console.error("User lookup error:", userError);
+      return NextResponse.json(
+        { error: "Failed to load user" },
+        { status: 500 }
+      );
+    }
 
     if (!user || !user.notionAccessToken) {
       return NextResponse.json(

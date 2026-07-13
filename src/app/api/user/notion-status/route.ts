@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "~/lib/supabase/server";
+import { getSupabase } from "~/lib/supabase/admin";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +12,25 @@ export async function GET(req: Request) {
       return NextResponse.json({ connected: false }, { status: 401 });
     }
 
-    const sql = createServerSupabaseClient();
+    const supabase = getSupabase();
+    if (!supabase) {
+      return NextResponse.json({ connected: false }, { status: 500 });
+    }
 
-    const users = await sql`SELECT "notionAccessToken", "notionWorkspaceId" FROM "User" WHERE id = ${userId}`;
+    const { data, error } = await supabase
+      .from("User")
+      .select("notionAccessToken, notionWorkspaceId")
+      .eq("id", userId)
+      .maybeSingle();
 
-    const user = users[0];
+    if (error) {
+      console.error("Notion status check error:", error);
+      return NextResponse.json({ connected: false }, { status: 500 });
+    }
 
     return NextResponse.json({
-      connected: Boolean(user?.notionAccessToken),
-      workspaceId: user?.notionWorkspaceId || null,
+      connected: Boolean(data?.notionAccessToken),
+      workspaceId: data?.notionWorkspaceId || null,
     });
   } catch (error) {
     console.error("Notion status check error:", error);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "~/lib/supabase/server";
+import { getSupabase } from "~/lib/supabase/admin";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 import {
   discoverBestSource,
@@ -24,13 +24,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sql = createServerSupabaseClient();
+    const supabase = getSupabase();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Server configuration error: Supabase not configured" },
+        { status: 500 }
+      );
+    }
 
-    const users = await sql`
-      SELECT "notionAccessToken" FROM "User" WHERE id = ${userId}
-    `;
+    const { data: user, error: userError } = await supabase
+      .from("User")
+      .select("notionAccessToken")
+      .eq("id", userId)
+      .maybeSingle();
 
-    const user = users[0];
+    if (userError) {
+      console.error("User lookup error:", userError);
+      return NextResponse.json(
+        { error: "Failed to load user" },
+        { status: 500 }
+      );
+    }
 
     if (!user || !user.notionAccessToken) {
       return NextResponse.json(
@@ -85,21 +99,29 @@ export async function GET(req: NextRequest) {
       `[Notion] /sync source "${source.title}" (${source.type}) → ${allNotionTasks.length} tasks`
     );
 
-    const existingTasks = await sql`
-      SELECT id, notion_task_id, notion_database_id, notion_last_edited_time, deleted_at
-      FROM tasks
-      WHERE user_id = ${userId}
-    `;
+    const { data: existingRows, error: existingError } = await supabase
+      .from("tasks")
+      .select("notion_task_id, notion_database_id, notion_last_edited_time, deleted_at")
+      .eq("user_id", userId);
 
+    if (existingError) {
+      console.error("Failed to load existing tasks:", existingError);
+      return NextResponse.json(
+        { error: "Failed to load existing tasks" },
+        { status: 500 }
+      );
+    }
+
+    const existingTasks: TaskRow[] = (existingRows || []) as TaskRow[];
     const existingByNotionId = new Map<string, TaskRow>(
-      existingTasks.map((t: TaskRow) => [t.notion_task_id, t])
+      existingTasks.map((t) => [t.notion_task_id, t])
     );
 
     const currentNotionIds = new Set<string>(allNotionTasks.map((t) => t.id));
 
     const added: NotionTask[] = [];
     const updated: NotionTask[] = [];
-    const deleted: string[] = [];
+    const deletedIds: string[] = [];
 
     for (const notionTask of allNotionTasks) {
       const existing = existingByNotionId.get(notionTask.id);
@@ -120,7 +142,7 @@ export async function GET(req: NextRequest) {
       if (!existing.notion_task_id) continue;
       if (currentNotionIds.has(existing.notion_task_id)) continue;
       if (existing.notion_database_id !== source.id) continue;
-      deleted.push(existing.notion_task_id);
+      deletedIds.push(existing.notion_task_id);
     }
 
     if (added.length > 0 || updated.length > 0) {
@@ -131,41 +153,39 @@ export async function GET(req: NextRequest) {
         notion_task_id: task.id,
         notion_database_id: source!.id,
         notion_last_edited_time: task.lastEditedTime
-          ? new Date(task.lastEditedTime)
+          ? new Date(task.lastEditedTime).toISOString()
           : null,
         deleted_at: null,
       }));
 
-      for (const task of tasksToUpsert) {
-        await sql`
-          INSERT INTO tasks (user_id, text, completed, notion_task_id, notion_database_id, notion_last_edited_time, deleted_at)
-          VALUES (
-            ${task.user_id},
-            ${task.text},
-            ${task.completed},
-            ${task.notion_task_id},
-            ${task.notion_database_id},
-            ${task.notion_last_edited_time},
-            ${task.deleted_at}
-          )
-          ON CONFLICT (notion_task_id)
-          DO UPDATE SET
-            text = EXCLUDED.text,
-            notion_last_edited_time = EXCLUDED.notion_last_edited_time,
-            notion_database_id = EXCLUDED.notion_database_id,
-            deleted_at = NULL
-        `;
+      const { error: upsertError } = await supabase
+        .from("tasks")
+        .upsert(tasksToUpsert, { onConflict: "notion_task_id" });
+
+      if (upsertError) {
+        console.error("Failed to upsert tasks:", upsertError);
+        return NextResponse.json(
+          { error: "Failed to upsert tasks" },
+          { status: 500 }
+        );
       }
     }
 
-    for (const notionTaskId of deleted) {
-      await sql`
-        UPDATE tasks
-        SET deleted_at = NOW()
-        WHERE notion_task_id = ${notionTaskId}
-        AND user_id = ${userId}
-        AND deleted_at IS NULL
-      `;
+    if (deletedIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("tasks")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("notion_task_id", deletedIds)
+        .eq("user_id", userId)
+        .is("deleted_at", null);
+
+      if (deleteError) {
+        console.error("Failed to soft delete tasks:", deleteError);
+        return NextResponse.json(
+          { error: "Failed to soft delete tasks" },
+          { status: 500 }
+        );
+      }
     }
 
     const lastSyncTime = new Date().toISOString();
@@ -174,7 +194,7 @@ export async function GET(req: NextRequest) {
       success: true,
       added: added.length,
       updated: updated.length,
-      deleted: deleted.length,
+      deleted: deletedIds.length,
       totalInNotion: allNotionTasks.length,
       databaseName: source.title,
       sourceType: source.type,
