@@ -769,7 +769,12 @@ export default function GeneratorPage() {
     setIsImportingFromNotion(true);
 
     try {
-      const response = await fetchWithClerkAuth("/api/notion/tasks");
+      const NOTION_DATABASE_ID =
+        process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID ||
+        "3115c404-ce33-803c-a01e-000b175c8c90";
+      const response = await fetchWithClerkAuth(
+        `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -874,7 +879,12 @@ export default function GeneratorPage() {
     }
 
     try {
-      const response = await fetchWithClerkAuth("/api/notion/tasks");
+      const NOTION_DATABASE_ID =
+        process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID ||
+        "3115c404-ce33-803c-a01e-000b175c8c90";
+      const response = await fetchWithClerkAuth(
+        `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
+      );
       if (!response.ok) {
         const status = response.status;
         if (status === 400) {
@@ -1052,7 +1062,12 @@ export default function GeneratorPage() {
         console.log("[Notion OAuth] Import attempt " + attempt + "/" + maxAttempts);
 
         try {
-          const response = await fetchWithClerkAuth("/api/notion/tasks");
+          const NOTION_DATABASE_ID =
+            process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID ||
+            "3115c404-ce33-803c-a01e-000b175c8c90";
+          const response = await fetchWithClerkAuth(
+            `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
+          );
 
           if (response.ok) {
             const data = await response.json();

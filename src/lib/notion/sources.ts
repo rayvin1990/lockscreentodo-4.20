@@ -329,44 +329,39 @@ export async function discoverBestSource(
     return null;
   }
 
-  evaluated.sort((a, b) => {
-    const aDb = a.candidate.type === "database";
-    const bDb = b.candidate.type === "database";
-    if (aDb !== bDb) return aDb ? -1 : 1;
-    return b.finalScore - a.finalScore;
-  });
-
-  for (const e of evaluated) {
-    if (e.candidate.type === "database") {
-      console.log(
-        `[Notion] boosting database "${e.candidate.title}" by +100 to ensure it wins over task-content pages`
-      );
-      e.finalScore += 100;
-    }
+  const firstDatabase = evaluated.find((e) => e.candidate.type === "database");
+  if (firstDatabase) {
+    const winner = firstDatabase;
+    console.log(
+      `[Notion] hardcoded first database winner "${winner.candidate.title}" (score=${winner.finalScore.toFixed(2)}, ignoring all page candidates)`
+    );
+    const tasks = await fetchTasksFromSource(token, {
+      id: winner.candidate.id,
+      type: winner.candidate.type,
+      title: winner.candidate.title,
+      taskCount: 0,
+    });
+    console.log(
+      `[Notion] selected source "${winner.candidate.title}" (${winner.candidate.type}) tasks=${tasks.length}`
+    );
+    return {
+      source: {
+        id: winner.candidate.id,
+        type: winner.candidate.type,
+        title: winner.candidate.title,
+        taskCount: tasks.length,
+      },
+      tasks,
+      score: winner.finalScore,
+    };
   }
-  evaluated.sort((a, b) => {
-    const aDb = a.candidate.type === "database";
-    const bDb = b.candidate.type === "database";
-    if (aDb !== bDb) return aDb ? -1 : 1;
-    return b.finalScore - a.finalScore;
-  });
 
-  let winner = evaluated[0];
-  if (winner && winner.finalScore < MIN_ACCEPTABLE_SCORE) {
-    const fallback = evaluated.find((e) => e.candidate.type === "database");
-    if (fallback) {
-      console.log(
-        `[Notion] top candidate "${winner.candidate.title}" scored ${winner.finalScore.toFixed(2)} < ${MIN_ACCEPTABLE_SCORE}; falling back to database "${fallback.candidate.title}"`
-      );
-      winner = fallback;
-    } else {
-      console.log(
-        `[Notion] best candidate "${winner.candidate.title}" score=${winner.finalScore} below minimum ${MIN_ACCEPTABLE_SCORE} and no database fallback`
-      );
-      return null;
-    }
-  }
-  if (!winner) {
+  evaluated.sort((a, b) => b.finalScore - a.finalScore);
+  const winner = evaluated[0];
+  if (!winner || winner.finalScore < MIN_ACCEPTABLE_SCORE) {
+    console.log(
+      `[Notion] no database found and top candidate "${winner?.candidate.title}" score=${winner?.finalScore} below minimum ${MIN_ACCEPTABLE_SCORE}`
+    );
     return null;
   }
 
