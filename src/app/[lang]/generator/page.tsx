@@ -774,8 +774,26 @@ export default function GeneratorPage() {
       if (!response.ok) {
         const errorData = await response.json();
         const errorMessage = errorData.message || errorData.error || "Failed to import tasks";
-        console.error("Import from Notion error:", errorMessage);
-        throw new Error(errorMessage);
+        const rawCount = errorData?.debug?.rawSearchCount ?? null;
+        const sampleTitles = (errorData?.debug?.rawResults ?? [])
+          .slice(0, 5)
+          .map((r: { title: string }) => r.title)
+          .join(", ");
+        const detail =
+          rawCount === 0
+            ? "Notion returned 0 sources."
+            : rawCount === null
+            ? "Notion search failed."
+            : `Notion returned ${rawCount} sources: ${sampleTitles || "(no titles)"}`;
+        console.error(
+          "Import from Notion error:",
+          errorMessage,
+          "debug:",
+          JSON.stringify(errorData, null, 2)
+        );
+        throw new Error(
+          `${errorMessage} — ${detail} — ${errorData?.debug?.hint ?? ""}`
+        );
       }
 
       const data = await response.json();
@@ -1073,13 +1091,33 @@ export default function GeneratorPage() {
             console.log("[Notion OAuth] Response not ready:", data);
           } else {
             const errorData = await response.json().catch(() => ({}));
-            console.log("[Notion OAuth] API returned " + response.status + ":", errorData);
+            console.log(
+              "[Notion OAuth] API returned " + response.status + ":",
+              JSON.stringify(errorData, null, 2)
+            );
 
             if (response.status === 404) {
+              const rawCount =
+                errorData?.debug?.rawSearchCount ?? null;
+              const sampleTitles = (errorData?.debug?.rawResults ?? [])
+                .slice(0, 5)
+                .map((r: { title: string }) => r.title)
+                .join(", ");
+              const detail =
+                rawCount === 0
+                  ? "Notion returned 0 sources (no page/database shared with the integration)."
+                  : rawCount === null
+                  ? "Notion search failed."
+                  : `Notion returned ${rawCount} sources: ${sampleTitles || "(no titles)"}`;
               toast({
                 variant: "destructive",
                 title: "No databases found",
-                description: errorData.message || "Create a database in Notion first.",
+                description:
+                  (errorData.message || "Create a database in Notion first.") +
+                  " — " +
+                  detail +
+                  " — debug: " +
+                  (errorData?.debug?.hint ?? ""),
               });
               return;
             }
