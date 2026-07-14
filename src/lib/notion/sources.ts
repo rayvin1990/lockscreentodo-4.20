@@ -122,14 +122,31 @@ async function sampleCandidate(
   candidate: NotionSource
 ): Promise<ScoreSamples> {
   if (candidate.type === "database") {
-    const data = await notionFetch<QueryResponse>(
-      token,
-      `/databases/${candidate.id}/query`,
-      {
-        method: "POST",
-        body: JSON.stringify({ page_size: SAMPLE_DB_PAGE_SIZE }),
+    let data: QueryResponse;
+    try {
+      data = await notionFetch<QueryResponse>(
+        token,
+        `/databases/${candidate.id}/query`,
+        {
+          method: "POST",
+          body: JSON.stringify({ page_size: SAMPLE_DB_PAGE_SIZE }),
+        }
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("404") || msg.includes("not_found")) {
+        data = await notionFetch<QueryResponse>(
+          token,
+          `/data_sources/${candidate.id}/query`,
+          {
+            method: "POST",
+            body: JSON.stringify({ page_size: SAMPLE_DB_PAGE_SIZE }),
+          }
+        );
+      } else {
+        throw err;
       }
-    );
+    }
     const hasCheckable = data.results.some((row) => {
       const props = row.properties || {};
       return Object.values(props).some((p: any) => p?.type === "checkbox");
@@ -218,11 +235,25 @@ async function fetchDatabaseRows(
   do {
     const body: Record<string, unknown> = { page_size: 100 };
     if (cursor) body.start_cursor = cursor;
-    const data = await notionFetch<QueryResponse>(
-      token,
-      `/databases/${databaseId}/query`,
-      { method: "POST", body: JSON.stringify(body) }
-    );
+    let data: QueryResponse;
+    try {
+      data = await notionFetch<QueryResponse>(
+        token,
+        `/databases/${databaseId}/query`,
+        { method: "POST", body: JSON.stringify(body) }
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("404") || msg.includes("not_found")) {
+        data = await notionFetch<QueryResponse>(
+          token,
+          `/data_sources/${databaseId}/query`,
+          { method: "POST", body: JSON.stringify(body) }
+        );
+      } else {
+        throw err;
+      }
+    }
     all.push(...data.results);
     cursor = data.has_more ? data.next_cursor ?? undefined : undefined;
   } while (cursor);
