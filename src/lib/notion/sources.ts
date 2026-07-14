@@ -329,7 +329,12 @@ export async function discoverBestSource(
     return null;
   }
 
-  evaluated.sort((a, b) => b.finalScore - a.finalScore);
+  evaluated.sort((a, b) => {
+    if (a.candidate.type !== b.candidate.type) {
+      return a.candidate.type === "database" ? -1 : 1;
+    }
+    return b.finalScore - a.finalScore;
+  });
   const winner = evaluated[0];
   if (!winner || winner.finalScore < MIN_ACCEPTABLE_SCORE) {
     console.log(
