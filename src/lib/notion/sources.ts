@@ -330,16 +330,28 @@ export async function discoverBestSource(
   }
 
   evaluated.sort((a, b) => {
-    if (a.candidate.type !== b.candidate.type) {
-      return a.candidate.type === "database" ? -1 : 1;
-    }
+    const aDb = a.candidate.type === "database";
+    const bDb = b.candidate.type === "database";
+    if (aDb !== bDb) return aDb ? -1 : 1;
     return b.finalScore - a.finalScore;
   });
-  const winner = evaluated[0];
-  if (!winner || winner.finalScore < MIN_ACCEPTABLE_SCORE) {
-    console.log(
-      `[Notion] best candidate "${winner?.candidate.title}" score=${winner?.finalScore} below minimum ${MIN_ACCEPTABLE_SCORE}`
-    );
+
+  let winner = evaluated[0];
+  if (winner && winner.finalScore < MIN_ACCEPTABLE_SCORE) {
+    const fallback = evaluated.find((e) => e.candidate.type === "database");
+    if (fallback) {
+      console.log(
+        `[Notion] top candidate "${winner.candidate.title}" scored ${winner.finalScore.toFixed(2)} < ${MIN_ACCEPTABLE_SCORE}; falling back to database "${fallback.candidate.title}"`
+      );
+      winner = fallback;
+    } else {
+      console.log(
+        `[Notion] best candidate "${winner.candidate.title}" score=${winner.finalScore} below minimum ${MIN_ACCEPTABLE_SCORE} and no database fallback`
+      );
+      return null;
+    }
+  }
+  if (!winner) {
     return null;
   }
 
