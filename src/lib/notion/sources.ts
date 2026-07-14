@@ -336,6 +336,21 @@ export async function discoverBestSource(
     return b.finalScore - a.finalScore;
   });
 
+  for (const e of evaluated) {
+    if (e.candidate.type === "database") {
+      console.log(
+        `[Notion] boosting database "${e.candidate.title}" by +100 to ensure it wins over task-content pages`
+      );
+      e.finalScore += 100;
+    }
+  }
+  evaluated.sort((a, b) => {
+    const aDb = a.candidate.type === "database";
+    const bDb = b.candidate.type === "database";
+    if (aDb !== bDb) return aDb ? -1 : 1;
+    return b.finalScore - a.finalScore;
+  });
+
   let winner = evaluated[0];
   if (winner && winner.finalScore < MIN_ACCEPTABLE_SCORE) {
     const fallback = evaluated.find((e) => e.candidate.type === "database");
