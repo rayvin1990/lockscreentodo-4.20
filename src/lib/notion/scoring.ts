@@ -1,4 +1,4 @@
-export type NotionSourceType = "database" | "page";
+﻿export type NotionSourceType = "database" | "page";
 
 export type NotionSource = {
   id: string;
@@ -22,7 +22,9 @@ export type ScoreBreakdown = {
   finalScore: number;
 };
 
-export const TITLE_TASK_RE = /\b(todo|task|to-do|待办)\b/i;
+// NOTE: \b doesn't work with CJK characters in JS, so Chinese keywords use a separate regex
+export const TITLE_TASK_EN_RE = /\b(todo|task|to-do)\b/i;
+export const TITLE_TASK_ZH_RE = /待办|任务|清单|项目|计划/i;
 export const TITLE_LIST_RE = /\b(list|checklist)\b/i;
 export const TITLE_NEGATIVE_RE = /\b(wiki|note|journal|log)\b/i;
 
@@ -35,7 +37,7 @@ export function scoreSource(
   const hasCheckableBlocks = Boolean(samples.hasCheckableBlocks);
 
   let titleScore = 0;
-  if (TITLE_TASK_RE.test(source.title)) titleScore += 3;
+  if (TITLE_TASK_EN_RE.test(source.title) || TITLE_TASK_ZH_RE.test(source.title)) titleScore += 3;
   if (TITLE_LIST_RE.test(source.title)) titleScore += 1;
   if (TITLE_NEGATIVE_RE.test(source.title)) titleScore -= 2;
 
