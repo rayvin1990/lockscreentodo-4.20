@@ -802,10 +802,18 @@ export default function GeneratorPage() {
         trackEvent("notion_import_empty", {
           signedIn: Boolean(isSignedIn),
         });
+        const dbName = (data as { databaseName?: string }).databaseName ?? "(unknown)";
+        const sourceType = (data as { sourceType?: string }).sourceType ?? "?";
+        console.log(
+          "[Notion] selected source but no tasks:",
+          { databaseName: dbName, sourceType, taskCount: data.tasks?.length ?? 0 }
+        );
         toast({
           variant: "destructive",
           title: "No tasks found",
-          description: data.message || "Could not find any tasks in your Notion databases.",
+          description:
+            (data.message || "Could not find any tasks in your Notion databases.") +
+            ` (source: "${dbName}" [${sourceType}])`,
         });
         return;
       }
