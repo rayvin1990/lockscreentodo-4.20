@@ -305,10 +305,8 @@ export async function discoverBestSource(
   );
 
   const evaluated: CandidateEvaluation[] = [];
-  let zeroRun = 0;
 
   for (const candidate of candidates) {
-    if (zeroRun >= EARLY_TERM_ZERO_RUN) break;
     try {
       const samples = await sampleCandidate(token, candidate);
       const breakdown = scoreSource(candidate, samples);
@@ -318,17 +316,11 @@ export async function discoverBestSource(
         `titleScore=${breakdown.titleScore} checkable=${breakdown.hasCheckableBlocks} excluded=${breakdown.excluded}`
       );
       evaluated.push({ candidate, finalScore: breakdown.finalScore });
-      if (breakdown.finalScore < MIN_ACCEPTABLE_SCORE) {
-        zeroRun += 1;
-      } else {
-        zeroRun = 0;
-      }
     } catch (err) {
       console.warn(
         `[Notion] sample failed for "${candidate.title}" (${candidate.id}):`,
         err instanceof Error ? err.message : err
       );
-      zeroRun += 1;
     }
   }
 

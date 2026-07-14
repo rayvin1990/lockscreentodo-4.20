@@ -46,8 +46,9 @@ export function scoreSource(
   score += Math.min(pageOrRowCount, 10) * 0.5;
   score += titleScore;
 
-  const excluded =
+  const looksEmpty =
     toDoCount === 0 && !hasCheckableBlocks && pageOrRowCount < 3;
+  const excluded = looksEmpty && titleScore <= 0;
   if (excluded) score -= 10;
 
   return {
