@@ -3,6 +3,7 @@ import { getSupabase } from "~/lib/supabase/admin";
 import { getAuthenticatedUserId } from "~/lib/clerk/server-auth";
 import {
   discoverBestSource,
+  diagnoseSearch,
   fetchTasksFromSource,
   NotionTask,
   NotionTaskSource,
@@ -80,21 +81,29 @@ export async function GET(req: NextRequest) {
         taskCount: 0,
       };
       tasks = await fetchTasksFromSource(token, source);
-    } else {
-      const result = await discoverBestSource(token);
-      if (!result) {
-        return NextResponse.json(
-          {
-            error: "No Notion sources found",
-            message:
-              "Could not find a task-like database or page in your Notion workspace. Share a page or database with the integration first.",
-          },
-          { status: 404 }
-        );
+      } else {
+        const result = await discoverBestSource(token);
+        if (!result) {
+          const diag = await diagnoseSearch(token).catch(() => null);
+          return NextResponse.json(
+            {
+              success: false,
+              error: "No Notion sources found",
+              message:
+                "Could not find a task-like database or page in your Notion workspace. Share a page or database with the integration first.",
+              debug: {
+                hint: "Open the Notion page/database → ... → Connections → add Lockscreen todo with Can view. Changes can take a minute to propagate.",
+                rawSearchCount: diag?.rawResults.length ?? null,
+                rawResults: (diag?.rawResults ?? []).slice(0, 10),
+                evaluations: diag?.evaluations ?? [],
+              },
+            },
+            { status: 404 }
+          );
+        }
+        source = result.source;
+        tasks = result.tasks;
       }
-      source = result.source;
-      tasks = result.tasks;
-    }
 
     console.log(
       `[Notion] /tasks returned ${tasks.length} tasks from "${source.title}" (${source.type})`

@@ -1,4 +1,4 @@
-import { scoreSource, NotionSource, ScoreSamples } from "./scoring";
+﻿import { scoreSource, NotionSource, ScoreSamples } from "./scoring";
 
 const NOTION_VERSION = "2022-06-28";
 const NOTION_API = "https://api.notion.com/v1";
@@ -27,6 +27,13 @@ export type DiscoverResult = {
   source: NotionTaskSource;
   tasks: NotionTask[];
   score: number;
+  candidatesEvaluated?: Array<{
+    title: string;
+    type: string;
+    score: number;
+    reason?: string;
+  }>;
+  rawSearchCount?: number;
 };
 
 type SearchResultItem = {
@@ -276,12 +283,26 @@ export async function discoverBestSource(
     }
   );
 
-  const candidates = searchData.results
+  const rawResults = searchData.results;
+  console.log(
+    `[Notion] search returned ${rawResults.length} results:`,
+    rawResults.map((r: SearchResultItem) => `${r.object} "${extractTitle(r)}"`).join(', ')
+  );
+
+  const candidates = rawResults
     .map(toSearchCandidate)
     .filter((c): c is NotionSource => c !== null)
     .slice(0, CANDIDATE_LIMIT);
 
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    console.log('[Notion] no valid candidates found in search results');
+    return null;
+  }
+
+  console.log(
+    `[Notion] evaluating ${candidates.length} candidates:`,
+    candidates.map((c) => `"${c.title}" (${c.type})`).join(', ')
+  );
 
   const evaluated: CandidateEvaluation[] = [];
   let zeroRun = 0;
@@ -291,6 +312,11 @@ export async function discoverBestSource(
     try {
       const samples = await sampleCandidate(token, candidate);
       const breakdown = scoreSource(candidate, samples);
+      console.log(
+        `[Notion] candidate "${candidate.title}" score=${breakdown.finalScore.toFixed(2)} ` +
+        `toDo=${breakdown.toDoCount} rows=${breakdown.pageOrRowCount} ` +
+        `titleScore=${breakdown.titleScore} checkable=${breakdown.hasCheckableBlocks} excluded=${breakdown.excluded}`
+      );
       evaluated.push({ candidate, finalScore: breakdown.finalScore });
       if (breakdown.finalScore < MIN_ACCEPTABLE_SCORE) {
         zeroRun += 1;
@@ -299,18 +325,26 @@ export async function discoverBestSource(
       }
     } catch (err) {
       console.warn(
-        `[Notion] sample failed for ${candidate.title} (${candidate.id}):`,
+        `[Notion] sample failed for "${candidate.title}" (${candidate.id}):`,
         err instanceof Error ? err.message : err
       );
       zeroRun += 1;
     }
   }
 
-  if (evaluated.length === 0) return null;
+  if (evaluated.length === 0) {
+    console.log('[Notion] all candidates failed evaluation');
+    return null;
+  }
 
   evaluated.sort((a, b) => b.finalScore - a.finalScore);
   const winner = evaluated[0];
-  if (!winner || winner.finalScore < MIN_ACCEPTABLE_SCORE) return null;
+  if (!winner || winner.finalScore < MIN_ACCEPTABLE_SCORE) {
+    console.log(
+      `[Notion] best candidate "${winner?.candidate.title}" score=${winner?.finalScore} below minimum ${MIN_ACCEPTABLE_SCORE}`
+    );
+    return null;
+  }
 
   const tasks = await fetchTasksFromSource(token, {
     id: winner.candidate.id,
@@ -333,6 +367,74 @@ export async function discoverBestSource(
     tasks,
     score: winner.finalScore,
   };
+}
+
+export async function diagnoseSearch(
+  token: string
+): Promise<{
+  rawResults: Array<{ object: string; id: string; title: string }>;
+  evaluations: Array<{
+    title: string;
+    type: string;
+    score: number;
+    reason?: string;
+  }>;
+}> {
+  const searchData = await notionFetch<{ results: SearchResultItem[] }>(
+    token,
+    "/search",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        sort: { direction: "descending", timestamp: "last_edited_time" },
+        page_size: CANDIDATE_LIMIT * 2,
+      }),
+    }
+  );
+
+  const rawResults = searchData.results.map((r) => ({
+    object: r.object,
+    id: r.id,
+    title: extractTitle(r),
+  }));
+
+  const candidates = rawResults
+    .map((_, idx) =>
+      toSearchCandidate(searchData.results[idx])
+    )
+    .filter((c): c is NotionSource => c !== null)
+    .slice(0, CANDIDATE_LIMIT);
+
+  const evaluations: Array<{
+    title: string;
+    type: string;
+    score: number;
+    reason?: string;
+  }> = [];
+
+  for (const candidate of candidates) {
+    try {
+      const samples = await sampleCandidate(token, candidate);
+      const breakdown = scoreSource(candidate, samples);
+      evaluations.push({
+        title: candidate.title,
+        type: candidate.type,
+        score: breakdown.finalScore,
+        reason: breakdown.excluded
+          ? "excluded (no to-do, no checkable, <3 rows)"
+          : undefined,
+      });
+    } catch (err) {
+      evaluations.push({
+        title: candidate.title,
+        type: candidate.type,
+        score: 0,
+        reason: `sample failed: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
+  }
+
+  return { rawResults, evaluations };
 }
 
 export const __concurrencyLimit = CONCURRENCY;
