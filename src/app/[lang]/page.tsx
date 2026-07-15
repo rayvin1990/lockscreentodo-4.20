@@ -22,19 +22,36 @@ const copy = {
     navGenerator: "Generator",
     navPricing: "Pricing",
     navDashboard: "Dashboard",
-    eyebrow: "Notion task lock screen wallpaper",
-    title: "Turn Notion tasks into a lock screen you cannot ignore.",
+    eyebrow: "Notion on your lock screen",
+    title: "Your Notion tasks are the most-checked page in your life. Why aren't they on your lock screen?",
     subtitle:
-      "Preview a clean phone wallpaper, then connect Notion to bring today's tasks onto your lock screen. No app install required.",
-    primaryCta: "Try the wallpaper demo",
-    secondaryCta: "See pricing",
+      "Connect your Notion once. Your tasks appear on your lock screen automatically. No app. No new habit.",
+    metricStrip: [
+      { value: "50+", label: "passive views per day" },
+      { value: "0", label: "active taps needed" },
+      { value: "30s", label: "to set up" },
+      { value: "OAuth only", label: "Zero data stored" },
+    ],
+    primaryCta: "Generate my wallpaper",
+    secondaryCta: "See how it works",
     useCases: ["Notion tasks", "Today's priorities", "Daily tasks", "Habit tracking", "ADHD reminders", "Medication notes"],
-    workflowTitle: "Simple Flow",
+    beforeLabel: "Without LockscreenTodo",
+    afterLabel: "With LockscreenTodo",
+    beforeBullets: [
+      "Tasks hide in an app you forget to open",
+      "You see your wallpaper 50+ times a day, but only your tasks when you remember to check",
+      "Missed deadlines. Forgotten medications. A separate habit to remember to check Notion.",
+    ],
+    afterBullets: [
+      "Your Notion tasks show up where you already look — your lock screen",
+      "Zero taps. Tasks are visible the moment you glance at your phone",
+      "Read-only OAuth. We don't store your tasks. Notion stays the source of truth.",
+    ],
+    workflowTitle: "Three steps. That's it.",
     workflow: [
-      { icon: Palette, title: "Preview", desc: "Start with sample tasks or your own list." },
-      { icon: Zap, title: "Connect", desc: "Import today's tasks from Notion." },
-      { icon: QrCode, title: "Scan", desc: "Open the image on your phone." },
-      { icon: Smartphone, title: "Set", desc: "Save it as your lock screen." },
+      { icon: Zap, title: "Connect Notion", desc: "OAuth, one click. We only read your tasks." },
+      { icon: Palette, title: "Pick your tasks", desc: "Smart filter to the next 7 days. No sample data noise." },
+      { icon: Smartphone, title: "Set as lock screen", desc: "Scan the QR, save the image, done." },
     ],
     faqTitle: "Question & Answer",
     faqs: [
@@ -83,18 +100,35 @@ const copy = {
     navGenerator: "生成器",
     navPricing: "定价",
     navDashboard: "仪表盘",
-    eyebrow: "Notion 待办锁屏壁纸",
-    title: "把 Notion 任务变成无法忽略的锁屏。",
-    subtitle: "先预览一张干净的手机壁纸，再连接 Notion，把今天的任务放到锁屏上。不需要安装 App。",
-    primaryCta: "试用壁纸生成器",
-    secondaryCta: "查看价格",
+    eyebrow: "把 Notion 搬到锁屏",
+    title: "你每天看 Notion 任务靠「想起来」。为什么不放在锁屏上?",
+    subtitle: "连接一次 Notion,任务自动出现在锁屏。无需安装 App,无需培养新习惯。",
+    metricStrip: [
+      { value: "50+", label: "每天被动曝光次数" },
+      { value: "0", label: "主动点击" },
+      { value: "30 秒", label: "即可设置" },
+      { value: "OAuth 只读", label: "数据零存储" },
+    ],
+    primaryCta: "立即生成我的壁纸",
+    secondaryCta: "了解使用流程",
     useCases: ["Notion 任务", "今日重点", "每日待办", "习惯打卡", "注意力提醒", "用药备注"],
-    workflowTitle: "使用流程",
+    beforeLabel: "不用 LockscreenTodo",
+    afterLabel: "用 LockscreenTodo",
+    beforeBullets: [
+      "任务藏在 App 里,你经常忘记打开",
+      "每天看锁屏 50+ 次,但任务只有想起来才会去查",
+      "错过截止日期、忘记吃药、要另外养成「打开 Notion」的习惯",
+    ],
+    afterBullets: [
+      "Notion 任务直接出现在你已经会看的锁屏上",
+      "零点击。抬手看手机时任务就在眼前",
+      "只读 OAuth,不存储你的任务,Notion 仍是数据源头",
+    ],
+    workflowTitle: "三步,搞定。",
     workflow: [
-      { icon: Palette, title: "预览", desc: "先用示例任务或自己的清单试试看。" },
-      { icon: Zap, title: "连接", desc: "从 Notion 导入今天要做的任务。" },
-      { icon: QrCode, title: "扫码", desc: "在手机上打开图片。" },
-      { icon: Smartphone, title: "设置", desc: "保存后设为锁屏。" },
+      { icon: Zap, title: "连接 Notion", desc: "OAuth 一键,我们只读取你的任务。" },
+      { icon: Palette, title: "选择任务", desc: "智能过滤 7 天内的任务,不掺杂 sample 数据。" },
+      { icon: Smartphone, title: "设为锁屏", desc: "扫码,保存图片,搞定。" },
     ],
     faqTitle: "常见问题",
     faqs: [
@@ -297,6 +331,21 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
                 {content.subtitle}
               </p>
 
+              {content.metricStrip && content.metricStrip.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+                  {content.metricStrip.map((m) => (
+                    <div key={m.label} className="border border-white/10 bg-white/[0.02] p-3 text-center lg:text-left">
+                      <div className="text-2xl lg:text-3xl font-bold text-white tracking-tight leading-none">
+                        {m.value}
+                      </div>
+                      <div className="text-[10px] font-bold tracking-widest uppercase text-white/40 mt-2">
+                        {m.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
                 <Link href={`/${lang}/generator`} onClick={() => trackEvent("home_cta_click", { target: "generator", lang })}>
                   <Button variant="outline" className="h-12 px-8 text-[12px] font-bold tracking-widest uppercase border-white/20 hover:bg-white hover:text-black rounded-none transition-all shadow-xl shadow-white/5">
@@ -322,6 +371,42 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
           </div>
         </div>
       </section>
+
+      {content.beforeBullets && content.beforeBullets.length > 0 && content.afterBullets && (
+        <section className="py-20 px-6">
+          <div className="container mx-auto max-w-5xl">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border border-white/10 bg-white/[0.02] p-8">
+                <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40 mb-4">
+                  {content.beforeLabel}
+                </div>
+                <ul className="space-y-3">
+                  {content.beforeBullets.map((b) => (
+                    <li key={b} className="text-sm text-slate-400 leading-relaxed flex">
+                      <span className="text-white/20 mr-3">—</span>
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="border border-brand-green/40 bg-brand-green/[0.04] p-8">
+                <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-brand-green mb-4">
+                  {content.afterLabel}
+                </div>
+                <ul className="space-y-3">
+                  {content.afterBullets.map((b) => (
+                    <li key={b} className="text-sm text-white/80 leading-relaxed flex">
+                      <span className="text-brand-green mr-3">+</span>
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="py-24 border-y border-white/5 bg-white/[0.01]">
         <div className="container mx-auto max-w-4xl px-6">
