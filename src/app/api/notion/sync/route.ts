@@ -82,11 +82,16 @@ export async function GET(req: NextRequest) {
       allNotionTasks = await fetchTasksFromSource(notionToken, source);
     } else {
       const result = await discoverBestSource(notionToken);
-      if (!result) {
+      if (!result || !result.source || !result.source.id || result.tasks.length === 0) {
         return NextResponse.json(
           {
             error: "No Notion sources found",
-            message: "Could not find a task-like database or page in Notion.",
+            message: "Could not find a task-like database or page in Notion. Make sure your Notion database is shared with the Lockscreen todo integration.",
+            debug: {
+              rawSearchCount: result?.rawSearchCount ?? 0,
+              rawResults: (result?.rawSearchResults ?? []).slice(0, 10),
+              searchFilterUsed: result?.searchFilterUsed ?? "?",
+            },
           },
           { status: 404 }
         );

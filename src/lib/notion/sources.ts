@@ -2,7 +2,7 @@
 
 const NOTION_VERSION = "2022-06-28";
 const NOTION_API = "https://api.notion.com/v1";
-const CANDIDATE_LIMIT = 5;
+const CANDIDATE_LIMIT = 50;
 const SAMPLE_DB_PAGE_SIZE = 5;
 const SAMPLE_BLOCK_PAGE_SIZE = 10;
 const CONCURRENCY = 2;
@@ -34,6 +34,8 @@ export type DiscoverResult = {
     reason?: string;
   }>;
   rawSearchCount?: number;
+  rawSearchResults?: Array<{ object: string; id: string; title: string }>;
+  searchFilterUsed?: string;
 };
 
 type SearchResultItem = {
@@ -356,37 +358,72 @@ type CandidateEvaluation = {
 export async function discoverBestSource(
   token: string
 ): Promise<DiscoverResult | null> {
-  const searchData = await notionFetch<{ results: SearchResultItem[] }>(
+  // Search for databases first — much more likely to contain tasks than pages.
+  const searchBody = (filter: "database" | "page" | null) => ({
+    sort: { direction: "descending" as const, timestamp: "last_edited_time" as const },
+    page_size: CANDIDATE_LIMIT,
+    ...(filter ? { filter: { property: "object" as const, value: filter } } : {}),
+  });
+
+  // Phase 1: databases only
+  let searchData = await notionFetch<{ results: SearchResultItem[] }>(
     token,
     "/search",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        sort: { direction: "descending", timestamp: "last_edited_time" },
-        page_size: CANDIDATE_LIMIT * 2,
-      }),
-    }
+    { method: "POST", body: JSON.stringify(searchBody("database")) }
   );
+
+  let searchFilterUsed = "database";
+  let dbCandidates = searchData.results
+    .map(toSearchCandidate)
+    .filter((c): c is NotionSource => c !== null);
+
+  console.log(
+    `[Notion] database-only search: ${dbCandidates.length} candidates`,
+    dbCandidates.map((c) => `"${c.title}"`).join(", ")
+  );
+
+  // Phase 2: if no databases, search all (pages + databases)
+  if (dbCandidates.length === 0) {
+    searchData = await notionFetch<{ results: SearchResultItem[] }>(
+      token,
+      "/search",
+      { method: "POST", body: JSON.stringify(searchBody(null)) }
+    );
+    searchFilterUsed = "all";
+    dbCandidates = searchData.results
+      .map(toSearchCandidate)
+      .filter((c): c is NotionSource => c !== null);
+  }
 
   const rawResults = searchData.results;
+  const rawSearchResults = rawResults.map((r: SearchResultItem) => ({
+    object: r.object,
+    id: r.id,
+    title: extractTitle(r),
+  }));
+
   console.log(
-    `[Notion] search returned ${rawResults.length} results:`,
-    rawResults.map((r: SearchResultItem) => `${r.object} "${extractTitle(r)}"`).join(', ')
+    `[Notion] search (filter=${searchFilterUsed}) returned ${rawResults.length} results:`,
+    rawResults.map((r: SearchResultItem) => `${r.object} "${extractTitle(r)}"`).join(", ")
   );
 
-  const candidates = rawResults
-    .map(toSearchCandidate)
-    .filter((c): c is NotionSource => c !== null)
-    .slice(0, CANDIDATE_LIMIT);
+  const candidates = dbCandidates.slice(0, CANDIDATE_LIMIT);
 
   if (candidates.length === 0) {
-    console.log('[Notion] no valid candidates found in search results');
-    return null;
+    console.log("[Notion] no valid candidates found in search results");
+    return {
+      source: { id: "", type: "database", title: "", taskCount: 0 },
+      tasks: [],
+      score: 0,
+      rawSearchCount: rawResults.length,
+      rawSearchResults,
+      searchFilterUsed,
+    } as any;
   }
 
   console.log(
     `[Notion] evaluating ${candidates.length} candidates:`,
-    candidates.map((c) => `"${c.title}" (${c.type})`).join(', ')
+    candidates.map((c) => `"${c.title}" (${c.type})`).join(", ")
   );
 
   const evaluated: CandidateEvaluation[] = [];
@@ -410,15 +447,23 @@ export async function discoverBestSource(
   }
 
   if (evaluated.length === 0) {
-    console.log('[Notion] all candidates failed evaluation');
-    return null;
+    console.log("[Notion] all candidates failed evaluation");
+    return {
+      source: { id: "", type: "database", title: "", taskCount: 0 },
+      tasks: [],
+      score: 0,
+      rawSearchCount: rawResults.length,
+      rawSearchResults,
+      searchFilterUsed,
+    } as any;
   }
 
+  // Always prefer databases over pages
   const firstDatabase = evaluated.find((e) => e.candidate.type === "database");
   if (firstDatabase) {
     const winner = firstDatabase;
     console.log(
-      `[Notion] hardcoded first database winner "${winner.candidate.title}" (score=${winner.finalScore.toFixed(2)}, ignoring all page candidates)`
+      `[Notion] using database "${winner.candidate.title}" (score=${winner.finalScore.toFixed(2)})`
     );
     const tasks = await fetchTasksFromSource(token, {
       id: winner.candidate.id,
@@ -438,41 +483,31 @@ export async function discoverBestSource(
       },
       tasks,
       score: winner.finalScore,
+      rawSearchCount: rawResults.length,
+      rawSearchResults,
+      searchFilterUsed,
     };
   }
 
-  evaluated.sort((a, b) => b.finalScore - a.finalScore);
-  const winner = evaluated[0];
-  if (!winner || winner.finalScore < MIN_ACCEPTABLE_SCORE) {
-    console.log(
-      `[Notion] no database found and top candidate "${winner?.candidate.title}" score=${winner?.finalScore} below minimum ${MIN_ACCEPTABLE_SCORE}`
-    );
-    return null;
-  }
-
-  const tasks = await fetchTasksFromSource(token, {
-    id: winner.candidate.id,
-    type: winner.candidate.type,
-    title: winner.candidate.title,
-    taskCount: 0,
-  });
-
+  // No database found — return null so the caller can show a helpful error
   console.log(
-    `[Notion] selected source "${winner.candidate.title}" (${winner.candidate.type}) score=${winner.finalScore.toFixed(2)} tasks=${tasks.length}`
+    `[Notion] no database found in search results. Found ${evaluated.length} page(s) but no databases.`
   );
-
   return {
-    source: {
-      id: winner.candidate.id,
-      type: winner.candidate.type,
-      title: winner.candidate.title,
-      taskCount: tasks.length,
-    },
-    tasks,
-    score: winner.finalScore,
-  };
+    source: { id: "", type: "database", title: "", taskCount: 0 },
+    tasks: [],
+    score: 0,
+    rawSearchCount: rawResults.length,
+    rawSearchResults,
+    searchFilterUsed,
+    candidatesEvaluated: evaluated.map((e) => ({
+      title: e.candidate.title,
+      type: e.candidate.type,
+      score: e.finalScore,
+      reason: e.candidate.type === "page" ? "skipped: page, not database" : undefined,
+    })),
+  } as any;
 }
-
 export async function diagnoseSearch(
   token: string
 ): Promise<{

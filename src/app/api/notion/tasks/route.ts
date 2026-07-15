@@ -83,18 +83,33 @@ export async function GET(req: NextRequest) {
       tasks = await fetchTasksFromSource(token, source);
       } else {
         const result = await discoverBestSource(token);
-        if (!result) {
+        if (!result || !result.source || !result.source.id || result.tasks.length === 0) {
           const diag = await diagnoseSearch(token).catch(() => null);
+          const rawResults = (result?.rawSearchResults?.length ? result.rawSearchResults : (diag?.rawResults ?? [])) as any[];
+          const searchFilter = result?.searchFilterUsed ?? "?";
+          const hasDatabases = rawResults.some((r: any) => r.object === "database");
+          const hasPages = rawResults.some((r: any) => r.object === "page");
+
+          let hint = "1. Open your Notion database → 2. Click ... menu → 3. Connections → 4. Add Lockscreen todo → 5. Wait 1 min, then retry.";
+          if (!hasDatabases && hasPages) {
+            hint = "No databases found in your Notion workspace. " + hint;
+          } else if (!hasDatabases && !hasPages) {
+            hint = "No pages or databases found. Make sure you have added the Lockscreen todo integration to your Notion database. " + hint;
+          } else if (hasDatabases) {
+            hint = "Databases were found but none contained tasks. Check that your database has rows with text content.";
+          }
+
           return NextResponse.json(
             {
               success: false,
               error: "No Notion sources found",
               message:
-                "Could not find a task-like database or page in your Notion workspace. Share a page or database with the integration first.",
+                "Could not find a task-like database or page in your Notion workspace.",
               debug: {
-                hint: "Open the Notion page/database → ... → Connections → add Lockscreen todo with Can view. Changes can take a minute to propagate.",
-                rawSearchCount: diag?.rawResults.length ?? null,
-                rawResults: (diag?.rawResults ?? []).slice(0, 10),
+                hint,
+                rawSearchCount: rawResults.length,
+                rawResults: rawResults.slice(0, 10),
+                searchFilterUsed: searchFilter,
                 evaluations: diag?.evaluations ?? [],
               },
             },
