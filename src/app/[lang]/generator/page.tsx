@@ -770,11 +770,11 @@ export default function GeneratorPage() {
 
     try {
       const NOTION_DATABASE_ID =
-        process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID ||
-        "3115c404-ce33-803c-a01e-000b175c8c90";
-      const response = await fetchWithClerkAuth(
-        `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
-      );
+        process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID;
+      const tasksUrl = NOTION_DATABASE_ID
+        ? `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
+        : `/api/notion/tasks`;
+      const response = await fetchWithClerkAuth(tasksUrl);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -880,11 +880,11 @@ export default function GeneratorPage() {
 
     try {
       const NOTION_DATABASE_ID =
-        process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID ||
-        "3115c404-ce33-803c-a01e-000b175c8c90";
-      const response = await fetchWithClerkAuth(
-        `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
-      );
+        process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID;
+      const tasksUrl = NOTION_DATABASE_ID
+        ? `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
+        : `/api/notion/tasks`;
+      const response = await fetchWithClerkAuth(tasksUrl);
       if (!response.ok) {
         const status = response.status;
         if (status === 400) {
@@ -1063,11 +1063,11 @@ export default function GeneratorPage() {
 
         try {
           const NOTION_DATABASE_ID =
-            process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID ||
-            "3115c404-ce33-803c-a01e-000b175c8c90";
-          const response = await fetchWithClerkAuth(
-            `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
-          );
+            process.env.NEXT_PUBLIC_NOTION_DEFAULT_DATABASE_ID;
+          const tasksUrl = NOTION_DATABASE_ID
+            ? `/api/notion/tasks?databaseId=${NOTION_DATABASE_ID}`
+            : `/api/notion/tasks`;
+          const response = await fetchWithClerkAuth(tasksUrl);
 
           if (response.ok) {
             const data = await response.json();
