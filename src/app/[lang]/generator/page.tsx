@@ -3,7 +3,7 @@
 // VERSION MARKER: 2025-02-27-v2 - Wallpaper save feature added
 console.log('Generator page loaded - VERSION 2025-02-27-v2');
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Smartphone, Plus, Trash2, X, Download, Share2, Twitter, Facebook, Linkedin, Send, ShoppingCart, Settings, GripVertical } from "lucide-react";
@@ -184,8 +184,43 @@ export default function GeneratorPage() {
   const [isImportingFromNotion, setIsImportingFromNotion] = useState(false);
   const [selectedNotionTaskIds, setSelectedNotionTaskIds] = useState<Set<string>>(new Set());
   const [showNotionTaskSelector, setShowNotionTaskSelector] = useState(false);
+  const [notionDateFilter, setNotionDateFilter] = useState<"all" | "today" | "tomorrow" | "week" | "no_date">("tomorrow");
 
   const { tasks: syncedNotionTasks, isSyncing, lastSyncTime, syncNow } = useNotionSync(isNotionConnected);
+
+  const filteredNotionTasks = useMemo(() => {
+    if (notionDateFilter === "all") return syncedNotionTasks;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 86400000);
+    const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
+
+    return syncedNotionTasks.filter(t => {
+      if (notionDateFilter === "no_date") {
+        return !t.dueDate;
+      }
+      if (!t.dueDate) {
+        return false;
+      }
+      const due = new Date(t.dueDate);
+      if (Number.isNaN(due.getTime())) {
+        return false;
+      }
+      switch (notionDateFilter) {
+        case "today":
+          return due >= todayStart && due < todayEnd;
+        case "tomorrow": {
+          const tomorrowStart = new Date(todayEnd);
+          const tomorrowEnd = new Date(tomorrowStart.getTime() + 86400000);
+          return due >= tomorrowStart && due < tomorrowEnd;
+        }
+        case "week":
+          return due >= todayStart && due < weekEnd;
+        default:
+          return true;
+      }
+    });
+  }, [syncedNotionTasks, notionDateFilter]);
 
   const handleToggleNotionTask = useCallback((taskId: string) => {
     setSelectedNotionTaskIds(prev => {
@@ -2167,6 +2202,23 @@ export default function GeneratorPage() {
                             </button>
                           </div>
 
+                          {/* Date Filter */}
+                          <div className="flex items-center gap-1.5">
+                            {(["all", "today", "tomorrow", "week"] as const).map((filter) => (
+                              <button
+                                key={filter}
+                                onClick={() => setNotionDateFilter(filter)}
+                                className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                  notionDateFilter === filter
+                                    ? "bg-brand-green text-black"
+                                    : "bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1]"
+                                }`}
+                              >
+                                {filter === "all" ? "All" : filter === "today" ? "Today" : filter === "tomorrow" ? "Tomorrow" : "This Week"}
+                              </button>
+                            ))}
+                          </div>
+
                           {/* Notion Task Selector Button */}
                           <button
                             onClick={() => {
@@ -2181,13 +2233,13 @@ export default function GeneratorPage() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
-                            Select Tasks from Notion
+                            Select Tasks from Notion ({filteredNotionTasks.length})
                           </button>
 
                           {/* Task Selector Panel */}
                           {showNotionTaskSelector && (
                             <NotionTaskSelector
-                              tasks={syncedNotionTasks}
+                              tasks={filteredNotionTasks}
                               selectedTaskIds={selectedNotionTaskIds}
                               onToggleTask={handleToggleNotionTask}
                               onAddSelectedToWallpaper={handleAddSelectedNotionTasksToWallpaper}
@@ -2595,8 +2647,34 @@ export default function GeneratorPage() {
                     Sync now
                   </button>
                 </div>
+
+                {/* Date Filter */}
+                <div className="flex items-center gap-1.5">
+                  {(["all", "tomorrow", "today", "week", "no_date"] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setNotionDateFilter(filter)}
+                      className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        notionDateFilter === filter
+                          ? "bg-brand-green text-black"
+                          : "bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1]"
+                      }`}
+                    >
+                      {filter === "all"
+                        ? "All"
+                        : filter === "today"
+                        ? "Today"
+                        : filter === "tomorrow"
+                        ? "Tomorrow"
+                        : filter === "week"
+                        ? "Week"
+                        : "No date"}
+                    </button>
+                  ))}
+                </div>
+
                 <NotionTaskSelector
-                  tasks={syncedNotionTasks}
+                  tasks={filteredNotionTasks}
                   selectedTaskIds={selectedNotionTaskIds}
                   onToggleTask={handleToggleNotionTask}
                   onAddSelectedToWallpaper={() => {
