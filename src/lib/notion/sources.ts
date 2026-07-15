@@ -55,6 +55,7 @@ type NotionBlock = {
   type: string;
   has_children?: boolean;
   to_do?: { rich_text: Array<{ plain_text: string }>; checked: boolean };
+  child_database?: { title: string };
   last_edited_time?: string;
 };
 
@@ -162,10 +163,11 @@ async function sampleCandidate(
     `/blocks/${candidate.id}/children?page_size=${SAMPLE_BLOCK_PAGE_SIZE}`
   );
   const toDoBlocks = data.results.filter((b) => b.type === "to_do").length;
+  const childDbBlocks = data.results.filter((b) => b.type === "child_database").length;
   return {
     rowsOrBlocks: data.results.length,
     toDoBlocks,
-    hasCheckableBlocks: toDoBlocks > 0,
+    hasCheckableBlocks: toDoBlocks > 0 || childDbBlocks > 0,
   };
 }
 
@@ -280,6 +282,37 @@ async function fetchPageBlocks(
   return all;
 }
 
+async function fetchChildDatabaseRows(
+  token: string,
+  databaseId: string
+): Promise<NotionBlock[]> {
+  const all: NotionBlock[] = [];
+  let cursor: string | undefined;
+  do {
+    const body: Record<string, unknown> = { page_size: 100 };
+    if (cursor) body.start_cursor = cursor;
+    const data = await notionFetch<QueryResponse>(
+      token,
+      `/databases/${databaseId}/query`,
+      { method: "POST", body: JSON.stringify(body) }
+    );
+    for (const row of data.results) {
+      const task = extractTaskFromRow(row);
+      all.push({
+        id: task.id,
+        type: "to_do",
+        to_do: {
+          rich_text: [{ plain_text: task.text }],
+          checked: false,
+        },
+        last_edited_time: task.lastEditedTime,
+      });
+    }
+    cursor = data.has_more ? data.next_cursor ?? undefined : undefined;
+  } while (cursor);
+  return all;
+}
+
 export async function fetchTasksFromSource(
   token: string,
   source: NotionTaskSource
@@ -289,9 +322,30 @@ export async function fetchTasksFromSource(
     return rows.map(extractTaskFromRow);
   }
   const blocks = await fetchPageBlocks(token, source.id);
-  return blocks
+  const directTasks = blocks
     .map(extractTaskFromBlock)
     .filter((t): t is NotionTask => t !== null);
+
+  // Expand child_database (inline database) blocks inside the page
+  const childDbBlocks = blocks.filter((b) => b.type === "child_database");
+  let inlineDbTasks: NotionTask[] = [];
+  for (const dbBlock of childDbBlocks) {
+    try {
+      const rows = await fetchChildDatabaseRows(token, dbBlock.id);
+      inlineDbTasks.push(
+        ...rows
+          .map(extractTaskFromBlock)
+          .filter((t): t is NotionTask => t !== null)
+      );
+    } catch (err) {
+      console.warn(
+        `[Notion] failed to expand child_database ${dbBlock.id}:`,
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
+
+  return [...directTasks, ...inlineDbTasks];
 }
 
 type CandidateEvaluation = {

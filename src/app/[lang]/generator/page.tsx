@@ -813,12 +813,15 @@ export default function GeneratorPage() {
           "[Notion] selected source but no tasks:",
           { databaseName: dbName, sourceType, taskCount: data.tasks?.length ?? 0 }
         );
+        const hint = sourceType === "page"
+          ? " Make sure your Notion database (not just a page) is shared: ... → Connections → Add Lockscreen todo."
+          : "";
         toast({
           variant: "destructive",
           title: "No tasks found",
           description:
             (data.message || "Could not find any tasks in your Notion databases.") +
-            ` (source: "${dbName}" [${sourceType}])`,
+            ` (source: "${dbName}" [${sourceType}])${hint}`,
         });
         return;
       }
