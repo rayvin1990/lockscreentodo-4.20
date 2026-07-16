@@ -1,0 +1,65 @@
+# 锁屏待办
+
+> 把你的 Notion 任务转成手机锁屏壁纸。免费、只读 OAuth、无需装 App。
+
+## 这是什么
+
+锁屏待办是一个小工具,把你的 Notion 数据库里的任务拉出来,渲染成锁屏壁纸。
+
+不需要装新 App。你接一次 Notion,挑想看的任务,工具生成一张 JPG,存到相册,设成锁屏。下次你看手机的时候,任务已经在那里了。
+
+做这个产品是因为:你用 Notion 写任务,但你不会主动打开 Notion。手机解锁看锁屏,每天 50-150 次,但看 Notion 4-10 次。锁屏是这个手机最高频的视觉位置,把任务放在那里,等于被动提醒。
+
+## 适合谁
+
+- 用 Notion 记任务的 Notion 重度用户
+- 注意力管理(ADHD)
+- 学生(每天看今天要做什么)
+- 习惯打卡(把"今天打卡"放在锁屏)
+- 家庭看护(给老人的提醒放锁屏)
+- 用 Notion 作为每日 agenda 的人
+
+## 怎么用
+
+1. 微信扫码或浏览器打开 https://lockscreentodo.com/zh
+2. 点"连接 Notion",OAuth 一次。只读权限
+3. 选你的 Notion 数据库(应用自动检测哪个有"标题"+"日期"字段)
+4. 应用会拉出今天(或者明天作 fallback)要做的任务
+5. 生成壁纸,保存到相册
+6. 在 iOS 或 Android 设为锁屏
+
+## 主要特点
+
+- Notion OAuth 集成(只读,官方)
+- 智能日期过滤:今天任务优先,明天作 fallback
+- 不用装 App
+- 数据不保存:任务从不存到我们的服务器
+- 隐私友好:Notion token 加密存储,只用于鉴权
+- iPhone 和 Android 都能用
+- 支持中英双语
+
+## 页面
+
+- [首页](https://lockscreentodo.com/zh): 主页
+- [生成器](https://lockscreentodo.com/zh/generator): 把 Notion 任务转成锁屏
+- [Notion 锁屏教程](https://lockscreentodo.com/zh/notion-锁屏): 详细教程
+- [锁屏生产力](https://lockscreentodo.com/zh/lock-screen-productivity): 深度文章
+- [锁屏 vs 小组件](https://lockscreentodo.com/zh/lock-screen-widget-vs-wallpaper): 对比
+- [Notion 集成](https://www.notion.com/integrations/lockscreen-todo): 官方 Notion 市场
+- [价格](https://lockscreentodo.com/zh/pricing): Pro 计划详情
+
+## 隐私
+
+- 只读 Notion OAuth
+- 你的任务**不保存**在我们服务器上 —— 每次你点生成,实时从 Notion 拉
+- Notion token 加密存 Supabase
+- 我们不做任何 AI 训练
+
+## 联系
+
+- GitHub: https://github.com/rayvin1990
+- Notion 集成: https://www.notion.com/integrations/lockscreen-todo
+
+## English version
+
+This file is the Chinese version. For the full English LLM reference, see https://lockscreentodo.com/llms-full.txt

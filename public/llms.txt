@@ -46,6 +46,7 @@ It was built for people who already manage their life in Notion but find that No
 - [GitHub repository](https://github.com/rayvin1990/lockscreentodo-4.20)
 - [Sitemap (all pages)](https://lockscreentodo.com/sitemap.xml)
 - [robots.txt](https://lockscreentodo.com/robots.txt)
+- [中文版 llms.txt](https://lockscreentodo.com/llms-zh.txt)
 
 ## Pricing
 
