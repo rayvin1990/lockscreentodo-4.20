@@ -993,68 +993,34 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
   };
 
   const saveTasksToSupabase = async (userId: string, tasks: Task[]) => {
-    if (!supabase) return;
     try {
-      const validTasks = tasks.filter(task => task.text && task.text.trim() !== '');
-      const uniqueTasks = Array.from(
-        new Map(validTasks.map(task => [task.id, task])).values()
-      );
+      const validTasks = tasks
+        .filter((task) => task.text && task.text.trim() !== "")
+        .map((task) => ({
+          id: task.id,
+          text: task.text,
+          isCompleted: task.isCompleted || false,
+        }));
 
-      const currentTaskIds = uniqueTasks.map(task => task.id);
+      const response = await fetchWithClerkAuth("/api/tasks/save-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tasks: validTasks }),
+      });
 
-      // Soft delete tasks that are no longer in wallpaper (set deleted_at instead of hard delete)
-      if (currentTaskIds.length > 0) {
-        const { error: softDeleteError } = await supabase
-          .from('tasks')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('user_id', userId)
-          .not('notion_task_id', 'in', `(${currentTaskIds.map(id => `'${id}'`).join(',')})`)
-          .is('deleted_at', null);
-
-        if (softDeleteError) {
-          console.error('Failed to soft delete removed tasks:', softDeleteError);
-        }
-      } else {
-        // Soft delete all tasks if no tasks in wallpaper
-        const { error: softDeleteAllError } = await supabase
-          .from('tasks')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('user_id', userId)
-          .is('deleted_at', null);
-
-        if (softDeleteAllError) {
-          console.error('Failed to soft delete all tasks:', softDeleteAllError);
-        }
-        console.log('No tasks to save');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(
+          "Failed to save tasks:",
+          errorData?.error || response.statusText
+        );
         return;
       }
 
-      const tasksToUpsert = uniqueTasks.map(task => ({
-        user_id: userId,
-        text: task.text,
-        completed: task.isCompleted || false,
-        notion_task_id: task.id,
-        // Preserve existing notion_database_id and notion_last_edited_time
-        // by using a raw update that doesn't overwrite them if already set
-      }));
-
-      // Upsert tasks, preserving notion sync metadata
-      for (const task of tasksToUpsert) {
-        const { error: upsertError } = await supabase
-          .from('tasks')
-          .upsert(task, {
-            onConflict: 'notion_task_id',
-            ignoreDuplicates: false,
-          });
-
-        if (upsertError) {
-          console.error('Failed to upsert task:', upsertError);
-        }
-      }
-
-      console.log('Saved tasks to Supabase:', tasksToUpsert.length);
+      const data = await response.json();
+      console.log("Saved tasks to Supabase:", data.saved);
     } catch (error) {
-      console.error('Failed to save tasks to Supabase:', error);
+      console.error("Failed to save tasks to Supabase:", error);
     }
   };
 
