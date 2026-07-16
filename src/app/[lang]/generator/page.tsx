@@ -186,19 +186,23 @@ export default function GeneratorPage() {
   const [showNotionTaskSelector, setShowNotionTaskSelector] = useState(false);
   const { tasks: syncedNotionTasks, isSyncing, lastSyncTime, syncNow } = useNotionSync(isNotionConnected);
 
-  const filteredNotionTasks = useMemo(() => {
+  function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrowStart = new Date(todayStart.getTime() + 86400000);
     const tomorrowEnd = new Date(tomorrowStart.getTime() + 86400000);
-
-    return syncedNotionTasks.filter((t) => {
+    return tasks.filter((t) => {
       if (!t.dueDate) return false;
       const due = new Date(t.dueDate);
       if (Number.isNaN(due.getTime())) return false;
       return due >= tomorrowStart && due < tomorrowEnd;
     });
-  }, [syncedNotionTasks]);
+  }
+
+  const filteredNotionTasks = useMemo(
+    () => filterTomorrowOnly(syncedNotionTasks),
+    [syncedNotionTasks]
+  );
 
   const handleToggleNotionTask = useCallback((taskId: string) => {
     setSelectedNotionTaskIds(prev => {
@@ -916,7 +920,16 @@ export default function GeneratorPage() {
 
       const data = await response.json();
       if (data?.success && Array.isArray(data.tasks) && data.tasks.length > 0) {
-        const tasks: Task[] = data.tasks.map((task: any, index: number) => ({
+        const tomorrowTasks = filterTomorrowOnly(data.tasks);
+        console.log(
+          "Loaded " + data.tasks.length + " tasks from Notion, " + tomorrowTasks.length + " due tomorrow"
+        );
+        if (tomorrowTasks.length === 0) {
+          console.log("No tasks due tomorrow — leaving wallpaper empty");
+          hasLoadedTasksRef.current = true;
+          return;
+        }
+        const tasks: Task[] = tomorrowTasks.map((task: any, index: number) => ({
           id: task.id,
           text: task.text,
           x: 132,
@@ -934,7 +947,7 @@ export default function GeneratorPage() {
         }));
 
         setWallpaperStyle(prev => ({ ...prev, tasks }));
-        console.log('Loaded tasks from Notion:', tasks.length);
+        console.log('Loaded tomorrow tasks onto wallpaper:', tasks.length);
       } else {
         console.log('No tasks returned from Notion, using local state');
       }
@@ -1089,7 +1102,9 @@ export default function GeneratorPage() {
             const data = await response.json();
             if (data.success && data.tasks && data.tasks.length > 0) {
               console.log("[Notion OAuth] Success: " + data.tasks.length + " tasks from \"" + data.databaseName + "\"");
-              const importedTasks = data.tasks.map((notionTask: any, index: number) => ({
+              const tomorrowTasks = filterTomorrowOnly(data.tasks);
+              console.log("[Notion OAuth] Filtered to " + tomorrowTasks.length + " tasks due tomorrow");
+              const importedTasks = tomorrowTasks.map((notionTask: any, index: number) => ({
                 id: notionTask.id,
                 text: notionTask.text,
                 x: 132,
@@ -1109,10 +1124,10 @@ export default function GeneratorPage() {
               notionImportDoneRef.current = true;
               toast({
                 title: "Tasks Imported!",
-                description: "Imported " + data.tasks.length + " tasks from \"" + data.databaseName + "\".",
+                description: "Imported " + tomorrowTasks.length + " tasks from \"" + data.databaseName + "\".",
               });
               trackEvent("notion_import_success", {
-                taskCount: data.tasks.length,
+                taskCount: tomorrowTasks.length,
                 databaseNamePresent: Boolean(data.databaseName),
               });
               return;
