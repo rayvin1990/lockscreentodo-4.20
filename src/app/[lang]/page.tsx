@@ -23,7 +23,7 @@ const copy = {
     navPricing: "Pricing",
     navDashboard: "Dashboard",
     eyebrow: "Notion on your lock screen",
-    title: "Your Notion tasks are the most-checked page in your life. Why aren't they on your lock screen?",
+    title: "Your Notion tasks aren't on your lock screen. Why not?",
     subtitle:
       "Connect your Notion once. Your tasks appear on your lock screen automatically. No app. No new habit.",
     metricStrip: [
@@ -101,7 +101,7 @@ const copy = {
     navPricing: "定价",
     navDashboard: "仪表盘",
     eyebrow: "把 Notion 搬到锁屏",
-    title: "你每天看 Notion 任务靠「想起来」。为什么不放在锁屏上?",
+    title: "你的 Notion 任务没在锁屏上,为什么不?",
     subtitle: "连接一次 Notion,任务自动出现在锁屏。无需安装 App,无需培养新习惯。",
     metricStrip: [
       { value: "50+", label: "每天被动曝光次数" },

@@ -184,43 +184,21 @@ export default function GeneratorPage() {
   const [isImportingFromNotion, setIsImportingFromNotion] = useState(false);
   const [selectedNotionTaskIds, setSelectedNotionTaskIds] = useState<Set<string>>(new Set());
   const [showNotionTaskSelector, setShowNotionTaskSelector] = useState(false);
-  const [notionDateFilter, setNotionDateFilter] = useState<"all" | "today" | "tomorrow" | "week" | "no_date">("tomorrow");
-
   const { tasks: syncedNotionTasks, isSyncing, lastSyncTime, syncNow } = useNotionSync(isNotionConnected);
 
   const filteredNotionTasks = useMemo(() => {
-    if (notionDateFilter === "all") return syncedNotionTasks;
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(todayStart.getTime() + 86400000);
-    const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
+    const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+    const tomorrowEnd = new Date(tomorrowStart.getTime() + 86400000);
 
-    return syncedNotionTasks.filter(t => {
-      if (notionDateFilter === "no_date") {
-        return !t.dueDate;
-      }
-      if (!t.dueDate) {
-        return false;
-      }
+    return syncedNotionTasks.filter((t) => {
+      if (!t.dueDate) return false;
       const due = new Date(t.dueDate);
-      if (Number.isNaN(due.getTime())) {
-        return false;
-      }
-      switch (notionDateFilter) {
-        case "today":
-          return due >= todayStart && due < todayEnd;
-        case "tomorrow": {
-          const tomorrowStart = new Date(todayEnd);
-          const tomorrowEnd = new Date(tomorrowStart.getTime() + 86400000);
-          return due >= tomorrowStart && due < tomorrowEnd;
-        }
-        case "week":
-          return due >= todayStart && due < weekEnd;
-        default:
-          return true;
-      }
+      if (Number.isNaN(due.getTime())) return false;
+      return due >= tomorrowStart && due < tomorrowEnd;
     });
-  }, [syncedNotionTasks, notionDateFilter]);
+  }, [syncedNotionTasks]);
 
   const handleToggleNotionTask = useCallback((taskId: string) => {
     setSelectedNotionTaskIds(prev => {
@@ -2202,21 +2180,9 @@ export default function GeneratorPage() {
                             </button>
                           </div>
 
-                          {/* Date Filter */}
-                          <div className="flex items-center gap-1.5">
-                            {(["all", "today", "tomorrow", "week"] as const).map((filter) => (
-                              <button
-                                key={filter}
-                                onClick={() => setNotionDateFilter(filter)}
-                                className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                  notionDateFilter === filter
-                                    ? "bg-brand-green text-black"
-                                    : "bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1]"
-                                }`}
-                              >
-                                {filter === "all" ? "All" : filter === "today" ? "Today" : filter === "tomorrow" ? "Tomorrow" : "This Week"}
-                              </button>
-                            ))}
+                          {/* Scope indicator */}
+                          <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40 px-1">
+                            Tomorrow&apos;s tasks
                           </div>
 
                           {/* Notion Task Selector Button */}
@@ -2648,29 +2614,9 @@ export default function GeneratorPage() {
                   </button>
                 </div>
 
-                {/* Date Filter */}
-                <div className="flex items-center gap-1.5">
-                  {(["all", "tomorrow", "today", "week", "no_date"] as const).map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setNotionDateFilter(filter)}
-                      className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        notionDateFilter === filter
-                          ? "bg-brand-green text-black"
-                          : "bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1]"
-                      }`}
-                    >
-                      {filter === "all"
-                        ? "All"
-                        : filter === "today"
-                        ? "Today"
-                        : filter === "tomorrow"
-                        ? "Tomorrow"
-                        : filter === "week"
-                        ? "Week"
-                        : "No date"}
-                    </button>
-                  ))}
+                {/* Scope indicator */}
+                <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40 px-1">
+                  Tomorrow&apos;s tasks
                 </div>
 
                 <NotionTaskSelector
