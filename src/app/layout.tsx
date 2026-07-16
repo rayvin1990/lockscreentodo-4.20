@@ -81,6 +81,9 @@ export const metadata = {
     "待办清单 锁屏",
   ],
   metadataBase: new URL(siteConfig.url),
+  alternates: {
+    canonical: "/",
+  },
 };
 
 const organizationJsonLd = {

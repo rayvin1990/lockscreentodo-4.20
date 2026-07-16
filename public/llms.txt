@@ -1,0 +1,64 @@
+# Lockscreen Todo
+
+> Turn your Notion to-do list into a phone lock screen wallpaper. Free, read-only OAuth, no app install.
+
+## What is it
+
+Lockscreen Todo is a small web app that pulls your tasks from a Notion database and renders them as a lock screen wallpaper for iPhone or Android.
+
+It does not require installing a new app. You connect your Notion once, pick the tasks you want, and the app generates a JPG that you save to Photos and set as your lock screen. The next time you glance at your phone, your tasks are already there.
+
+It was built for people who already manage their life in Notion but find that Notion's app is not visible enough — the lock screen is visible 50-150 times per day, while a task app is only opened 4-10 times.
+
+## Who it is for
+
+- Notion power users whose tasks live in a Notion database with a `Due date` column.
+- People with ADHD, students, caregivers, and habit builders who use Notion as a GTD-style daily agenda.
+- Anyone who wants a friction-free daily reminder without installing a new app.
+
+## How it works
+
+1. Sign in with Notion (OAuth, read-only).
+2. Pick which Notion database holds your tasks.
+3. The app imports tasks due today (or tomorrow as fallback) and renders them onto a wallpaper.
+4. Save the JPG to Photos and set it as your lock screen.
+
+## Key features
+
+- Notion OAuth integration (read-only, official).
+- Smart date filter: today's tasks by default, tomorrow as fallback.
+- No app install — works in the browser, exports JPG/PNG.
+- Private: tasks are not stored, Notion stays the source of truth.
+- Free preview with sample data; Pro plan removes watermark.
+- iPhone and Android compatible.
+- Multilingual: English and Simplified Chinese.
+
+## Pages
+
+- [Home](https://lockscreentodo.com/en): main landing page
+- [Generator](https://lockscreentodo.com/en/generator): turn Notion tasks into a wallpaper
+- [Lock screen todo guide](https://lockscreentodo.com/en/lock-screen-todo): long-form SEO page
+- [Lock screen productivity](https://lockscreentodo.com/en/lock-screen-productivity): pillar article
+- [Lock screen vs widget comparison](https://lockscreentodo.com/en/lock-screen-widget-vs-wallpaper): comparison
+- [Notion lock screen tutorial](https://lockscreentodo.com/en/notion-task-lock-screen): how to set up
+- [Pricing](https://lockscreentodo.com/en/pricing): Pro plan details
+- [Notion integration listing](https://www.notion.com/integrations/lockscreen-todo): official Notion marketplace
+- [GitHub repository](https://github.com/rayvin1990/lockscreentodo-4.20)
+- [Sitemap (all pages)](https://lockscreentodo.com/sitemap.xml)
+- [robots.txt](https://lockscreentodo.com/robots.txt)
+
+## Pricing
+
+Free preview with sample tasks. Pro plan removes the watermark and unlocks unlimited generations.
+
+## Privacy
+
+- Notion OAuth scope is read-only.
+- Tasks are not stored in any database.
+- The Notion token is stored encrypted in Supabase and used only to fetch your tasks at the moment you click "Generate".
+
+## Contact
+
+- GitHub: https://github.com/rayvin1990
+- Notion integration: https://www.notion.com/integrations/lockscreen-todo
+- Twitter / X: @lockscreentodo
