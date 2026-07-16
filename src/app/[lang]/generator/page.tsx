@@ -861,7 +861,16 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
         return;
       }
 
-      const importedTasks: Task[] = data.tasks.map((notionTask: any, index: number) => ({
+      let focusTasks = filterTodayPlusOverdue(data.tasks);
+      let scope: "today" | "tomorrow" = "today";
+      if (focusTasks.length === 0) {
+        focusTasks = filterTomorrowOnly(data.tasks);
+        scope = "tomorrow";
+      }
+      console.log(
+        "[Notion import] Filtered to " + focusTasks.length + " " + scope + " tasks"
+      );
+      const importedTasks: Task[] = focusTasks.slice(0, 5).map((notionTask: any, index: number) => ({
         id: notionTask.id,
         text: notionTask.text,
         x: 132,
@@ -882,11 +891,12 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
 
       toast({
         title: "Tasks Imported!",
-        description: `Imported ${data.tasks.length} tasks from "${data.databaseName}". Data is only used for your personal wallpaper.`,
+        description: `Imported ${focusTasks.length} ${scope} tasks from "${data.databaseName}". Data is only used for your personal wallpaper.`,
       });
 
       trackEvent("notion_import_success", {
-        taskCount: data.tasks.length,
+        taskCount: focusTasks.length,
+        scope,
         databaseNamePresent: Boolean(data.databaseName),
       });
 
