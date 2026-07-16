@@ -50,7 +50,7 @@ const copy = {
     workflowTitle: "Three steps. That's it.",
     workflow: [
       { icon: Zap, title: "Connect Notion", desc: "OAuth, one click. We only read your tasks." },
-      { icon: Palette, title: "Pick your tasks", desc: "Smart filter to the next 7 days. No sample data noise." },
+      { icon: Palette, title: "Pick your tasks", desc: "Today's agenda pulled automatically. Tomorrow as fallback if today is empty." },
       { icon: Smartphone, title: "Set as lock screen", desc: "Scan the QR, save the image, done." },
     ],
     faqTitle: "Question & Answer",
@@ -127,7 +127,7 @@ const copy = {
     workflowTitle: "三步,搞定。",
     workflow: [
       { icon: Zap, title: "连接 Notion", desc: "OAuth 一键,我们只读取你的任务。" },
-      { icon: Palette, title: "选择任务", desc: "智能过滤 7 天内的任务,不掺杂 sample 数据。" },
+      { icon: Palette, title: "选择任务", desc: "自动拉取今日 agenda,今日为空时 fallback 到明天。" },
       { icon: Smartphone, title: "设为锁屏", desc: "扫码,保存图片,搞定。" },
     ],
     faqTitle: "常见问题",

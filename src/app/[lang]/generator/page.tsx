@@ -186,23 +186,41 @@ export default function GeneratorPage() {
   const [showNotionTaskSelector, setShowNotionTaskSelector] = useState(false);
   const { tasks: syncedNotionTasks, isSyncing, lastSyncTime, syncNow } = useNotionSync(isNotionConnected);
 
-  function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrowStart = new Date(todayStart.getTime() + 86400000);
-    const tomorrowEnd = new Date(tomorrowStart.getTime() + 86400000);
-    return tasks.filter((t) => {
-      if (!t.dueDate) return false;
-      const due = new Date(t.dueDate);
-      if (Number.isNaN(due.getTime())) return false;
-      return due >= tomorrowStart && due < tomorrowEnd;
-    });
-  }
-
-  const filteredNotionTasks = useMemo(
-    () => filterTomorrowOnly(syncedNotionTasks),
-    [syncedNotionTasks]
+function filterTodayPlusOverdue<T extends { dueDate?: string }>(tasks: T[]): T[] {
+  const now = new Date();
+  const todayEnd = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1
   );
+  return tasks.filter((t) => {
+    if (!t.dueDate) return false;
+    const due = new Date(t.dueDate);
+    if (Number.isNaN(due.getTime())) return false;
+    return due < todayEnd;
+  });
+}
+
+function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart.getTime() + 86400000);
+  const tomorrowEnd = new Date(tomorrowStart.getTime() + 86400000);
+  return tasks.filter((t) => {
+    if (!t.dueDate) return false;
+    const due = new Date(t.dueDate);
+    if (Number.isNaN(due.getTime())) return false;
+    return due >= tomorrowStart && due < tomorrowEnd;
+  });
+}
+
+  const filteredNotionTasks = useMemo(() => {
+  let result = filterTodayPlusOverdue(syncedNotionTasks);
+  if (result.length === 0) {
+    result = filterTomorrowOnly(syncedNotionTasks);
+  }
+  return result.slice(0, 5);
+}, [syncedNotionTasks]);
 
   const handleToggleNotionTask = useCallback((taskId: string) => {
     setSelectedNotionTaskIds(prev => {
@@ -920,16 +938,22 @@ export default function GeneratorPage() {
 
       const data = await response.json();
       if (data?.success && Array.isArray(data.tasks) && data.tasks.length > 0) {
-        const tomorrowTasks = filterTomorrowOnly(data.tasks);
+        let focusTasks = filterTodayPlusOverdue(data.tasks);
+        let scope: "today" | "tomorrow" = "today";
+        if (focusTasks.length === 0) {
+          focusTasks = filterTomorrowOnly(data.tasks);
+          scope = "tomorrow";
+        }
         console.log(
-          "Loaded " + data.tasks.length + " tasks from Notion, " + tomorrowTasks.length + " due tomorrow"
+          "Loaded " + data.tasks.length + " tasks from Notion, " +
+            focusTasks.length + " due " + scope
         );
-        if (tomorrowTasks.length === 0) {
-          console.log("No tasks due tomorrow — leaving wallpaper empty");
+        if (focusTasks.length === 0) {
+          console.log("No tasks due today or tomorrow — leaving wallpaper empty");
           hasLoadedTasksRef.current = true;
           return;
         }
-        const tasks: Task[] = tomorrowTasks.map((task: any, index: number) => ({
+        const tasks: Task[] = focusTasks.slice(0, 5).map((task: any, index: number) => ({
           id: task.id,
           text: task.text,
           x: 132,
@@ -947,7 +971,7 @@ export default function GeneratorPage() {
         }));
 
         setWallpaperStyle(prev => ({ ...prev, tasks }));
-        console.log('Loaded tomorrow tasks onto wallpaper:', tasks.length);
+        console.log("Loaded " + scope + " tasks onto wallpaper:", tasks.length);
       } else {
         console.log('No tasks returned from Notion, using local state');
       }
@@ -1102,9 +1126,14 @@ export default function GeneratorPage() {
             const data = await response.json();
             if (data.success && data.tasks && data.tasks.length > 0) {
               console.log("[Notion OAuth] Success: " + data.tasks.length + " tasks from \"" + data.databaseName + "\"");
-              const tomorrowTasks = filterTomorrowOnly(data.tasks);
-              console.log("[Notion OAuth] Filtered to " + tomorrowTasks.length + " tasks due tomorrow");
-              const importedTasks = tomorrowTasks.map((notionTask: any, index: number) => ({
+              let focusTasks = filterTodayPlusOverdue(data.tasks);
+              let scope: "today" | "tomorrow" = "today";
+              if (focusTasks.length === 0) {
+                focusTasks = filterTomorrowOnly(data.tasks);
+                scope = "tomorrow";
+              }
+              console.log("[Notion OAuth] Filtered to " + focusTasks.length + " tasks due " + scope);
+              const importedTasks = focusTasks.slice(0, 5).map((notionTask: any, index: number) => ({
                 id: notionTask.id,
                 text: notionTask.text,
                 x: 132,
@@ -1124,10 +1153,11 @@ export default function GeneratorPage() {
               notionImportDoneRef.current = true;
               toast({
                 title: "Tasks Imported!",
-                description: "Imported " + tomorrowTasks.length + " tasks from \"" + data.databaseName + "\".",
+                description: "Imported " + focusTasks.length + " " + scope + " tasks from \"" + data.databaseName + "\".",
               });
               trackEvent("notion_import_success", {
-                taskCount: tomorrowTasks.length,
+                taskCount: focusTasks.length,
+                scope,
                 databaseNamePresent: Boolean(data.databaseName),
               });
               return;
@@ -2197,7 +2227,7 @@ export default function GeneratorPage() {
 
                           {/* Scope indicator */}
                           <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40 px-1">
-                            Tomorrow&apos;s tasks
+                            Today&apos;s agenda
                           </div>
 
                           {/* Notion Task Selector Button */}
@@ -2631,7 +2661,7 @@ export default function GeneratorPage() {
 
                 {/* Scope indicator */}
                 <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40 px-1">
-                  Tomorrow&apos;s tasks
+                  Today&apos;s agenda
                 </div>
 
                 <NotionTaskSelector
