@@ -32,6 +32,7 @@ const baseRoutes: { route: string; lastModified?: string }[] = [
   { route: "/zh/developers", lastModified: "2026-07-12" },
   { route: "/en/press", lastModified: "2026-07-15" },
   { route: "/zh/press", lastModified: "2026-07-15" },
+  { route: "/zh/notion-锁屏", lastModified: "2026-07-15" },
   { route: "/llms.txt" },
   { route: "/llms-full.txt" },
 ];
