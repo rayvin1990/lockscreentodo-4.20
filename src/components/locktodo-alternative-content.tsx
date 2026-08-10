@@ -129,7 +129,7 @@ export function LockTodoAlternativeContent({ lang, copy, notionIntegrationUrl, l
               <a
                 href={locktodoSiteUrl}
                 target="_blank"
-                rel="noreferrer noopener"
+                rel="noreferrer noopener nofollow"
                 className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-indigo-300 hover:text-indigo-200"
               >
                 {copy.sectionWhatLink}
