@@ -1,4 +1,4 @@
-﻿import { Brain, ListChecks, Timer, BookOpen, Dumbbell, Pill } from "lucide-react";
+import { Brain, ListChecks, Timer, BookOpen, Dumbbell, Pill, Target, HeartHandshake, Flame } from "lucide-react";
 
 export function getSeoScenario(slug: string) {
   return seoScenarios.find((s) => s.slug === slug);
@@ -417,6 +417,207 @@ export const seoScenarios: SeoScenario[] = [
       "用药计划锁屏",
       "手机锁屏吃药提醒",
       "老人吃药提醒壁纸",
+    ],
+  },
+  {
+    slug: "daily-priority-lock-screen",
+    lastModified: "2026-08-10",
+    icon: Target,
+    template: "bold-minimal",
+    gradient: "linear-gradient(160deg, #f59e0b 0%, #e11d48 46%, #020617 100%)",
+    eyebrow: {
+      en: "Daily priority lock screen",
+      zh: "每日重点锁屏",
+    },
+    title: {
+      en: "Daily Priority Lock Screen: Your Top 3 Tasks, Visible Before Every Unlock.",
+      zh: "每日重点锁屏：今天最重要的 3 件事，解锁手机前就看到。",
+    },
+    description: {
+      en: "Put today's top 3 priorities on your phone lock screen, so the few things that actually matter stay in front of you all day instead of buried in a task app.",
+      zh: "把今天最重要的 3 件事放到手机锁屏上，让真正关键的任务一整天都在眼前，而不是埋在待办 App 里。",
+    },
+    audience: {
+      en: "Best for people who plan in Notion but end up reacting to notifications all day — and want one visible answer to the question: what actually matters today?",
+      zh: "适合在 Notion 里做计划、白天却被通知牵着走的人，让「今天到底什么最重要」有一个抬头就能看到的答案。",
+    },
+    tasks: {
+      en: [
+        "Top 1: Ship the pricing page draft",
+        "Top 2: Call the accountant at 2 PM",
+        "Top 3: 30 minutes inbox zero",
+        "Everything else can wait",
+      ],
+      zh: [
+        "重点 1：发出定价页初稿",
+        "重点 2：下午 2 点给会计打电话",
+        "重点 3：30 分钟清空收件箱",
+        "其他事都可以等",
+      ],
+    },
+    keywords: [
+      "daily priority lock screen",
+      "top 3 tasks lock screen",
+      "daily focus wallpaper",
+      "today priorities wallpaper",
+      "most important task lock screen",
+      "MIT lock screen wallpaper",
+      "daily goals lock screen",
+      "focus wallpaper for phone",
+    ],
+    keywordsZh: [
+      "每日重点锁屏",
+      "今日任务锁屏",
+      "每日三件事壁纸",
+      "今日优先事项壁纸",
+      "每日目标锁屏",
+      "专注锁屏壁纸",
+      "最重要的事 锁屏",
+      "手机锁屏 每日计划",
+    ],
+  },
+  {
+    slug: "caregiver-emergency-lock-screen",
+    lastModified: "2026-08-10",
+    icon: HeartHandshake,
+    template: "simple-text",
+    gradient: "linear-gradient(160deg, #fb7185 0%, #f59e0b 46%, #020617 100%)",
+    eyebrow: {
+      en: "Caregiver emergency lock screen",
+      zh: "照护紧急联系锁屏",
+    },
+    title: {
+      en: "Emergency Contact Lock Screen for Alzheimer's and Memory Care.",
+      zh: "阿尔茨海默照护锁屏：紧急联系人，拿起手机就能看到。",
+    },
+    description: {
+      en: "Create a large-text lock screen wallpaper with an emergency contact, home address, and key medical notes for a loved one living with Alzheimer's, dementia, or memory loss.",
+      zh: "为患阿尔茨海默、失智或记忆衰退的家人制作大字锁屏壁纸，放上紧急联系人、家庭住址和关键用药信息。",
+    },
+    audience: {
+      en: "Made for caregivers of parents, grandparents, or partners with Alzheimer's or dementia, who need critical information visible on the phone even when its owner cannot recall it.",
+      zh: "为照护阿尔茨海默或失智父母、祖辈、伴侣的人设计，即使使用者自己想不起来，手机锁屏上也能看到关键信息。",
+    },
+    tasks: {
+      en: [
+        "If lost, call Sarah: (555) 012-3456",
+        "Home: 42 Maple Street, Springfield",
+        "Allergic to penicillin",
+        "Takes heart medication at 8 AM / 8 PM",
+      ],
+      zh: [
+        "如走失，请联系女儿小李：138-0000-0000",
+        "家庭住址：朝阳区枫叶街 42 号",
+        "青霉素过敏",
+        "早晚各服一次心脏药",
+      ],
+    },
+    faqs: [
+      {
+        q: {
+          en: "Is it safe to put an emergency contact on a lock screen?",
+          zh: "把紧急联系人放在锁屏上安全吗？",
+        },
+        a: {
+          en: "Lock screen content is visible to anyone holding the phone, so include only what a helper needs: a contact name and number, a street-level address, and critical medical notes. Avoid ID numbers, financial details, or full medical records.",
+          zh: "锁屏内容对拿到手机的人可见，所以只放救助者需要的信息：联系人姓名电话、街区级住址和关键医疗提示。不要放身份证号、财务信息或完整病历。",
+        },
+      },
+      {
+        q: {
+          en: "How do I set this up on my parent's phone?",
+          zh: "怎么在父母的手机上设置？",
+        },
+        a: {
+          en: "Generate the wallpaper on your own device, transfer the image to their phone, then set it as the lock screen in system settings. The large-text template keeps every line readable without unlocking.",
+          zh: "在你自己的设备上生成壁纸，把图片传到家人的手机，再在系统设置里设为锁屏。大字模板保证不解锁也能看清每一行。",
+        },
+      },
+      {
+        q: {
+          en: "What if the contact information changes?",
+          zh: "联系人信息变了怎么办？",
+        },
+        a: {
+          en: "Regenerate the wallpaper with the updated details and set it again. It takes about a minute, and there is no account or app required on your loved one's phone.",
+          zh: "用新信息重新生成一张壁纸再设置即可，大约一分钟。家人的手机上不需要装任何 App，也不需要注册账号。",
+        },
+      },
+    ],
+    keywords: [
+      "emergency contact lock screen",
+      "alzheimers lock screen wallpaper",
+      "dementia patient phone wallpaper",
+      "ICE lock screen wallpaper",
+      "in case of emergency lock screen",
+      "caregiver lock screen",
+      "memory loss phone reminder",
+      "elderly emergency wallpaper",
+    ],
+    keywordsZh: [
+      "紧急联系人锁屏",
+      "阿尔茨海默 锁屏",
+      "失智老人 手机壁纸",
+      "老人防走失 锁屏",
+      "照护 锁屏提醒",
+      "ICE 紧急联系 壁纸",
+      "老人手机 紧急联系",
+      "记忆衰退 锁屏提醒",
+    ],
+  },
+  {
+    slug: "habit-tracker-lock-screen",
+    lastModified: "2026-08-10",
+    icon: Flame,
+    template: "calm-list",
+    gradient: "linear-gradient(160deg, #06b6d4 0%, #10b981 46%, #020617 100%)",
+    eyebrow: {
+      en: "Habit tracker lock screen",
+      zh: "习惯打卡锁屏",
+    },
+    title: {
+      en: "Habit Tracker Lock Screen: Keep Your Daily Habits in Sight All Day.",
+      zh: "习惯打卡锁屏：让每天要打卡的习惯一整天都在视线里。",
+    },
+    description: {
+      en: "Turn your daily habit list into a lock screen wallpaper, so the habits you are building get seen dozens of times a day instead of once inside a tracker app.",
+      zh: "把每日习惯清单变成锁屏壁纸，让你正在养成的习惯每天被看到几十次，而不是只在打卡 App 里出现一次。",
+    },
+    audience: {
+      en: "Great for habit builders, Atomic Habits readers, and Notion habit tracker users who want their streaks and daily commitments visible without opening an app.",
+      zh: "适合正在养成习惯的人、《原子习惯》读者和用 Notion 做习惯打卡的用户，不解锁手机就能看到今天的习惯承诺。",
+    },
+    tasks: {
+      en: [
+        "Read 20 pages before bed",
+        "10-minute meditation after waking",
+        "No sugar today",
+        "Write 300 words",
+      ],
+      zh: [
+        "睡前读 20 页书",
+        "起床后冥想 10 分钟",
+        "今天不吃糖",
+        "写 300 字",
+      ],
+    },
+    keywords: [
+      "habit tracker lock screen",
+      "habit reminder wallpaper",
+      "daily habits lock screen",
+      "habit streak wallpaper",
+      "atomic habits lock screen",
+      "notion habit tracker wallpaper",
+      "habit checklist wallpaper",
+    ],
+    keywordsZh: [
+      "习惯打卡锁屏",
+      "习惯养成壁纸",
+      "每日习惯锁屏",
+      "打卡提醒壁纸",
+      "Notion 习惯打卡 锁屏",
+      "自律锁屏壁纸",
+      "习惯清单壁纸",
     ],
   },
 ];

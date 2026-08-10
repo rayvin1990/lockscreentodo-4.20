@@ -1,4 +1,4 @@
-﻿import type { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
 
 import { siteConfig } from "~/config/site";
 import { seoScenarios } from "~/lib/seo-scenarios";
@@ -19,6 +19,10 @@ const baseRoutes: { route: string; lastModified?: string }[] = [
   { route: "/zh/about", lastModified: "2026-07-12" },
   { route: "/en/reminder-wallpaper", lastModified: "2026-07-12" },
   { route: "/zh/reminder-wallpaper", lastModified: "2026-07-12" },
+  { route: "/en/locktodo-alternative", lastModified: "2026-08-10" },
+  { route: "/zh/locktodo-alternative", lastModified: "2026-08-10" },
+  { route: "/en/apple-reminders-lock-screen", lastModified: "2026-08-10" },
+  { route: "/zh/apple-reminders-lock-screen", lastModified: "2026-08-10" },
   { route: "/en/pricing", lastModified: "2026-07-12" },
   { route: "/zh/pricing", lastModified: "2026-07-12" },
   { route: "/en/privacy" },

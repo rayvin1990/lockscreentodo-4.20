@@ -3,7 +3,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Circle, Palette, QrCode, Sparkles, Smartphone, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, Circle, Palette, QrCode, ShieldCheck, Sparkles, Smartphone, Zap } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { siteConfig } from "~/config/site";
@@ -34,6 +34,7 @@ const copy = {
     ],
     primaryCta: "Generate my wallpaper",
     secondaryCta: "See how it works",
+    heroTrustLine: "Read-only OAuth. We never store your tasks. Notion stays the source of truth.",
     useCases: ["Notion tasks", "Today's priorities", "Daily tasks", "Habit tracking", "ADHD reminders", "Medication notes"],
     beforeLabel: "Without LockscreenTodo",
     afterLabel: "With LockscreenTodo",
@@ -82,6 +83,7 @@ const copy = {
     links: {
       lockScreenTodo: "Lock Screen Todo",
       reminderWallpaper: "Reminder Wallpaper",
+      lockTodoAlternative: "LockTodo Alternative",
       generator: "Generator",
       developers: "Developers",
       dailyTasks: "Daily Tasks",
@@ -111,6 +113,7 @@ const copy = {
     ],
     primaryCta: "立即生成我的壁纸",
     secondaryCta: "了解使用流程",
+    heroTrustLine: "只读 OAuth，我们绝不存储你的任务，Notion 始终是数据源头。",
     useCases: ["Notion 任务", "今日重点", "每日待办", "习惯打卡", "注意力提醒", "用药备注"],
     beforeLabel: "不用 LockscreenTodo",
     afterLabel: "用 LockscreenTodo",
@@ -163,6 +166,7 @@ const copy = {
     links: {
       lockScreenTodo: "锁屏待办",
       reminderWallpaper: "提醒壁纸",
+      lockTodoAlternative: "对比 LockTodo",
       generator: "生成器",
       developers: "开发者",
       dailyTasks: "每日任务",
@@ -365,6 +369,11 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
                   {content.secondaryCta}
                 </Link>
               </div>
+
+              <div className="flex items-center justify-center lg:justify-start gap-2 pt-1 text-[11px] text-slate-500">
+                <ShieldCheck className="h-3.5 w-3.5 text-brand-green shrink-0" />
+                <span>{content.heroTrustLine}</span>
+              </div>
             </div>
 
             <div className="flex-1 w-full max-w-[320px] relative">
@@ -506,6 +515,7 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
                 <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.generator}</Link></li>
                 <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockScreenTodo}</Link></li>
                 <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.reminderWallpaper}</Link></li>
+                <li><Link href={`/${lang}/locktodo-alternative`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockTodoAlternative}</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
