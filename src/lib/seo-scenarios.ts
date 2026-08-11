@@ -65,7 +65,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "Notion 待办锁屏",
     },
     title: {
-      en: "Notion Task Lock Screen: Put Your To-Do List Where You Actually See It.",
+      en: "Notion Lock Screen: Your To-Do List as Phone Wallpaper",
       zh: "Notion 待办锁屏：把任务放到你真正会看到的地方。",
     },
     description: {
@@ -155,7 +155,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "ADHD 锁屏提醒",
     },
     title: {
-      en: "ADHD Lock Screen Reminders: Stop Forgetting Important Tasks Before You Unlock Your Phone.",
+      en: "ADHD Lock Screen Reminder: Tasks You Can't Miss",
       zh: "ADHD 锁屏提醒：在解锁手机之前就不会忘事。",
     },
     description: {
@@ -210,7 +210,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "考试倒计时锁屏",
     },
     title: {
-      en: "Exam Countdown Lock Screen: See How Many Days Are Left Every Time You Pick Up Your Phone.",
+      en: "Exam Countdown Wallpaper: Days Left on Your Lock Screen",
       zh: "考试倒计时锁屏：每次拿手机都能看到还剩多少天。",
     },
     description: {
@@ -267,7 +267,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "学习计划锁屏",
     },
     title: {
-      en: "Study Plan Lock Screen: Turn Your Daily Study Schedule Into a Wallpaper You See 100+ Times a Day.",
+      en: "Study Lock Screen: Your Daily Study Plan as Wallpaper",
       zh: "学习计划锁屏：把你的每日学习计划变成每天看100多次的壁纸。",
     },
     description: {
@@ -322,7 +322,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "健身计划锁屏",
     },
     title: {
-      en: "Workout Routine Lock Screen: Never Skip a Gym Day Because You Forgot Your Plan.",
+      en: "Workout Routine Lock Screen: Gym Plan on Your Wallpaper",
       zh: "健身计划锁屏：再也不会因为忘了计划而跳过健身日。",
     },
     description: {
@@ -376,7 +376,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "吃药提醒锁屏",
     },
     title: {
-      en: "Medication Reminder Lock Screen: Never Forget to Take Your Pills Again.",
+      en: "Medication Reminder Lock Screen: Pill Schedule Wallpaper",
       zh: "吃药提醒锁屏：再也不会忘记吃药。",
     },
     description: {
@@ -430,7 +430,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "每日重点锁屏",
     },
     title: {
-      en: "Daily Priority Lock Screen: Your Top 3 Tasks, Visible Before Every Unlock.",
+      en: "Daily Priority Lock Screen: Top 3 Tasks on Your Wallpaper",
       zh: "每日重点锁屏：今天最重要的 3 件事，解锁手机前就看到。",
     },
     description: {
@@ -487,7 +487,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "照护紧急联系锁屏",
     },
     title: {
-      en: "Emergency Contact Lock Screen for Alzheimer's and Memory Care.",
+      en: "Emergency Contact Lock Screen: Alzheimer's & Memory Care",
       zh: "阿尔茨海默照护锁屏：紧急联系人，拿起手机就能看到。",
     },
     description: {
@@ -576,7 +576,7 @@ export const seoScenarios: SeoScenario[] = [
       zh: "习惯打卡锁屏",
     },
     title: {
-      en: "Habit Tracker Lock Screen: Keep Your Daily Habits in Sight All Day.",
+      en: "Habit Tracker Lock Screen: Daily Habits on Your Wallpaper",
       zh: "习惯打卡锁屏：让每天要打卡的习惯一整天都在视线里。",
     },
     description: {
