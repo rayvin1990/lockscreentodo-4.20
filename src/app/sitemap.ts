@@ -23,6 +23,14 @@ const baseRoutes: { route: string; lastModified?: string }[] = [
   { route: "/zh/locktodo-alternative", lastModified: "2026-08-10" },
   { route: "/en/apple-reminders-lock-screen", lastModified: "2026-08-10" },
   { route: "/zh/apple-reminders-lock-screen", lastModified: "2026-08-10" },
+  { route: "/en/iphone-lock-screen-todo-list", lastModified: "2026-08-17" },
+  { route: "/zh/iphone-lock-screen-todo-list", lastModified: "2026-08-17" },
+  { route: "/en/android-lock-screen-todo-list", lastModified: "2026-08-17" },
+  { route: "/zh/android-lock-screen-todo-list", lastModified: "2026-08-17" },
+  { route: "/en/how-to-put-todo-list-on-lock-screen", lastModified: "2026-08-17" },
+  { route: "/zh/how-to-put-todo-list-on-lock-screen", lastModified: "2026-08-17" },
+  { route: "/en/how-to-put-todo-list-on-iphone-lock-screen", lastModified: "2026-08-31" },
+  { route: "/zh/how-to-put-todo-list-on-iphone-lock-screen", lastModified: "2026-08-31" },
   { route: "/en/pricing", lastModified: "2026-07-12" },
   { route: "/zh/pricing", lastModified: "2026-07-12" },
   { route: "/en/privacy" },
@@ -64,7 +72,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ? 1
       : isScenarioRoute(route)
         ? 0.9
-        : (route.includes("/generator") || route.includes("/lock-screen-todo") || route.includes("/reminder-wallpaper") || route.includes("/lock-screen-widget-vs-wallpaper") || route.includes("/lock-screen-productivity") || route.includes("/about"))
+        : (route.includes("/generator") || route.includes("/lock-screen-todo") || route.includes("/reminder-wallpaper") || route.includes("/lock-screen-widget-vs-wallpaper") || route.includes("/lock-screen-productivity") || route.includes("/how-to-put-todo-list-on-lock-screen") || route.includes("/how-to-put-todo-list-on-iphone-lock-screen") || route.includes("/about"))
           ? 0.9
           : 0.6,
   }));

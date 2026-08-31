@@ -183,12 +183,27 @@ const copy = {
   },
 } as const;
 
+function NotionGlyph({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.139c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z" />
+    </svg>
+  );
+}
+
 function ShowcaseWallpaper({ lang }: { lang: "en" | "zh" }) {
   const content = copy[lang];
 
   return (
     <div className="relative h-full w-full bg-[#050508] overflow-hidden flex flex-col items-center pt-[190px] px-5 font-sans">
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent opacity-50" />
+
+      <div className="relative z-10 flex items-center gap-2 mb-1 px-1">
+        <NotionGlyph className="w-3.5 h-3.5 text-white/70" />
+        <span className="text-[11px] font-semibold tracking-wider uppercase text-white/50">
+          {lang === "zh" ? "同步自 Notion" : "Synced from Notion"}
+        </span>
+      </div>
 
       <div className="relative z-10 w-full space-y-3.5">
         {content.sampleTasks.map((task) => (
@@ -212,6 +227,15 @@ function ShowcaseWallpaper({ lang }: { lang: "en" | "zh" }) {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="relative z-10 w-full mt-5" aria-hidden="true">
+        <div className="flex items-center justify-center gap-2 rounded-xl bg-white py-3 shadow-2xl shadow-black/50">
+          <NotionGlyph className="w-4 h-4 text-black" />
+          <span className="text-[13px] font-bold tracking-wide text-black">
+            Connect Notion Tasks
+          </span>
+        </div>
       </div>
 
       <div className="absolute bottom-12 flex gap-12 text-white/20">
@@ -326,47 +350,34 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
         <div className="container mx-auto max-w-4xl relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
             <div className="flex-1 space-y-10 text-center lg:text-left">
-              <div className="inline-flex items-center space-x-2 text-[9px] font-bold tracking-[0.3em] uppercase text-white/30 border-b border-white/10 pb-1 mx-auto lg:mx-0">
-                <Sparkles className="w-2.5 h-2.5" />
-                <span>{content.eyebrow}</span>
+              <div className="flex justify-center lg:justify-start">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 backdrop-blur-sm">
+                  <NotionGlyph className="w-4 h-4 text-white" />
+                  <span className="text-[12px] font-semibold tracking-wide text-white/80">
+                    {lang === "zh" ? "已接入 Notion · 一键导入任务" : "Official Notion integration · import your tasks"}
+                  </span>
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                </div>
               </div>
 
               <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1]">
-                {content.title}
+                {lang === "zh"
+                  ? "你的 Notion 任务，直接显示在锁屏上。"
+                  : "Your Notion tasks, on your lock screen."}
               </h1>
 
-              <p className="text-base text-slate-500 max-w-md leading-relaxed mx-auto lg:mx-0">
-                {content.subtitle}
+              <p className="text-base text-slate-400 max-w-md leading-relaxed mx-auto lg:mx-0">
+                {lang === "zh"
+                  ? "连接 Notion，生成壁纸，设为锁屏。30 秒搞定。"
+                  : "Connect Notion, get a wallpaper, set it as your lock screen. 30 seconds."}
               </p>
 
-              {content.metricStrip && content.metricStrip.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
-                  {content.metricStrip.map((m) => (
-                    <div key={m.label} className="border border-white/10 bg-white/[0.02] p-3 text-center lg:text-left">
-                      <div className="text-2xl lg:text-3xl font-bold text-white tracking-tight leading-none">
-                        {m.value}
-                      </div>
-                      <div className="text-[10px] font-bold tracking-widest uppercase text-white/40 mt-2">
-                        {m.label}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+              <div className="flex items-center justify-center lg:justify-start pt-2">
                 <Link href={`/${lang}/generator`} onClick={() => trackEvent("home_cta_click", { target: "generator", lang })}>
                   <Button variant="outline" className="h-12 px-8 text-[12px] font-bold tracking-widest uppercase border-white/20 hover:bg-white hover:text-black rounded-none transition-all shadow-xl shadow-white/5">
-                    {content.primaryCta}
+                    {lang === "zh" ? "免费试试" : "Try it free"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                </Link>
-                <Link
-                  href="#pricing"
-                  className="text-[11px] font-bold tracking-widest uppercase text-white/40 hover:text-white transition-colors"
-                  onClick={() => trackEvent("home_pricing_click", { lang })}
-                >
-                  {content.secondaryCta}
                 </Link>
               </div>
 
@@ -380,6 +391,9 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
               <RealisticPhoneMockup>
                 <ShowcaseWallpaper lang={lang} />
               </RealisticPhoneMockup>
+              <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-500 max-w-[280px] mx-auto">
+                Preview for illustration only. The lock screen wallpaper can&apos;t connect to Notion directly — connect it once in the generator.
+              </p>
             </div>
           </div>
         </div>
