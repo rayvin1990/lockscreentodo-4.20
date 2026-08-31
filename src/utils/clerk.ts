@@ -55,6 +55,17 @@ export const isPublicRoute = createRouteMatcher([
   ]),
 ]);
 
+// The marketing site is PUBLIC by default so every landing/SEO page is crawlable
+// without sign-in. Only the signed-in app area (dashboard) requires auth.
+// Add a path here ONLY if it must require an authenticated user.
+const protectedRouteRe = new RegExp(
+  `^/(${i18n.locales.join("|")})/dashboard(/|$)`,
+);
+
+export function isProtectedRoute(request: NextRequest): boolean {
+  return protectedRouteRe.test(request.nextUrl.pathname);
+}
+
 export function getLocale(request: NextRequest): string | undefined {
   const negotiatorHeaders: Record<string, string> = {};
   request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
@@ -137,7 +148,8 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
     );
   }
 
-  if (isPublicRoute(req)) {
+  // Marketing site is public by default; only the signed-in app area requires auth.
+  if (!isProtectedRoute(req)) {
     return null;
   }
 
