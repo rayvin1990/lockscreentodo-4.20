@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default function Home() {
-  // 实战修正：默认进入带语言后缀的 Landing Page，而不是直接进工具页
-  redirect("/en");
+  // 308 永久重定向：把 "/" 的 SEO 权重合并到 "/en"（middleware 已先行处理，此为兜底）
+  permanentRedirect("/en");
 }

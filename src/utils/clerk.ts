@@ -131,7 +131,8 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
 
   if (pathname === "/") {
     const locale = getLocale(req);
-    return NextResponse.redirect(new URL(`/${locale}${searchParams}`, req.url));
+    // 308 permanent: consolidate SEO signals from "/" onto "/<locale>" (was 307)
+    return NextResponse.redirect(new URL(`/${locale}${searchParams}`, req.url), 308);
   }
 
   const pathnameIsMissingLocale = i18n.locales.every(
@@ -140,11 +141,13 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
 
   if (!isNoRedirect(req) && pathnameIsMissingLocale) {
     const locale = getLocale(req);
+    // 308 permanent: locale-prefixed URL is the canonical one
     return NextResponse.redirect(
       new URL(
         `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}${searchParams}`,
         req.url,
       ),
+      308,
     );
   }
 

@@ -57,7 +57,7 @@ export const seoScenarios: SeoScenario[] = [
   {
     slug: "notion-task-lock-screen",
     icon: ListChecks,
-    lastModified: "2026-07-06",
+    lastModified: "2026-09-05",
     template: "calm-list",
     gradient: "linear-gradient(160deg, #0f172a 0%, #2563eb 46%, #020617 100%)",
     eyebrow: {
@@ -65,12 +65,12 @@ export const seoScenarios: SeoScenario[] = [
       zh: "Notion 待办锁屏",
     },
     title: {
-      en: "Notion Lock Screen: Your To-Do List as Phone Wallpaper",
+      en: "Notion Tasks on Lock Screen: Free Wallpaper in 30s",
       zh: "Notion 待办锁屏：把任务放到你真正会看到的地方。",
     },
     description: {
-      en: "Turn today's Notion tasks into a clean phone lock screen wallpaper, so your priorities stay visible before you open another app.",
-      zh: "把今天的 Notion 任务生成一张干净的手机锁屏壁纸，让重点任务在打开任何 App 之前就被看到。",
+      en: "Connect Notion once, import today's tasks, and turn them into a lock screen wallpaper you'll see 100+ times a day. Free, no app install, iPhone & Android.",
+      zh: "连接一次 Notion，把今天的任务生成锁屏壁纸，每天点亮手机 100+ 次都能看到。免费、不用装 App，iPhone 和安卓都能用。",
     },
     audience: {
       en: "Best for Notion users who plan carefully, then still miss tasks because the list is hidden inside a workspace, dashboard, or database view.",
@@ -258,7 +258,7 @@ export const seoScenarios: SeoScenario[] = [
   },
   {
     slug: "study-plan-lock-screen",
-    lastModified: "2026-07-12",
+    lastModified: "2026-09-05",
     icon: BookOpen,
     template: "calm-list",
     gradient: "linear-gradient(160deg, #10b981 0%, #3b82f6 46%, #020617 100%)",
@@ -267,12 +267,12 @@ export const seoScenarios: SeoScenario[] = [
       zh: "学习计划锁屏",
     },
     title: {
-      en: "Study Lock Screen: Your Daily Study Plan as Wallpaper",
-      zh: "学习计划锁屏：把你的每日学习计划变成每天看100多次的壁纸。",
+      en: "Study Lock Screen Wallpaper: Free Study Plan Maker",
+      zh: "学习锁屏壁纸：把每日学习计划放在每次点亮屏幕的地方。",
     },
     description: {
-      en: "Organize your daily study tasks into a clean, distraction-free lock screen wallpaper that keeps you on track with your learning goals without opening a study app.",
-      zh: "把你的每日学习任务整理成干净无干扰的锁屏壁纸，不用打开学习App就能保持学习进度。",
+      en: "Turn your study schedule into a free lock screen wallpaper you see 100+ times a day. No app to install, works on iPhone & Android — make yours in 30 seconds.",
+      zh: "把学习计划变成免费锁屏壁纸，每天点亮手机 100+ 次都能看到。不用装 App，iPhone 和安卓都能用，30 秒生成。",
     },
     audience: {
       en: "Perfect for students of all ages, from middle school to graduate school, who want to stay focused on their study schedule without digital distractions.",
@@ -293,6 +293,8 @@ export const seoScenarios: SeoScenario[] = [
       ],
     },
     keywords: [
+      "study lock screen",
+      "study lock screen wallpaper",
       "study plan lock screen",
       "study schedule wallpaper",
       "student to do list lock screen",
