@@ -34,7 +34,14 @@ export function NotionAuthButton({
         throw new Error('Notion Client ID not configured');
       }
 
-      const redirectUri = window.location.origin + '/api/notion/auth/callback';
+      // Pin the redirect URI to a fixed, public env value instead of deriving it
+      // from window.location.origin. Notion requires it to match the URI
+      // registered in the integration's settings *exactly* (scheme + host +
+      // path), so letting it drift with www/apex redirects breaks OAuth. The
+      // window.location.origin fallback only applies to local dev where the env
+      // var is unset.
+      const redirectUri = process.env.NEXT_PUBLIC_NOTION_REDIRECT_URI ||
+        (window.location.origin + '/api/notion/auth/callback');
       const oauthUrl = `https://api.notion.com/v1/oauth/authorize?` +
         `client_id=${notionClientId}&` +
         `response_type=code&` +
