@@ -6,7 +6,7 @@ console.log('Generator page loaded - VERSION 2025-02-27-v2');
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Smartphone, Plus, Trash2, X, Download, Share2, Twitter, Facebook, Linkedin, Send, ShoppingCart, Settings, GripVertical } from "lucide-react";
+import { ArrowLeft, Loader2, Smartphone, Plus, Trash2, X, Download, Share2, Twitter, Facebook, Linkedin, Send, ShoppingCart, Settings, GripVertical, Sparkles } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/use-toast";
 import { useAuth } from "@clerk/nextjs";
@@ -72,6 +72,83 @@ interface WallpaperStyle {
   backgroundScale: number;
   tasks: Task[];
   stickers: { id: string; emoji: string; x: number; y: number }[];
+}
+
+// Sample tasks shown to every visitor (signed-in or not) the moment they open
+// the generator, so the phone preview is never an empty black screen. They are
+// placeholders only: flagged via the `sample-` id prefix and `isSampleMode`,
+// never auto-saved to Supabase, and replaced the moment real tasks arrive
+// (Notion import / manual add / template). "Try before you connect."
+const SAMPLE_TASKS: Task[] = [
+  "Review today's top 3 priorities",
+  "Send the project update",
+  "Finish the slide deck",
+  "Reply to important messages",
+].map((text, index) => ({
+  id: `sample-${index + 1}`,
+  text,
+  x: 132,
+  y: 200 + index * 30,
+  fontSize: 13,
+  color: "#F8FAFC",
+  backgroundColor: "transparent",
+  backgroundOpacity: 0.5,
+  opacity: 1,
+  isBold: true,
+  isItalic: false,
+  isCompleted: false,
+  textAlign: "left" as const,
+  fontFamily: "Inter, system-ui, sans-serif",
+}));
+
+// Smart routing: read the task texts and pick the wallpaper layout + color
+// theme that fits, so users don't have to understand template names. Returns
+// a LockedTaskContainer `variant` (drives typography/layout), a background
+// gradient, and a human label. `variant: null` = the default clean list.
+function detectSmartStyle(tasks: { text: string }[]): {
+  variant: string | null;
+  background: string | null;
+  label: string;
+} {
+  const allText = tasks.map((t) => t.text).join(" \n ");
+
+  // Countdown to a date / exam / launch (needs a number in one of the tasks).
+  if (/\b\d+\s*(more\s*)?days?\b|days?\s*left|countdown|\bexam\b|\blaunch\b/i.test(allText)) {
+    return {
+      variant: "countdown",
+      background: "linear-gradient(160deg, #1e1b4b 0%, #4c1d95 52%, #0b1026 100%)",
+      label: "Countdown",
+    };
+  }
+
+  // Health / habit tracking.
+  if (/workout|\bgym\b|\brun(ning)?\b|exercise|\bsteps?\b|\bwater\b|meditat|stretch|cardio|protein|\byoga\b|\bsleep\b/i.test(allText)) {
+    return {
+      variant: "fitness",
+      background: "linear-gradient(160deg, #064e3b 0%, #0f766e 52%, #022c22 100%)",
+      label: "Habit tracker",
+    };
+  }
+
+  // Time-sensitive / high-pressure.
+  if (/urgent|asap|deadline|\bdue\b|!!|emergency|interview|submit|\bpay\b|\brent\b|\bbill\b|overdue/i.test(allText)) {
+    return {
+      variant: "urgent",
+      background: "linear-gradient(160deg, #450a0a 0%, #7f1d1d 55%, #160404 100%)",
+      label: "Urgent focus",
+    };
+  }
+
+  // A single focus item deserves the big-treatment layout.
+  if (tasks.length <= 1) {
+    return {
+      variant: "large-reminder",
+      background: "linear-gradient(160deg, #1e293b 0%, #334155 52%, #0b1120 100%)",
+      label: "Big reminder",
+    };
+  }
+
+  return { variant: null, background: null, label: "Classic list" };
 }
 
 export default function GeneratorPage() {
@@ -166,9 +243,14 @@ export default function GeneratorPage() {
     backgroundImage: "linear-gradient(160deg, #20251f 0%, #4b5549 46%, #111318 100%)",
     backgroundPosition: { x: 0, y: 0 },
     backgroundScale: 1,
-    tasks: [],
+    tasks: SAMPLE_TASKS.map((t) => ({ ...t })),
     stickers: [],
   });
+
+  // Whether the wallpaper still holds the built-in sample tasks. While true we
+  // hide the "sample data" banner once real content lands and never persist
+  // the samples to Supabase.
+  const [isSampleMode, setIsSampleMode] = useState(true);
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -241,7 +323,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
         id: notionTask.id,
         text: notionTask.text,
         x: 132,
-        y: wallpaperStyle.tasks.length * 30 + (index * 30),
+        y: (isSampleMode ? 0 : wallpaperStyle.tasks.length) * 30 + (index * 30),
         fontSize: 13,
         color: "#F8FAFC",
         backgroundColor: "transparent",
@@ -254,10 +336,14 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
         fontFamily: "Inter, system-ui, sans-serif",
       }));
 
+    if (tasksToAdd.length === 0) return;
+
     setWallpaperStyle(prev => ({
       ...prev,
-      tasks: [...prev.tasks, ...tasksToAdd],
+      // In sample mode, real Notion tasks replace the placeholders entirely.
+      tasks: isSampleMode ? tasksToAdd : [...prev.tasks, ...tasksToAdd],
     }));
+    setIsSampleMode(false);
 
     setSelectedNotionTaskIds(new Set());
     setShowNotionTaskSelector(false);
@@ -271,7 +357,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       title: "Tasks Added!",
       description: `Added ${tasksToAdd.length} task(s) from Notion to your wallpaper.`,
     });
-  }, [syncedNotionTasks, selectedNotionTaskIds, wallpaperStyle.tasks.length, toast]);
+  }, [syncedNotionTasks, selectedNotionTaskIds, wallpaperStyle.tasks.length, isSampleMode, toast]);
 
   const [tasksLocked, setTasksLocked] = useState(true);
   const [containerPosition, setContainerPosition] = useState({ x: 0, y: 200 });
@@ -388,6 +474,66 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       description: scenario ? `Loaded ${scenario.replace(/-/g, " ")} tasks.` : "Loaded preset tasks.",
     });
   }, [toast]);
+
+  // Smart routing: auto-pick layout + theme from the task contents. Keeps the
+  // current tasks (samples or user's), just restyles them. Users get a good
+  // result without understanding template names.
+  const applySmartStyle = useCallback(() => {
+    const tasks = wallpaperStyle.tasks;
+    if (tasks.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No tasks yet",
+        description: "Add a task first, then let Magic pick the style.",
+      });
+      return;
+    }
+
+    const { variant, background, label } = detectSmartStyle(tasks);
+
+    const largeTemplates = new Set(["large-reminder", "urgent", "interruption", "ops-alert"]);
+    const isLargeTemplate = variant !== null && largeTemplates.has(variant);
+    const isCountdown = variant === "countdown";
+    const isFitness = variant === "fitness";
+    const fontSize = isCountdown ? 22 : isLargeTemplate ? 20 : isFitness ? 16 : 13;
+    const yStart = isCountdown ? 228 : isLargeTemplate ? 236 : 200;
+    const rowGap = isLargeTemplate ? 42 : isFitness ? 36 : 30;
+
+    const restyled: Task[] = tasks.slice(0, 5).map((task, index) => ({
+      ...task,
+      x: 132,
+      y: yStart + index * rowGap,
+      fontSize:
+        index === 0 && (isLargeTemplate || isCountdown || isFitness)
+          ? fontSize
+          : Math.max(13, fontSize - 4),
+      color: "#F8FAFC",
+      isBold: true,
+    }));
+
+    setWallpaperStyle((prev) => ({
+      ...prev,
+      backgroundType: "preset",
+      backgroundImage: background || prev.backgroundImage,
+      tasks: restyled,
+    }));
+    setTasksLocked(true);
+    setContainerPosition({
+      x: 0,
+      y: isCountdown ? 248 : isLargeTemplate ? 270 : 300,
+    });
+    setGlobalFontSize(fontSize);
+    setBackgroundOpacity(variant === "ops-alert" || variant === "urgent" ? 0.5 : isLargeTemplate ? 0.44 : 0.34);
+    setActiveTemplate(variant);
+    setSelectedTaskId(restyled[0]?.id || null);
+
+    trackEvent("smart_style_applied", { variant: variant || "classic", taskCount: tasks.length });
+
+    toast({
+      title: `Magic style: ${label}`,
+      description: "We picked the layout and colors that fit your tasks.",
+    });
+  }, [wallpaperStyle.tasks, toast]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -738,13 +884,18 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       textAlign: "left",
       fontFamily: "Inter, system-ui, sans-serif",
     };
-    setWallpaperStyle(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
+    // First real task replaces the built-in samples instead of piling on top.
+    const baseTasks = isSampleMode ? [] : wallpaperStyle.tasks;
+    setWallpaperStyle(prev => ({ ...prev, tasks: [...baseTasks, newTask] }));
+    setIsSampleMode(false);
     setSelectedTaskId(newTask.id);
   };
 
   const deleteTask = (id: string) => {
     setWallpaperStyle(prev => ({ ...prev, tasks: prev.tasks.filter(t => t.id !== id) }));
     if (selectedTaskId === id) setSelectedTaskId(null);
+    // Any edit to the placeholder list means it's now the user's own.
+    setIsSampleMode(false);
   };
 
   const updateTask = (id: string, updates: Partial<Task>) => {
@@ -752,6 +903,10 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       ...prev,
       tasks: prev.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
     }));
+    // Editing a sample task's text turns it into real content.
+    if (isSampleMode && (typeof updates.text === "string" || updates.isCompleted !== undefined)) {
+      setIsSampleMode(false);
+    }
   };
 
   const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1215,13 +1370,24 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
 
   useEffect(() => {
     if (!isSignedIn || !userId) return;
+    // Never persist the built-in sample tasks as the user's saved list.
+    if (isSampleMode) return;
 
     const timeoutId = setTimeout(() => {
       saveTasksToSupabase(userId, wallpaperStyle.tasks);
     }, 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [wallpaperStyle.tasks, isSignedIn, userId]);
+  }, [wallpaperStyle.tasks, isSignedIn, userId, isSampleMode]);
+
+  // Auto-exit sample mode the moment any real (non-`sample-`) task lands in the
+  // list — covers Notion import, templates, inspiration, and manual adds without
+  // needing a flag at every call site.
+  useEffect(() => {
+    if (!isSampleMode) return;
+    const hasRealTask = wallpaperStyle.tasks.some((t) => !t.id.startsWith("sample-"));
+    if (hasRealTask) setIsSampleMode(false);
+  }, [wallpaperStyle.tasks, isSampleMode]);
 
   const generateWallpaper = async () => {
     console.log('Starting wallpaper generation...');
@@ -1875,7 +2041,15 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                   <span>Notion</span>
                 </button>
               </div>
-              <div className="px-3 pb-3">
+              <div className="px-3 pb-3 space-y-2">
+                <button
+                  type="button"
+                  onClick={applySmartStyle}
+                  className="w-full py-2.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 text-indigo-200 border border-indigo-400/40 font-semibold rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Magic: auto-pick my style
+                </button>
                 <button
                   type="button"
                   onClick={generateWallpaper}
@@ -2282,14 +2456,34 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                         <span className="text-xs text-white font-medium w-8">{Math.round(backgroundOpacity * 100)}%</span>
                       </div>
                     </div>
-                    <button
-                      onClick={addTask}
-                      className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-3 py-1.5 rounded-xl font-semibold transition-all hover:scale-105 text-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={applySmartStyle}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 text-indigo-200 border border-indigo-400/40"
+                        title="Auto-pick the layout and colors that fit your tasks"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Magic
+                      </button>
+                      <button
+                        onClick={addTask}
+                        className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-3 py-1.5 rounded-xl font-semibold transition-all hover:scale-105 text-sm"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add
+                      </button>
+                    </div>
                   </div>
+
+                  {isSampleMode && (
+                    <div className="mb-3 flex items-start gap-2 p-3 rounded-xl border border-indigo-400/30 bg-indigo-500/10">
+                      <Sparkles className="w-4 h-4 text-indigo-300 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-indigo-200/90 leading-relaxed">
+                        These are <span className="font-semibold">sample tasks</span> so you can preview the wallpaper instantly.
+                        Tap any text to edit, hit <span className="font-semibold">+ Add</span> to write your own, or connect Notion to import your real to-dos.
+                      </p>
+                    </div>
+                  )}
 
                   {tasksLocked && (
                     <div className="mb-3 p-3 bg-brand-bg rounded-xl border border-gray-700">
@@ -2462,6 +2656,14 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
               Tap a task to edit it. Drag-reorder is desktop only.
             </SheetDescription>
           </SheetHeader>
+          {isSampleMode && (
+            <div className="mt-3 flex items-start gap-2 p-3 rounded-xl border border-indigo-400/30 bg-indigo-500/10">
+              <Sparkles className="w-4 h-4 text-indigo-300 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-indigo-200/90 leading-relaxed">
+                Sample tasks for preview. Tap <span className="font-semibold">+</span> to add your own — they&rsquo;ll replace these.
+              </p>
+            </div>
+          )}
           <div className="mt-4">
             <div className="flex justify-start mb-3">
               <button
@@ -2483,7 +2685,10 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                     textAlign: "left",
                     fontFamily: "Inter, system-ui, sans-serif",
                   };
-                  setWallpaperStyle(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
+                  // First real task replaces the built-in samples.
+                  const baseTasks = isSampleMode ? [] : wallpaperStyle.tasks;
+                  setWallpaperStyle(prev => ({ ...prev, tasks: [...baseTasks, newTask] }));
+                  setIsSampleMode(false);
                   setShowTasksSheet(false);
                   setEditingTaskId(newTask.id);
                 }}

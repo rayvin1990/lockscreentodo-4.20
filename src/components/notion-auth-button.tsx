@@ -86,9 +86,19 @@ export function NotionAuthButton({
         )}
       </Button>
       {!isConnected && !isLoading && (
-        <p className="text-xs text-gray-500 text-center leading-relaxed">
-          Read-only access to tasks only. Your privacy is protected.
-        </p>
+        <div className="space-y-1.5">
+          <p className="text-xs text-gray-500 text-center leading-relaxed">
+            Read-only access to tasks only. Your privacy is protected.
+          </p>
+          <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
+            <p className="text-[11px] text-gray-400 leading-relaxed">
+              <span className="text-gray-300 font-medium">On the Notion page that opens next:</span>{" "}
+              click <span className="text-gray-200 font-medium">&quot;Select pages&quot;</span>, then
+              tick the page or database that holds your to-do list (e.g. &quot;Tasks&quot;,
+              &quot;To-do&quot;). You don&apos;t need to share anything else.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
