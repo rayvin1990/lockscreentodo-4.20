@@ -12,7 +12,33 @@ const noNeedProcessRoute = [
   "^/_next/",
   "^/sitemap\\.xml$",
   "^/robots\\.txt$",
+  // Any path ending in a static-file extension (.txt/.json/.xml/.svg/.woff2/
+  // .css/.js/...). These are either App Router route handlers (llms.txt,
+  // manifest, sitemap) or static assets; they must bypass the locale redirect
+  // or they 308 to /en/<file> and 404 (GSC "Redirect error" + 404 reports).
+  // Page routes never end in a dot-extension, and protected /dashboard routes
+  // have no extension, so this never skips auth.
+  "\\.[a-zA-Z0-9]{2,12}$",
 ];
+
+// Legacy scenario slugs that were renamed or removed. 301-redirect every old
+// URL form (/use-cases/<old>, /en/<old>, /zh/<old>) to the closest live page
+// so Google stops reporting them as 404 and consolidates the signals.
+const legacyScenarioRedirects: Record<string, string> = {
+  // Renamed (content moved to a new slug)
+  "exam-countdown-wallpaper": "exam-countdown-lock-screen",
+  "daily-todo-wallpaper": "daily-priority-lock-screen",
+  "study-lock-screen-wallpaper": "study-plan-lock-screen",
+  "metformin-after-dinner-reminder": "medication-reminder-lock-screen",
+  "ai-one-thing-lock-screen": "daily-priority-lock-screen",
+  "doomscrolling-blocker-wallpaper": "habit-tracker-lock-screen",
+  "stop-doomscrolling-lock-screen": "habit-tracker-lock-screen",
+  // Removed scenarios -> closest live equivalent
+  "keys-wallet-door-card-reminder": "daily-priority-lock-screen",
+  "passport-before-flight-lock-screen": "daily-priority-lock-screen",
+  "p0-incident-lock-screen-alert": "caregiver-emergency-lock-screen",
+  "n8n-urgent-alerts-lockscreen": "caregiver-emergency-lock-screen",
+};
 
 export const isPublicRoute = createRouteMatcher([
   "/",
@@ -133,6 +159,22 @@ export const middleware = clerkMiddleware(async (auth, req: NextRequest) => {
     const locale = getLocale(req);
     // 308 permanent: consolidate SEO signals from "/" onto "/<locale>" (was 307)
     return NextResponse.redirect(new URL(`/${locale}${searchParams}`, req.url), 308);
+  }
+
+  // 301 redirects for renamed/removed scenario slugs (see legacyScenarioRedirects).
+  // Handles all three URL forms: /use-cases/<old>, /en/<old>, /zh/<old>.
+  const legacyMatch = pathname.match(
+    /^\/(?:use-cases|en|zh)\/([a-z0-9-]+)\/?$/,
+  );
+  if (legacyMatch) {
+    const newSlug = legacyScenarioRedirects[legacyMatch[1]];
+    if (newSlug) {
+      // zh visitors stay on the zh page; everyone else goes to the canonical /use-cases URL.
+      const dest = pathname.startsWith("/zh/")
+        ? `/zh/${newSlug}`
+        : `/use-cases/${newSlug}`;
+      return NextResponse.redirect(new URL(dest, req.url), 301);
+    }
   }
 
   const pathnameIsMissingLocale = i18n.locales.every(

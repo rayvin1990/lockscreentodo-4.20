@@ -27,7 +27,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {};
   }
 
-  const canonical = `${siteConfig.url}/use-cases/${scenario.slug}`;
+  // Canonical differs per language: the English scenario page is canonical at
+  // /use-cases/<slug>, while the Chinese page is distinct Chinese content and
+  // must be canonical at /zh/<slug> (otherwise Google treats /zh pages as
+  // duplicates of the English URL and never indexes the Chinese content).
+  const canonical =
+    lang === "zh"
+      ? `${siteConfig.url}/zh/${scenario.slug}`
+      : `${siteConfig.url}/use-cases/${scenario.slug}`;
   const langPath = lang === "zh" ? "/zh" : "/en";
 
   return {
@@ -37,8 +44,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: {
       canonical,
       languages: {
-        en: `${siteConfig.url}/en/${scenario.slug}`,
-        zh: `${siteConfig.url}/zh/${scenario.slug}`,
+        en: `${siteConfig.url}/use-cases/${scenario.slug}`,
+        "zh-Hans": `${siteConfig.url}/zh/${scenario.slug}`,
+        "x-default": `${siteConfig.url}/use-cases/${scenario.slug}`,
       },
     },
     robots: {
