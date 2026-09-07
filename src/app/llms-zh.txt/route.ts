@@ -1,4 +1,6 @@
-# 锁屏待办
+// Served via an App Router route handler (same reason as llms.txt route).
+// Content mirrors public/llms-zh.txt (Simplified Chinese).
+const content = `# 锁屏待办
 
 > 把你的 Notion 任务转成手机锁屏壁纸。免费、只读 OAuth、无需装 App。
 
@@ -63,3 +65,15 @@
 ## English version
 
 This file is the Chinese version. For the full English LLM reference, see https://lockscreentodo.com/llms-full.txt
+`;
+
+export const dynamic = "force-static";
+
+export function GET() {
+  return new Response(content, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400",
+    },
+  });
+}

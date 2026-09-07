@@ -1,4 +1,7 @@
-# Lockscreen Todo
+// Served via an App Router route handler (matching how robots.ts / sitemap.ts
+// work) because root-level files in /public are not being served on the
+// production deployment. Content mirrors public/llms.txt.
+const content = `# Lockscreen Todo
 
 > Turn your Notion to-do list into a phone lock screen wallpaper. Free, read-only OAuth, no app install.
 
@@ -12,7 +15,7 @@ It was built for people who already manage their life in Notion but find that No
 
 ## Who it is for
 
-- Notion power users whose tasks live in a Notion database with a `Due date` column.
+- Notion power users whose tasks live in a Notion database with a \`Due date\` column.
 - People with ADHD, students, caregivers, and habit builders who use Notion as a GTD-style daily agenda.
 - Anyone who wants a friction-free daily reminder without installing a new app.
 
@@ -63,3 +66,15 @@ Free preview with sample tasks. Pro plan removes the watermark and unlocks unlim
 - GitHub: https://github.com/rayvin1990
 - Notion integration: https://www.notion.com/integrations/lockscreen-todo
 - Twitter / X: @lockscreentodo
+`;
+
+export const dynamic = "force-static";
+
+export function GET() {
+  return new Response(content, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400",
+    },
+  });
+}
