@@ -6,7 +6,7 @@ console.log('Generator page loaded - VERSION 2025-02-27-v2');
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Smartphone, Plus, Trash2, X, Download, Share2, Twitter, Facebook, Linkedin, Send, ShoppingCart, Settings, GripVertical, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Smartphone, Plus, Trash2, X, Download, Share2, Twitter, Facebook, Linkedin, Send, ShoppingCart, Settings, GripVertical, Sparkles, CheckCircle2, LogIn } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/use-toast";
 import { useAuth } from "@clerk/nextjs";
@@ -278,6 +278,9 @@ export default function GeneratorPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [qrUnavailableReason, setQrUnavailableReason] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // True right after an anonymous visitor (no sign-in) generates a sample
+  // wallpaper locally. Drives the "connect Notion / sign in" nudge in the modal.
+  const [isGuestGenerated, setIsGuestGenerated] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
   const [hasUploadedImage, setHasUploadedImage] = useState(false);
   const [isMouseInPhone, setIsMouseInPhone] = useState(false);
@@ -1411,6 +1414,63 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
     if (hasRealTask) setIsSampleMode(false);
   }, [wallpaperStyle.tasks, isSampleMode]);
 
+  // Render the currently-visible preview to a PNG data URL at 2x. Purely local —
+  // used by both anonymous guest generation and the normal download path.
+  const renderActiveCanvasToPng = async (): Promise<string> => {
+    const canvas = getActiveCanvas();
+    if (!canvas) throw new Error("canvas_missing");
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) throw new Error("canvas_hidden");
+
+    // @ts-expect-error dom-to-image types mismatch
+    const { toPng } = await import("dom-to-image");
+    const scale = 2;
+    return toPng(canvas, {
+      width: rect.width * scale,
+      height: rect.height * scale,
+      quality: 1,
+      bgcolor: "#0F1117",
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        backdropFilter: "none !important",
+        webkitBackdropFilter: "none !important",
+      },
+    });
+  };
+
+  // Save a PNG data URL via the native share sheet (mobile) or an <a download>
+  // fallback (desktop). Returns true if the user completed a save/share.
+  const saveOrSharePng = async (dataUrl: string): Promise<boolean> => {
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `lockscreen-${Date.now()}.png`, { type: "image/png" });
+
+    if (
+      typeof navigator !== "undefined" &&
+      "canShare" in navigator &&
+      typeof navigator.share === "function" &&
+      navigator.canShare({ files: [file] })
+    ) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "Lock Screen Wallpaper",
+          text: "My Notion tasks as a lock screen",
+        });
+        return true;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return false;
+        // Fall through to download link on other share errors.
+      }
+    }
+
+    const link = document.createElement("a");
+    link.download = file.name;
+    link.href = dataUrl;
+    link.click();
+    return true;
+  };
+
   const generateWallpaper = async () => {
     console.log('Starting wallpaper generation...');
 
@@ -1423,19 +1483,6 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       return;
     }
 
-    const authToken = await getToken();
-
-    if (!authToken) {
-      console.log('User not authenticated');
-      toast({
-        variant: "destructive",
-        title: "Please sign in first",
-        description: "Sign in to generate wallpapers",
-      });
-      router.push(`/${currentLang}/sign-in`);
-      return;
-    }
-
     if (wallpaperStyle.tasks.length === 0) {
       console.log('No tasks found');
       toast({
@@ -1443,6 +1490,43 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
         title: "No tasks",
         description: "Please add at least one task",
       });
+      return;
+    }
+
+    const authToken = await getToken();
+
+    // Anonymous guest path: render the preview locally and let them save the
+    // sample wallpaper with zero sign-up. No check-limit / R2 / usage writes.
+    // Aha moment first — the success modal then nudges them to connect Notion.
+    if (!authToken) {
+      console.log('Guest generation (no auth) — local render only');
+      setIsGenerating(true);
+      setShareUrl(null);
+      setQrUnavailableReason(null);
+      try {
+        const dataUrl = await renderActiveCanvasToPng();
+        await saveOrSharePng(dataUrl);
+        setIsGuestGenerated(true);
+        setShowSuccessModal(true);
+        trackEvent("wallpaper_generate_success", {
+          taskCount: wallpaperStyle.tasks.length,
+          signedIn: false,
+          guest: true,
+        });
+      } catch (err) {
+        console.error("Guest generation failed:", err);
+        trackEvent("wallpaper_download_failed", {
+          reason: err instanceof Error ? err.message : "guest_render_failed",
+          signedIn: false,
+        });
+        toast({
+          variant: "destructive",
+          title: "Generation failed",
+          description: "Could not render the preview. Please try again.",
+        });
+      } finally {
+        setIsGenerating(false);
+      }
       return;
     }
 
@@ -1692,6 +1776,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
 
       await recordDownload();
 
+      setIsGuestGenerated(false);
       setShowSuccessModal(true);
       trackEvent("wallpaper_generate_success", {
         taskCount: wallpaperStyle.tasks.length,
@@ -2939,17 +3024,34 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                     includeMargin={false}
                   />
                 </div>
+              ) : isGuestGenerated ? (
+                <div className="flex h-[212px] w-[212px] flex-col items-center justify-center gap-3 rounded-2xl border border-emerald-800/60 bg-emerald-950/30 p-4 text-center">
+                  <CheckCircle2 className="h-12 w-12 text-emerald-400" />
+                  <p className="text-sm leading-5 text-emerald-200">
+                    Sample wallpaper saved to your device
+                  </p>
+                </div>
               ) : (
                 <div className="flex h-[212px] w-[212px] items-center justify-center rounded-2xl border border-gray-700 bg-gray-900 p-4 text-center">
                   <p className="text-sm leading-5 text-gray-400">
-                    {qrUnavailableReason || "QR code is unavailable because no share URL was created."}
+                    {qrUnavailableReason || "Use Download Wallpaper on this device"}
                   </p>
                 </div>
               )}
                 <p className="text-sm text-gray-400 text-center">
-                  {shareUrl ? "Scan QR code to download wallpaper" : "Use Download Wallpaper on this device"}
+                  {shareUrl ? "Scan QR code to download wallpaper" : isGuestGenerated ? "Want your real tasks there?" : "Use Download Wallpaper on this device"}
                 </p>
             </div>
+
+            {isGuestGenerated ? (
+              <a
+                href={`/${currentLang}/sign-in`}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-3 text-base font-semibold text-white hover:bg-indigo-500"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign in & connect Notion — it's free
+              </a>
+            ) : null}
 
             <Button
               onClick={handleDownload}
@@ -2960,6 +3062,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
               Download Wallpaper
             </Button>
 
+            {shareUrl ? (
             <div className="space-y-3">
               <p className="text-sm font-semibold text-gray-300 text-center">
                 Share on Social Media
@@ -3020,6 +3123,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                 </Button>
               </div>
             </div>
+            ) : null}
 
             <Button
               onClick={() => setShowSuccessModal(false)}
