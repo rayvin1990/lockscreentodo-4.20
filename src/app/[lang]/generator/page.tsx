@@ -3051,7 +3051,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-3 text-base font-semibold text-white hover:bg-indigo-500"
               >
                 <LogIn className="h-4 w-4" />
-                Sign in & connect Notion — it's free
+                Sign in &amp; connect Notion for free
               </a>
             ) : null}
 
