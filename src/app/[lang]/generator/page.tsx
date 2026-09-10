@@ -209,9 +209,30 @@ export default function GeneratorPage() {
     };
   }, []);
 
-  const canvasRef = useRef<HTMLDivElement>(null);
+  // The mobile and desktop previews are BOTH always mounted (toggled via CSS
+  // lg:hidden / hidden lg:grid). Sharing one ref between them made React point
+  // it at whichever mounted last — on phones that was the display:none desktop
+  // node (0x0), so generate/download read a hidden canvas and failed. Use
+  // separate refs and always operate on the preview that actually has size.
+  const canvasMobileRef = useRef<HTMLDivElement>(null);
+  const canvasDesktopRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const phoneScreenRef = useRef<HTMLDivElement>(null);
+  const phoneScreenMobileRef = useRef<HTMLDivElement>(null);
+  const phoneScreenDesktopRef = useRef<HTMLDivElement>(null);
+
+  const getActiveCanvas = useCallback((): HTMLDivElement | null => {
+    const hasSize = (el: HTMLDivElement | null) => {
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    };
+    return (
+      (hasSize(canvasMobileRef.current) ? canvasMobileRef.current : null) ||
+      (hasSize(canvasDesktopRef.current) ? canvasDesktopRef.current : null) ||
+      canvasMobileRef.current ||
+      canvasDesktopRef.current
+    );
+  }, []);
 
   const [isMobile, setIsMobile] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -598,9 +619,6 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
   }, [isMouseInPhone]);
 
   useEffect(() => {
-    const phoneScreen = phoneScreenRef.current;
-    if (!phoneScreen) return;
-
     const handleWheelNative = (e: WheelEvent) => {
       console.log('Native wheel event:', { isMouseInPhone, deltaY: e.deltaY });
 
@@ -628,10 +646,14 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       }
     };
 
-    phoneScreen.addEventListener('wheel', handleWheelNative, { passive: false });
+    // Attach to both previews; the hidden one simply never receives wheel events.
+    const nodes = [phoneScreenMobileRef.current, phoneScreenDesktopRef.current].filter(
+      (el): el is HTMLDivElement => !!el,
+    );
+    nodes.forEach(n => n.addEventListener('wheel', handleWheelNative, { passive: false }));
 
     return () => {
-      phoneScreen.removeEventListener('wheel', handleWheelNative);
+      nodes.forEach(n => n.removeEventListener('wheel', handleWheelNative));
     };
   }, [isMouseInPhone, wallpaperStyle.backgroundType, wallpaperStyle.backgroundImage, wallpaperStyle.backgroundScale]);
 
@@ -1489,7 +1511,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       const domtoimage = require("dom-to-image") as typeof import("dom-to-image");
       const toPng = (domtoimage as unknown as { toPng: Function }).toPng;
 
-      const canvas = canvasRef.current;
+      const canvas = getActiveCanvas();
       if (!canvas) {
         console.error('Canvas ref is null');
         throw new Error("Canvas not found - please try refreshing the page");
@@ -1699,8 +1721,20 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
   };
 
   const handleDownload = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvas = getActiveCanvas();
+    if (!canvas) {
+      console.error("Download failed: active canvas not found");
+      trackEvent("wallpaper_download_failed", {
+        reason: "canvas_missing",
+        signedIn: isSignedIn,
+      });
+      toast({
+        title: "Download failed",
+        description: "Preview not ready. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // @ts-expect-error dom-to-image types mismatch
     const { toPng } = await import("dom-to-image");
@@ -1722,6 +1756,10 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       });
     } catch (err) {
       console.error("Failed to render wallpaper to PNG:", err);
+      trackEvent("wallpaper_download_failed", {
+        reason: "render_png_failed",
+        signedIn: isSignedIn,
+      });
       toast({
         title: "Download failed",
         description: "Could not generate the wallpaper image. Please try again.",
@@ -1782,7 +1820,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
     if (!shareUrl) return;
 
     try {
-      const canvas = canvasRef.current;
+      const canvas = getActiveCanvas();
       if (!canvas) return;
 
       const domtoimage = await import("dom-to-image") as unknown as { toPng: Function };
@@ -1912,12 +1950,12 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
               <p className="text-[11px] text-gray-400 mb-2">Tap any text to edit</p>
               <div className="flex-1 min-h-0 flex items-center justify-center">
                 <RealisticPhoneMockup
-                  ref={phoneScreenRef}
+                  ref={phoneScreenMobileRef}
                   onScreenMouseEnter={() => setIsMouseInPhone(true)}
                   onScreenMouseLeave={() => setIsMouseInPhone(false)}
                 >
                   <div
-                    ref={canvasRef}
+                    ref={canvasMobileRef}
                     className="w-full h-full relative"
                     style={{
                       background: wallpaperStyle.backgroundType === "preset" && wallpaperStyle.backgroundImage
@@ -2170,12 +2208,12 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
 
                 <div className="flex justify-center flex-1 min-h-0 items-center">
                   <RealisticPhoneMockup
-                    ref={phoneScreenRef}
+                    ref={phoneScreenDesktopRef}
                     onScreenMouseEnter={() => setIsMouseInPhone(true)}
                     onScreenMouseLeave={() => setIsMouseInPhone(false)}
                   >
                     <div
-                      ref={canvasRef}
+                      ref={canvasDesktopRef}
                       className="w-full h-full relative"
                       style={{
                         background: wallpaperStyle.backgroundType === "preset" && wallpaperStyle.backgroundImage
