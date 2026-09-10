@@ -1504,8 +1504,10 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       setShareUrl(null);
       setQrUnavailableReason(null);
       try {
-        const dataUrl = await renderActiveCanvasToPng();
-        await saveOrSharePng(dataUrl);
+        // Render once to confirm the wallpaper builds, then let the success
+        // modal drive the explicit Download / connect-Notion choice (rather
+        // than auto-opening the share sheet, which can be cancelled).
+        await renderActiveCanvasToPng();
         setIsGuestGenerated(true);
         setShowSuccessModal(true);
         trackEvent("wallpaper_generate_success", {
