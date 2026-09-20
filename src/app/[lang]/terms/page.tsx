@@ -1,12 +1,21 @@
 import fs from 'fs/promises';
 import path from 'path';
 import ReactMarkdown from 'react-markdown';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Terms of Use - Lockscreen Todo',
-  description: 'Terms of Service for Lockscreen Todo',
-};
+import { buildPageMetadata } from '~/lib/page-metadata';
+
+export function generateMetadata({
+  params,
+}: {
+  params: { lang: string };
+}): Metadata {
+  const lang = params.lang === 'zh' ? 'zh' : 'en';
+  return buildPageMetadata(lang, '/terms', {
+    title: 'Terms of Use - Lockscreen Todo',
+    description: 'Terms of Service for Lockscreen Todo',
+  });
+}
 
 async function getTermsContent() {
   const filePath = path.join(process.cwd(), 'public', 'TERMS_OF_USE.md');

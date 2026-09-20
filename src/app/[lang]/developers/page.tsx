@@ -3,12 +3,20 @@ import Link from "next/link";
 import { ArrowRight, Braces, KeyRound, Smartphone, TerminalSquare } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { buildPageMetadata } from "~/lib/page-metadata";
 
-export const metadata: Metadata = {
-  title: "Developers - Lockscreen MCP",
-  description:
-    "Use Lockscreen MCP to let agents send human-only real-world reminders to a phone lockscreen workflow.",
-};
+export function generateMetadata({
+  params,
+}: {
+  params: { lang: string };
+}): Metadata {
+  const lang = params.lang === "zh" ? "zh" : "en";
+  return buildPageMetadata(lang, "/developers", {
+    title: "Developers - Lockscreen MCP",
+    description:
+      "Use Lockscreen MCP to let agents send human-only real-world reminders to a phone lockscreen workflow.",
+  });
+}
 
 const pushPayload = `{
   "jsonrpc": "2.0",

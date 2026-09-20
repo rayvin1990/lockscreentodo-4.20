@@ -91,25 +91,18 @@ export function generateMetadata({
   const lang: "en" | "zh" = params.lang === "zh" ? "zh" : "en";
   const seo = seoCopy[lang];
   const baseUrl = siteConfig.url;
-  const path = lang === "zh" ? "/zh" : "/en";
 
   return {
     title: seo.title,
     description: seo.description,
     keywords: seo.keywords,
-    alternates: {
-      canonical: `${baseUrl}${path}`,
-      languages: {
-        "en-US": `${baseUrl}/en`,
-        "zh-Hans": `${baseUrl}/zh`,
-        "x-default": `${baseUrl}/en`,
-      },
-    },
+    // No layout-level canonical: it must match each page's own URL. Pages set
+    // it themselves via buildPageMetadata; a layout default to /en or /zh made
+    // every subpage canonical to the homepage.
     openGraph: {
       type: "website",
       title: seo.ogTitle,
       description: seo.ogDescription,
-      url: `${baseUrl}${path}`,
       siteName: siteConfig.name,
       images: [
         {

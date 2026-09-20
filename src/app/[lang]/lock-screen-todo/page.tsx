@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { Button } from "~/components/ui/button";
+import { buildPageMetadata } from "~/lib/page-metadata";
 import { 
   CheckCircle2, 
   Smartphone, 
@@ -23,14 +24,15 @@ const RealisticPhoneMockup = dynamic(
 );
 
 export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
-  return {
+  const lang = params.lang === "zh" ? "zh" : "en";
+  return buildPageMetadata(lang, "/lock-screen-todo", {
     title: "Lock Screen Todo — Turn Your Lock Screen Into a To-Do List",
     description: "Create a personalized lock screen with your tasks, reminders, or habits. No app. No install. Works instantly.",
     openGraph: {
       title: "Lock Screen Todo — Turn Your Lock Screen Into a To-Do List",
       description: "Create a personalized lock screen with your tasks, reminders, or habits. No app. No install. Works instantly.",
     }
-  };
+  });
 }
 
 const ShowcaseWallpaper = () => (
