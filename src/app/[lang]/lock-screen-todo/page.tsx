@@ -334,24 +334,23 @@ export default function LockScreenTodoPage({ params }: { params: { lang: string 
             <div className="space-y-4">
               <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Product</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Lock Screen Todo</Link></li>
-                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Reminder Wallpaper</Link></li>
                 <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">Generator</Link></li>
+                <li><Link href={`/${lang}/lock-screen-widget-vs-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Widget vs Wallpaper</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
-              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Solutions</h4>
+              <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Guides</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Daily Tasks</Link></li>
-                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Medication Reminders</Link></li>
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">Habit Tracker</Link></li>
+                <li><Link href={`/${lang}/how-to-put-todo-list-on-lock-screen`} className="text-sm text-slate-400 hover:text-white transition-colors">How to Put a To-Do List on Your Lock Screen</Link></li>
+                <li><Link href={`/${lang}/iphone-lock-screen-todo-list`} className="text-sm text-slate-400 hover:text-white transition-colors">iPhone Lock Screen Todo List</Link></li>
+                <li><Link href={`/${lang}/android-lock-screen-todo-list`} className="text-sm text-slate-400 hover:text-white transition-colors">Android Lock Screen Todo List</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
               <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Legal</h4>
               <ul className="space-y-2">
-                <li><Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href={`/${lang}/terms`} className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href={`/${lang}/privacy`} className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>

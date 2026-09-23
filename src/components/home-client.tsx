@@ -89,6 +89,9 @@ const copy = {
       dailyTasks: "Daily Tasks",
       study: "Study Wallpaper",
       habits: "Habit Tracker",
+      iphoneList: "iPhone Lock Screen Todo",
+      androidList: "Android Lock Screen Todo",
+      howTo: "How to Put a To-Do List on Your Lock Screen",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
     },
@@ -172,6 +175,9 @@ const copy = {
       dailyTasks: "每日任务",
       study: "学习壁纸",
       habits: "习惯打卡",
+      iphoneList: "iPhone 锁屏待办",
+      androidList: "安卓锁屏待办",
+      howTo: "如何把待办清单放到锁屏",
       privacy: "隐私政策",
       terms: "服务条款",
     },
@@ -528,17 +534,15 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
               <ul className="space-y-2">
                 <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.generator}</Link></li>
                 <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockScreenTodo}</Link></li>
-                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.reminderWallpaper}</Link></li>
                 <li><Link href={`/${lang}/locktodo-alternative`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockTodoAlternative}</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
               <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">{content.solutions}</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.dailyTasks}</Link></li>
-                <li><Link href={`/${lang}/reminder-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.study}</Link></li>
-                <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.habits}</Link></li>
-                <li><Link href={`/${lang}/developers`} className="text-sm text-slate-500 hover:text-white transition-colors">{content.links.developers}</Link></li>
+                <li><Link href={`/${lang}/how-to-put-todo-list-on-lock-screen`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.howTo}</Link></li>
+                <li><Link href={`/${lang}/iphone-lock-screen-todo-list`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.iphoneList}</Link></li>
+                <li><Link href={`/${lang}/android-lock-screen-todo-list`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.androidList}</Link></li>
               </ul>
             </div>
             <div className="space-y-4">

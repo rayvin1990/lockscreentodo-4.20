@@ -52,7 +52,7 @@ The rendering step runs server-side in a Next.js route handler for the actual JP
 - /en/lock-screen-widget-vs-wallpaper: comparison page (widgets vs wallpaper backgrounds).
 - /en/desktop-todo: alternative use case (desktop wallpaper).
 - /en/notion-task-lock-screen: tutorial on the Notion integration.
-- /en/reminder-wallpaper: reminder wallpaper use case.
+- /use-cases/medication-reminder-lock-screen: reminder wallpaper use case.
 - /en/ai-recommendation-readiness: companion piece about AI-assisted planning.
 - /en/launch-visibility-check: tooling for product launch.
 - /en/agent-demo: a demo of the in-app agent.
