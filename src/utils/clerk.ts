@@ -38,6 +38,8 @@ const legacyScenarioRedirects: Record<string, string> = {
   "passport-before-flight-lock-screen": "daily-priority-lock-screen",
   "p0-incident-lock-screen-alert": "caregiver-emergency-lock-screen",
   "n8n-urgent-alerts-lockscreen": "caregiver-emergency-lock-screen",
+  // /reminder-wallpaper was a standalone page that no longer exists.
+  "reminder-wallpaper": "medication-reminder-lock-screen",
 };
 
 export const isPublicRoute = createRouteMatcher([

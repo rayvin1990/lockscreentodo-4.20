@@ -29,6 +29,8 @@ const nextConfig = {
       ["daily-todo-wallpaper", "daily-priority-lock-screen"],
       ["passport-before-flight-lock-screen", "daily-priority-lock-screen"],
       ["n8n-urgent-alerts-lockscreen", "daily-priority-lock-screen"],
+      // standalone reminder-wallpaper page removed -> closest live scenario
+      ["reminder-wallpaper", "medication-reminder-lock-screen"],
     ];
     return legacyScenarioMap.flatMap(([from, to]) => [
       {
