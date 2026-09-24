@@ -376,6 +376,19 @@ function main() {
     return;
   }
 
+  // --stdin: read the diff directly from stdin instead of spawning git.
+  // Useful in sandboxes where a child node process cannot spawn git (EBUSY).
+  if (args.has("--stdin")) {
+    const diff = readStdin();
+    const findings = parseDiff(diff);
+    if (findings.length > 0) {
+      printFindings(findings, "staged");
+      process.exit(1);
+    }
+    console.log("Secret Guard: stdin changes passed.");
+    return;
+  }
+
   const mode = args.has("--all") ? "all" : args.has("--push") ? "push" : "staged";
   if (mode === "all") {
     const files = getTrackedFiles();
