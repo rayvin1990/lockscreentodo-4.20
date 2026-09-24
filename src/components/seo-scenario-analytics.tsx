@@ -60,17 +60,20 @@ export function SeoScenarioTrackedLink({
   lang,
   template,
   target,
+  rel,
 }: ScenarioAnalyticsPayload & {
   href: string;
   children: React.ReactNode;
   className?: string;
   event: "seo_scenario_cta_click" | "seo_scenario_secondary_click";
   target: string;
+  rel?: string;
 }) {
   return (
     <Link
       href={href}
       className={className}
+      rel={rel}
       onClick={() => {
         trackEvent(event, {
           scenario,

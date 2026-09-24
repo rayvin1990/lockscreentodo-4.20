@@ -276,6 +276,7 @@ export function SeoScenarioPage({
                   lang={lang}
                   template={scenario.template}
                   target="generator_template"
+                  rel="nofollow"
                 >
                   <Button className="h-12 rounded-full bg-white px-8 font-bold text-black hover:bg-indigo-50">
                     {copy.create}
