@@ -48,6 +48,7 @@ The rendering step runs server-side in a Next.js route handler for the actual JP
 - / (or /en, /zh): the home page, with hero, use cases, before/after, and how-it-works sections
 - /en/generator: the main tool. Connects Notion, picks tasks, generates the wallpaper.
 - /en/lock-screen-todo: long-form SEO landing page targeted at "lock screen todo" keyword cluster.
+- /en/lock-screen-maker: landing page for the "lock screen maker" / "to do list wallpaper maker" cluster, explaining the difference between a generated wallpaper, a widget, and an app.
 - /en/lock-screen-productivity: pillar article about using the lock screen as a productivity surface.
 - /en/lock-screen-widget-vs-wallpaper: comparison page (widgets vs wallpaper backgrounds).
 - /en/desktop-todo: alternative use case (desktop wallpaper).

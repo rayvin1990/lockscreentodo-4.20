@@ -603,8 +603,53 @@ export const seoScenarios: SeoScenario[] = [
         "写 300 字",
       ],
     },
+    faqs: [
+      {
+        q: {
+          en: "Can I put a habit tracker on my lock screen without installing an app?",
+          zh: "不装 App 能把习惯打卡放到锁屏上吗？",
+        },
+        a: {
+          en: "Yes. Generate a habit wallpaper in the browser, download the image, and set it as your lock screen. Nothing is installed on the phone and no permissions are granted.",
+          zh: "可以。在浏览器里生成习惯壁纸，下载图片后设为锁屏即可。手机不用装任何东西，也不需要授权。",
+        },
+      },
+      {
+        q: {
+          en: "Does the streak or checklist update automatically at midnight?",
+          zh: "打卡记录会每天自动更新吗？",
+        },
+        a: {
+          en: "No. The wallpaper is a static image, so you regenerate it when you want the new day or the new streak shown. That takes a few seconds and keeps the battery cost at zero.",
+          zh: "不会。壁纸是静态图片，需要时重新生成一次就能显示新的一天或新的连胜记录。整个过程几秒钟，而且完全不耗电。",
+        },
+      },
+      {
+        q: {
+          en: "How many habits should I show on the lock screen?",
+          zh: "锁屏上放几个习惯合适？",
+        },
+        a: {
+          en: "One to three for a streak tracker, up to five if you only need a simple checklist. More than that turns the wallpaper into noise you stop seeing.",
+          zh: "如果是打卡连胜，一到三个就够；只做简单清单最多五个。再多了壁纸就变成噪音，你会自动忽略它。",
+        },
+      },
+      {
+        q: {
+          en: "Is a habit wallpaper better than a lock screen widget?",
+          zh: "习惯壁纸和锁屏小组件比，哪个好？",
+        },
+        a: {
+          en: "A widget is live and tappable but only fits one or two items. A wallpaper shows the whole habit row at a readable size and never drains battery. Use the widget for one next action, the wallpaper for the full daily picture.",
+          zh: "小组件是实时、可点击的，但只放得下一两条。壁纸能把整排习惯以可读的字号显示出来，而且不耗电。想提醒下一个动作用小组件，想看一整天的全貌用壁纸。",
+        },
+      },
+    ],
     keywords: [
       "habit tracker lock screen",
+      "habit tracker wallpaper",
+      "habit tracker on iphone wallpaper",
+      "habit tracker wallpaper android",
       "habit reminder wallpaper",
       "daily habits lock screen",
       "habit streak wallpaper",

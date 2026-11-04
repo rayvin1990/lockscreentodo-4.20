@@ -11,6 +11,8 @@ const baseRoutes: { route: string; lastModified?: string }[] = [
   { route: "/zh/generator", lastModified: "2026-07-12" },
   { route: "/en/lock-screen-todo", lastModified: "2026-07-12" },
   { route: "/zh/lock-screen-todo", lastModified: "2026-07-12" },
+  { route: "/en/lock-screen-maker", lastModified: "2026-11-04" },
+  { route: "/zh/lock-screen-maker", lastModified: "2026-11-04" },
   { route: "/en/lock-screen-widget-vs-wallpaper", lastModified: "2026-07-12" },
   { route: "/zh/lock-screen-widget-vs-wallpaper", lastModified: "2026-07-12" },
   { route: "/en/lock-screen-productivity", lastModified: "2026-07-12" },
@@ -70,7 +72,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ? 1
       : isScenarioRoute(route)
         ? 0.9
-        : (route.includes("/generator") || route.includes("/lock-screen-todo") || route.includes("/lock-screen-widget-vs-wallpaper") || route.includes("/lock-screen-productivity") || route.includes("/how-to-put-todo-list-on-lock-screen") || route.includes("/how-to-put-todo-list-on-iphone-lock-screen") || route.includes("/about"))
+        : (route.includes("/generator") || route.includes("/lock-screen-todo") || route.includes("/lock-screen-maker") || route.includes("/lock-screen-widget-vs-wallpaper") || route.includes("/lock-screen-productivity") || route.includes("/how-to-put-todo-list-on-lock-screen") || route.includes("/how-to-put-todo-list-on-iphone-lock-screen") || route.includes("/about"))
           ? 0.9
           : 0.6,
   }));

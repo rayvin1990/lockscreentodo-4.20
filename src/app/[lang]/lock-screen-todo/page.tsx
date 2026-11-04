@@ -335,6 +335,7 @@ export default function LockScreenTodoPage({ params }: { params: { lang: string 
               <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Product</h4>
               <ul className="space-y-2">
                 <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">Generator</Link></li>
+                <li><Link href={`/${lang}/lock-screen-maker`} className="text-sm text-slate-400 hover:text-white transition-colors">Lock Screen Maker</Link></li>
                 <li><Link href={`/${lang}/lock-screen-widget-vs-wallpaper`} className="text-sm text-slate-400 hover:text-white transition-colors">Widget vs Wallpaper</Link></li>
               </ul>
             </div>

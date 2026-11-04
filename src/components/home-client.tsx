@@ -82,7 +82,7 @@ const copy = {
     useCaseSubtitle: "Start from a specific situation, then customize the wallpaper in the generator.",
     links: {
       lockScreenTodo: "Lock Screen Todo",
-      reminderWallpaper: "Reminder Wallpaper",
+      lockScreenMaker: "Lock Screen Maker",
       lockTodoAlternative: "LockTodo Alternative",
       generator: "Generator",
       developers: "Developers",
@@ -168,7 +168,7 @@ const copy = {
     useCaseSubtitle: "先从一个明确场景开始，再到生成器里改成自己的内容。",
     links: {
       lockScreenTodo: "锁屏待办",
-      reminderWallpaper: "提醒壁纸",
+      lockScreenMaker: "锁屏制作器",
       lockTodoAlternative: "对比 LockTodo",
       generator: "生成器",
       developers: "开发者",
@@ -534,6 +534,7 @@ export default function LocaleHomePage({ params }: { params: { lang: string } })
               <ul className="space-y-2">
                 <li><Link href={`/${lang}/generator`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.generator}</Link></li>
                 <li><Link href={`/${lang}/lock-screen-todo`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockScreenTodo}</Link></li>
+                <li><Link href={`/${lang}/lock-screen-maker`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockScreenMaker}</Link></li>
                 <li><Link href={`/${lang}/locktodo-alternative`} className="text-sm text-slate-400 hover:text-white transition-colors">{content.links.lockTodoAlternative}</Link></li>
               </ul>
             </div>
