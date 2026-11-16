@@ -118,6 +118,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // GA4 measurement id is a public identifier (not a secret). Override with
+  // NEXT_PUBLIC_GA_MEASUREMENT_ID if the property ever changes.
+  const gaMeasurementId =
+    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-SMC0X3CK76";
+  // Only load GA in production builds so local dev and CI don't pollute data.
+  const gaEnabled = process.env.NODE_ENV === "production";
+
   const app = (
     <ThemeProvider
       attribute="class"
@@ -129,6 +136,22 @@ export default function RootLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
+      {gaEnabled ? (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga4-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${gaMeasurementId}', { anonymize_ip: true });
+            `}
+          </Script>
+        </>
+      ) : null}
       {children}
       <Toaster />
       <Analytics />

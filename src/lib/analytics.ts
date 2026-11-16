@@ -6,6 +6,23 @@ type AnalyticsPayload = {
 export function trackEvent(event: string, properties?: AnalyticsPayload["properties"]) {
   if (typeof window === "undefined") return;
 
+  // Forward to GA4 as a custom event when the gtag snippet is loaded
+  // (production only — see RootLayout). Events show up in GA under the
+  // event name, with payload keys as event parameters.
+  const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+  if (typeof gtag === "function") {
+    try {
+      // GA4 event parameters must not be null/undefined.
+      const params: Record<string, string | number | boolean> = {};
+      for (const [key, value] of Object.entries(properties ?? {})) {
+        if (value != null) params[key] = value;
+      }
+      gtag("event", event, params);
+    } catch (e) {
+      console.warn("[trackEvent] gtag forward threw:", e);
+    }
+  }
+
   const payload = JSON.stringify({
     event,
     properties,
