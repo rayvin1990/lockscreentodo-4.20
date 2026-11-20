@@ -1204,6 +1204,53 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
     }
   };
 
+  // Surface Notion OAuth failures. The callback redirects failed connects to
+  // /{lang}/generator?error=<code> — before this handler existed those params
+  // were silently ignored, so users believed they were connected and then hit
+  // "Notion not connected" on the manual import.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthError = urlParams.get("error");
+    const knownErrors = [
+      "access_denied",
+      "no_code",
+      "oauth_config",
+      "token_exchange_failed",
+      "db_unavailable",
+      "user_upsert_failed",
+      "internal_error",
+    ];
+    if (!oauthError || !knownErrors.includes(oauthError)) return;
+
+    const detail = urlParams.get("detail") ?? "";
+    const friendly =
+      oauthError === "access_denied"
+        ? "Notion authorization was cancelled or no pages were selected. Click Connect Notion again, open \"Select pages\", and tick the database that holds your to-dos."
+        : oauthError === "token_exchange_failed"
+        ? "Notion rejected the connection. Please try connecting again."
+        : "Notion connection failed. Please try connecting again.";
+
+    trackEvent("notion_oauth_return", {
+      status: "failed",
+      error: oauthError,
+    });
+    toast({
+      variant: "destructive",
+      title: "Notion connection failed",
+      description: detail ? `${friendly} (${detail.slice(0, 120)})` : friendly,
+    });
+
+    urlParams.delete("error");
+    urlParams.delete("detail");
+    const query = urlParams.toString();
+    window.history.replaceState(
+      {},
+      "",
+      query ? `${window.location.pathname}?${query}` : window.location.pathname
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     // Wait for Clerk to finish loading before running any logic.
     // Using isLoaded instead of isSignedIn prevents the effect from

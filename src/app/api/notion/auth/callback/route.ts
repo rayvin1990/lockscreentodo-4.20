@@ -11,18 +11,23 @@ export async function GET(req: NextRequest) {
     const state = searchParams.get("state");
     const error = searchParams.get("error");
 
+    // The auth button encodes the UI locale in the state ("zh-<nonce>"), so the
+    // user lands back on the same locale they started from instead of /en.
+    const stateLang = (state ?? "").split("-")[0];
+    const lang = stateLang === "zh" ? "zh" : "en";
+
     if (error) {
       console.error("Notion OAuth error:", error);
       const origin = new URL(req.url).origin;
       return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=${encodeURIComponent(error)}`)
+        new URL(`${origin}/${lang}/generator?error=${encodeURIComponent(error)}`)
       );
     }
 
     if (!code) {
       const origin = new URL(req.url).origin;
       return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=no_code`)
+        new URL(`${origin}/${lang}/generator?error=no_code`)
       );
     }
 
@@ -32,7 +37,7 @@ export async function GET(req: NextRequest) {
     if (!userId) {
       const origin = new URL(req.url).origin;
       return NextResponse.redirect(
-        new URL(`${origin}/sign-in?redirect=/en/generator`)
+        new URL(`${origin}/sign-in?redirect=/${lang}/generator`)
       );
     }
 
@@ -45,7 +50,7 @@ export async function GET(req: NextRequest) {
       console.error("Notion OAuth credentials not configured");
       const origin = new URL(req.url).origin;
       return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=oauth_config`)
+        new URL(`${origin}/${lang}/generator?error=oauth_config`)
       );
     }
 
@@ -69,7 +74,7 @@ export async function GET(req: NextRequest) {
       const errorSummary = errorText.slice(0, 120).replace(/[^\x20-\x7E]/g, "");
       return NextResponse.redirect(
         new URL(
-          `${origin}/en/generator?error=token_exchange_failed&detail=${encodeURIComponent(errorSummary)}`
+          `${origin}/${lang}/generator?error=token_exchange_failed&detail=${encodeURIComponent(errorSummary)}`
         )
       );
     }
@@ -84,7 +89,7 @@ export async function GET(req: NextRequest) {
     if (!supabase) {
       const origin = new URL(req.url).origin;
       return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=db_unavailable`)
+        new URL(`${origin}/${lang}/generator?error=db_unavailable`)
       );
     }
 
@@ -103,19 +108,21 @@ export async function GET(req: NextRequest) {
       console.error("Failed to save Notion token to Supabase:", upsertError);
       const origin = new URL(req.url).origin;
       return NextResponse.redirect(
-        new URL(`${origin}/en/generator?error=user_upsert_failed`)
+        new URL(`${origin}/${lang}/generator?error=user_upsert_failed`)
       );
     }
 
     console.log("Notion token saved for user:", userId);
 
     const origin = new URL(req.url).origin;
-    const redirectUrl = `${origin}/en/generator?notion=connected`;
+    const redirectUrl = `${origin}/${lang}/generator?notion=connected`;
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("Notion OAuth callback error:", error);
     const origin = new URL(req.url).origin;
-    const redirectUrl = `${origin}/en/generator?error=internal_error`;
+    const stateLang = (new URL(req.url).searchParams.get("state") ?? "").split("-")[0];
+    const lang = stateLang === "zh" ? "zh" : "en";
+    const redirectUrl = `${origin}/${lang}/generator?error=internal_error`;
     return NextResponse.redirect(redirectUrl);
   }
 }

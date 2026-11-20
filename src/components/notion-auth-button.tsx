@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "~/components/ui/button";
 import { useToast } from "~/components/ui/use-toast";
 import { trackEvent } from "~/lib/analytics";
@@ -17,14 +19,33 @@ export function NotionAuthButton({
 }: NotionAuthButtonProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const { isLoaded, isSignedIn } = useAuth();
+  const pathname = usePathname();
 
   const handleConnect = async () => {
+    // The OAuth callback exchanges the code server-side, which requires a
+    // signed-in session. Sending a signed-out user to Notion would burn their
+    // consent and drop the authorization code at the sign-in redirect.
+    if (isLoaded && !isSignedIn) {
+      trackEvent("notion_connect_blocked", { reason: "signed_out" });
+      toast({
+        variant: "destructive",
+        title: "Sign in first",
+        description: "Sign in (it takes a second), then connect Notion to import your tasks.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     trackEvent("notion_connect_click", { connected: isConnected });
 
     try {
-      const state = Math.random().toString(36).substring(2, 15) +
-                   Math.random().toString(36).substring(2, 15);
+      // Encode the UI locale in the state so the callback can redirect the
+      // user back to the same locale ("zh-<nonce>" / "en-<nonce>").
+      const lang = pathname?.startsWith("/zh") ? "zh" : "en";
+      const nonce = Math.random().toString(36).substring(2, 15) +
+                    Math.random().toString(36).substring(2, 15);
+      const state = `${lang}-${nonce}`;
 
       sessionStorage.setItem('notion_oauth_state', state);
 
