@@ -235,6 +235,11 @@ export default function GeneratorPage() {
   }, []);
 
   const [isMobile, setIsMobile] = useState(false);
+  // Holds the generated PNG data URL shown in the mobile "long-press to save"
+  // sheet. iOS Safari ignores <a download> for data: URLs and the wallpaper
+  // preview is a DOM canvas (not long-pressable), so a real <img> is the only
+  // reliable save path on iOS.
+  const [savePreviewUrl, setSavePreviewUrl] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showTasksSheet, setShowTasksSheet] = useState(false);
   const [showBackgroundSheet, setShowBackgroundSheet] = useState(false);
@@ -1971,8 +1976,22 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       }
     }
 
-    // Fallback: <a download> for desktop and older browsers. On mobile this still
-    // opens the image in a new tab where the user can long-press to save.
+    // Mobile fallback: surface a real <img> so the user can long-press →
+    // "Save Image". iOS Safari does NOT honor <a download> on data: URLs, and
+    // the wallpaper preview is a canvas (long-press does nothing there).
+    if (isMobile) {
+      setShowSuccessModal(false);
+      setSavePreviewUrl(dataUrl);
+      await recordDownload();
+      trackEvent("wallpaper_download_success", {
+        taskCount: wallpaperStyle.tasks.length,
+        signedIn: isSignedIn,
+        method: "long_press_preview",
+      });
+      return;
+    }
+
+    // Fallback: <a download> for desktop and older browsers.
     const link = document.createElement("a");
     link.download = file.name;
     link.href = dataUrl;
@@ -3217,6 +3236,52 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
               variant="outline"
             >
               Continue Editing
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mobile "long-press to save" sheet — the only reliable save path when
+          the native share sheet is unavailable or fails on mobile Safari. */}
+      <Dialog
+        open={Boolean(savePreviewUrl)}
+        onOpenChange={(open) => {
+          if (!open) setSavePreviewUrl(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md bg-brand-card border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">
+              {currentLang === "zh" ? "长按图片保存壁纸" : "Long-press to save your wallpaper"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {savePreviewUrl ? (
+              <img
+                src={savePreviewUrl}
+                alt="Lock screen wallpaper"
+                className="mx-auto w-full max-w-[260px] rounded-2xl border border-gray-700"
+                style={{
+                  WebkitTouchCallout: "default",
+                  WebkitUserSelect: "auto",
+                  userSelect: "auto",
+                }}
+              />
+            ) : null}
+
+            <p className="text-sm leading-6 text-gray-300 text-center">
+              {currentLang === "zh"
+                ? "长按上面的图片 → 选择「存储到照片」/「保存图片」。保存后在手机设置里把它设为锁屏壁纸。"
+                : 'Long-press the image above → choose "Save to Photos" / "Download image". Then set it as your lock screen in Settings.'}
+            </p>
+
+            <Button
+              onClick={() => setSavePreviewUrl(null)}
+              className="w-full bg-white hover:bg-white/90 text-black font-semibold"
+              size="lg"
+            >
+              {currentLang === "zh" ? "完成" : "Done"}
             </Button>
           </div>
         </DialogContent>
