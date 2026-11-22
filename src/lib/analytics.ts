@@ -37,11 +37,16 @@ export function trackEvent(event: string, properties?: AnalyticsPayload["propert
     try {
       const sent = navigator.sendBeacon("/api/analytics", new Blob([payload], { type: "application/json" }));
       console.log("[trackEvent] sendBeacon returned:", sent);
+      // sendBeacon returned true = the browser queued the request. Falling
+      // through to fetch would POST the same event twice, doubling every row
+      // in analytics_events (and the Sheets webhook) — 91% of rows were dupes.
+      if (sent) return;
     } catch (e) {
       console.warn("[trackEvent] sendBeacon threw:", e);
     }
   }
 
+  // Fallback only when sendBeacon is unavailable or refused to queue.
   void fetch("/api/analytics", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
