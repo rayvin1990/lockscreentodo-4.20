@@ -991,6 +991,24 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
         : `/api/notion/tasks`;
       const response = await fetchWithClerkAuth(tasksUrl);
 
+      if (response.status === 401) {
+        // Notion token expired/revoked — server already cleared it.
+        // Reset the connected state so the Connect Notion button reappears.
+        setIsNotionConnected(false);
+        isNotionConnectedRef.current = false;
+        trackEvent("notion_import_failure", {
+          signedIn: Boolean(isSignedIn),
+          reason: "notion_disconnected",
+        });
+        toast({
+          variant: "destructive",
+          title: "Notion connection expired",
+          description:
+            "Your Notion connection has expired or was revoked. Click \"Connect Notion\" to reconnect, then import again.",
+        });
+        return;
+      }
+
       if (!response.ok) {
         const errorData = await response.json();
         const errorMessage = errorData.message || errorData.error || "Failed to import tasks";
@@ -1382,6 +1400,24 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
               "[Notion OAuth] API returned " + response.status + ":",
               JSON.stringify(errorData, null, 2)
             );
+
+            if (response.status === 401) {
+              // Notion token expired/revoked — stop retrying, the stale token
+              // is already cleared server-side. Let the user reconnect.
+              setIsNotionConnected(false);
+              isNotionConnectedRef.current = false;
+              trackEvent("notion_import_failure", {
+                signedIn: true,
+                reason: "notion_disconnected",
+              });
+              toast({
+                variant: "destructive",
+                title: "Notion connection expired",
+                description:
+                  "Your Notion connection has expired or was revoked. Click \"Connect Notion\" to reconnect, then import again.",
+              });
+              return;
+            }
 
             if (response.status === 404) {
               const rawCount =
