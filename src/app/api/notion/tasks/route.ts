@@ -135,10 +135,11 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Notion tasks fetch error:", error);
     const msg = error instanceof Error ? error.message : String(error);
-    // Dead/revoked Notion token: Notion returns 401. Clear the stale token so
-    // /api/user/notion-status reports disconnected and the UI shows the
-    // Connect button again, then tell the client to reconnect.
-    if (/401|unauthorized/i.test(msg)) {
+    // Dead/revoked Notion token: Notion returns 401. Match only the real
+    // shapes thrown by notionFetch ("failed: 401" or code:"unauthorized") —
+    // a bare /401/ would also match page IDs / titles containing "401" and
+    // wrongly wipe a perfectly valid token.
+    if (/\bfailed:\s*401\b|"code"\s*:\s*"unauthorized"/i.test(msg)) {
       try {
         const supabase = getSupabase();
         const userId = await getAuthenticatedUserId(req);

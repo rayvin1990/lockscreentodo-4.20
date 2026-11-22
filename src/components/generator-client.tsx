@@ -235,11 +235,16 @@ export default function GeneratorPage() {
   }, []);
 
   const [isMobile, setIsMobile] = useState(false);
-  // Holds the generated PNG data URL shown in the mobile "long-press to save"
-  // sheet. iOS Safari ignores <a download> for data: URLs and the wallpaper
-  // preview is a DOM canvas (not long-pressable), so a real <img> is the only
-  // reliable save path on iOS.
+  // Mobile "long-press to save" sheet state. iOS Safari ignores <a download> on
+  // data: URLs and the preview is a canvas (not long-pressable). We keep:
+  //  - dataUrl  → for the "Download image file" link
+  //  - blobUrl  → for <img>, the only URL form Safari reliably offers "Save Image"
+  //  - file     → ready-to-share File, so retrying share needs no await before
+  //               navigator.share (iOS requires transient user activation)
   const [savePreviewUrl, setSavePreviewUrl] = useState<string | null>(null);
+  const [savePreviewObjectUrl, setSavePreviewObjectUrl] = useState<string | null>(null);
+  const [savePreviewFile, setSavePreviewFile] = useState<File | null>(null);
+  const successModalRestoreRef = useRef(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showTasksSheet, setShowTasksSheet] = useState(false);
   const [showBackgroundSheet, setShowBackgroundSheet] = useState(false);
@@ -996,26 +1001,27 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
         : `/api/notion/tasks`;
       const response = await fetchWithClerkAuth(tasksUrl);
 
-      if (response.status === 401) {
-        // Notion token expired/revoked — server already cleared it.
-        // Reset the connected state so the Connect Notion button reappears.
-        setIsNotionConnected(false);
-        isNotionConnectedRef.current = false;
-        trackEvent("notion_import_failure", {
-          signedIn: Boolean(isSignedIn),
-          reason: "notion_disconnected",
-        });
-        toast({
-          variant: "destructive",
-          title: "Notion connection expired",
-          description:
-            "Your Notion connection has expired or was revoked. Click \"Connect Notion\" to reconnect, then import again.",
-        });
-        return;
-      }
-
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
+
+        // A 401 can also mean the Clerk session expired. Only treat it as a
+        // revoked Notion token when the server explicitly says so.
+        if (response.status === 401 && errorData?.error === "notion_disconnected") {
+          setIsNotionConnected(false);
+          isNotionConnectedRef.current = false;
+          trackEvent("notion_import_failure", {
+            signedIn: Boolean(isSignedIn),
+            reason: "notion_disconnected",
+          });
+          toast({
+            variant: "destructive",
+            title: "Notion connection expired",
+            description:
+              "Your Notion connection has expired or was revoked. Click \"Connect Notion\" to reconnect, then import again.",
+          });
+          return;
+        }
+
         const errorMessage = errorData.message || errorData.error || "Failed to import tasks";
         const rawCount = errorData?.debug?.rawSearchCount ?? null;
         const sampleTitles = (errorData?.debug?.rawResults ?? [])
@@ -1406,7 +1412,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
               JSON.stringify(errorData, null, 2)
             );
 
-            if (response.status === 401) {
+            if (response.status === 401 && errorData?.error === "notion_disconnected") {
               // Notion token expired/revoked — stop retrying, the stale token
               // is already cleared server-side. Let the user reconnect.
               setIsNotionConnected(false);
@@ -1895,6 +1901,103 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
     }
   };
 
+  // Review fix: remember whether the success modal (which may contain the QR
+  // code) was open, so closing the save sheet restores it instead of losing it.
+  const openMobileSaveSheet = (
+    dataUrl: string,
+    blob: Blob,
+    file: File,
+    method: string
+  ) => {
+    successModalRestoreRef.current = showSuccessModal;
+    setShowSuccessModal(false);
+    setSavePreviewUrl(dataUrl);
+    setSavePreviewObjectUrl(URL.createObjectURL(blob));
+    setSavePreviewFile(file);
+    trackEvent("wallpaper_save_sheet_shown", {
+      taskCount: wallpaperStyle.tasks.length,
+      signedIn: isSignedIn,
+      method,
+    });
+  };
+
+  // Single cleanup path — triggered by onOpenChange for every close reason
+  // (button, Esc, backdrop). Revoking the blob URL here prevents leaks.
+  const handleSaveSheetOpenChange = (open: boolean) => {
+    if (open) return;
+    if (savePreviewObjectUrl) URL.revokeObjectURL(savePreviewObjectUrl);
+    setSavePreviewUrl(null);
+    setSavePreviewObjectUrl(null);
+    setSavePreviewFile(null);
+    if (successModalRestoreRef.current) {
+      setShowSuccessModal(true);
+      successModalRestoreRef.current = false;
+    }
+  };
+
+  // Actions available inside the mobile long-press save sheet. All reuse the
+  // PNG already generated by handleDownload — no re-render needed.
+  const markWallpaperSaved = (method: string) => {
+    trackEvent("wallpaper_download_success", {
+      taskCount: wallpaperStyle.tasks.length,
+      signedIn: isSignedIn,
+      method,
+    });
+    setSavePreviewUrl(null);
+  };
+
+  const shareFromPreview = async () => {
+    const file = savePreviewFile;
+    if (!file) return;
+    try {
+      // No await before navigator.share: iOS requires transient user activation.
+      const canShare =
+        typeof navigator !== "undefined" &&
+        "canShare" in navigator &&
+        typeof navigator.share === "function" &&
+        navigator.canShare({ files: [file] });
+
+      if (!canShare) {
+        trackEvent("wallpaper_save_share_retry", { result: "unsupported" });
+        toast({
+          variant: "destructive",
+          title: currentLang === "zh" ? "此浏览器不支持分享" : "Sharing not supported",
+          description:
+            currentLang === "zh"
+              ? "请长按上方图片 → 存储到照片"
+              : "Please long-press the image above and choose Save Image.",
+        });
+        return;
+      }
+
+      await navigator.share({
+        files: [file],
+        title: "Lock Screen Wallpaper",
+        text: "My Notion tasks as a lock screen",
+      });
+      trackEvent("wallpaper_save_share_retry", { result: "success" });
+      markWallpaperSaved("web_share_api_retry");
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "unknown";
+      trackEvent("wallpaper_save_share_retry", {
+        result: name === "AbortError" ? "cancelled" : "failed",
+      });
+      if (name !== "AbortError") {
+        console.warn("Retry share failed:", err);
+      }
+    }
+  };
+
+  const downloadFromPreview = () => {
+    const href = savePreviewObjectUrl || savePreviewUrl;
+    if (!href) return;
+    const link = document.createElement("a");
+    link.download = `lockscreen-${Date.now()}.png`;
+    link.href = href;
+    link.click();
+    trackEvent("wallpaper_save_download_link_clicked", { signedIn: isSignedIn });
+  };
+
   const handleDownload = async () => {
     const canvas = getActiveCanvas();
     if (!canvas) {
@@ -1974,13 +2077,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
           // still give them the long-press path instead of a dead end.
           trackEvent("wallpaper_share_cancelled", { signedIn: isSignedIn });
           if (isMobile) {
-            setShowSuccessModal(false);
-            setSavePreviewUrl(dataUrl);
-            trackEvent("wallpaper_save_sheet_shown", {
-              taskCount: wallpaperStyle.tasks.length,
-              signedIn: isSignedIn,
-              method: "after_share_cancelled",
-            });
+            openMobileSaveSheet(dataUrl, blob, file, "after_share_cancelled");
           }
           return;
         }
@@ -1998,14 +2095,8 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
     // Showing the sheet is an INTENT signal, not a completed save — success is
     // recorded only when the user confirms or completes a share from the sheet.
     if (isMobile) {
-      setShowSuccessModal(false);
-      setSavePreviewUrl(dataUrl);
+      openMobileSaveSheet(dataUrl, blob, file, "long_press_preview");
       await recordDownload();
-      trackEvent("wallpaper_save_sheet_shown", {
-        taskCount: wallpaperStyle.tasks.length,
-        signedIn: isSignedIn,
-        method: "long_press_preview",
-      });
       return;
     }
 
@@ -2022,70 +2113,6 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       signedIn: isSignedIn,
       method: "download_link",
     });
-  };
-
-  // Actions available inside the mobile long-press save sheet. All of them
-  // reuse the PNG already generated by handleDownload — no re-render needed.
-  const markWallpaperSaved = (method: string) => {
-    trackEvent("wallpaper_download_success", {
-      taskCount: wallpaperStyle.tasks.length,
-      signedIn: isSignedIn,
-      method,
-    });
-    setSavePreviewUrl(null);
-  };
-
-  const shareFromPreview = async () => {
-    if (!savePreviewUrl) return;
-    try {
-      const blob = await (await fetch(savePreviewUrl)).blob();
-      const file = new File([blob], `lockscreen-${Date.now()}.png`, {
-        type: "image/png",
-      });
-      const canShare =
-        typeof navigator !== "undefined" &&
-        "canShare" in navigator &&
-        typeof navigator.share === "function" &&
-        navigator.canShare({ files: [file] });
-
-      if (!canShare) {
-        trackEvent("wallpaper_save_share_retry", { result: "unsupported" });
-        toast({
-          variant: "destructive",
-          title: currentLang === "zh" ? "此浏览器不支持分享" : "Sharing not supported",
-          description:
-            currentLang === "zh"
-              ? "请长按上方图片 → 存储到照片"
-              : "Please long-press the image above and choose Save Image.",
-        });
-        return;
-      }
-
-      await navigator.share({
-        files: [file],
-        title: "Lock Screen Wallpaper",
-        text: "My Notion tasks as a lock screen",
-      });
-      trackEvent("wallpaper_save_share_retry", { result: "success" });
-      markWallpaperSaved("web_share_api_retry");
-    } catch (err) {
-      const name = err instanceof Error ? err.name : "unknown";
-      trackEvent("wallpaper_save_share_retry", {
-        result: name === "AbortError" ? "cancelled" : "failed",
-      });
-      if (name !== "AbortError") {
-        console.warn("Retry share failed:", err);
-      }
-    }
-  };
-
-  const downloadFromPreview = () => {
-    if (!savePreviewUrl) return;
-    const link = document.createElement("a");
-    link.download = `lockscreen-${Date.now()}.png`;
-    link.href = savePreviewUrl;
-    link.click();
-    trackEvent("wallpaper_save_download_link_clicked", { signedIn: isSignedIn });
   };
 
   const handleShare = async () => {
@@ -3328,9 +3355,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
           the native share sheet is unavailable or fails on mobile Safari. */}
       <Dialog
         open={Boolean(savePreviewUrl)}
-        onOpenChange={(open) => {
-          if (!open) setSavePreviewUrl(null);
-        }}
+        onOpenChange={handleSaveSheetOpenChange}
       >
         <DialogContent className="sm:max-w-md bg-brand-card border-gray-700 text-white">
           <DialogHeader>
@@ -3342,7 +3367,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
           <div className="space-y-4">
             {savePreviewUrl ? (
               <img
-                src={savePreviewUrl}
+                src={savePreviewObjectUrl || savePreviewUrl || undefined}
                 alt="Lock screen wallpaper"
                 className="mx-auto w-full max-w-[260px] rounded-2xl border border-gray-700"
                 style={{
