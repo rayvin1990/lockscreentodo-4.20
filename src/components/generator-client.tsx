@@ -1943,7 +1943,10 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       signedIn: isSignedIn,
       method,
     });
-    setSavePreviewUrl(null);
+    // Close through the single cleanup path. A programmatic state change does
+    // NOT fire Radix Dialog's onOpenChange, so bypassing it would leak the
+    // blob URL and leave the success modal (with its QR code) hidden.
+    handleSaveSheetOpenChange(false);
   };
 
   const shareFromPreview = async () => {
@@ -2100,15 +2103,24 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
       return;
     }
 
-    // Fallback: <a download> for desktop and older browsers. Browsers give us
-    // no completion callback, so this is an ATTEMPT, never a confirmed success.
+    // Desktop / older browsers only. Mobile never reaches this branch: isMobile
+    // returns above via the long-press sheet, because iOS Safari silently
+    // ignores <a download> on data: URLs. On desktop the download attribute IS
+    // reliable, so keep wallpaper_download_success with method=download_link —
+    // this preserves the GA4 key event and continuity with historical funnel
+    // data. Browsers expose no completion callback, so this is a best-effort
+    // "handed to the browser" signal, not a verified file-on-disk check.
+    // blob: URLs avoid the size limits some browsers impose on data: URLs.
+    const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.download = file.name;
-    link.href = dataUrl;
+    link.href = objectUrl;
     link.click();
+    // Let the browser start the download before releasing the blob.
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 
     await recordDownload();
-    trackEvent("wallpaper_download_attempt", {
+    trackEvent("wallpaper_download_success", {
       taskCount: wallpaperStyle.tasks.length,
       signedIn: isSignedIn,
       method: "download_link",
@@ -3411,7 +3423,7 @@ function filterTomorrowOnly<T extends { dueDate?: string }>(tasks: T[]): T[] {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSavePreviewUrl(null)}
+                  onClick={() => handleSaveSheetOpenChange(false)}
                   className="text-xs text-gray-400 underline underline-offset-2 hover:text-white"
                 >
                   {currentLang === "zh" ? "暂不保存" : "Not now"}
